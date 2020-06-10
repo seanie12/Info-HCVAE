@@ -25,7 +25,7 @@ __Graphical Model__
 <br />
 <img align="left" width="300" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/graphical_model.png">
 
-<br />
+<br/><br/>
 The code will be uploaded by the end of June. <br />
 
 If you have any questions, please email me. {Id}@gmail.com where Id is lsnfamily02
