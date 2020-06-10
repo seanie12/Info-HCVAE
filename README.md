@@ -26,6 +26,9 @@ __Graphical Model__
 <img align="left" width="700" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/graphical_model.png">
 
 <br/><br/>
-The code will be uploaded by the end of June. <br />
-
+(HCVAE) for generating QA pairs given unstructured texts as contexts, while maximizing
+the mutual information between generated QA pairs to ensure their consistency. We validate
+our Information Maximizing Hierarchical Conditional Variational AutoEncoder (InfoHCVAE) on several benchmark datasets by
+evaluating the performance of the QA model (BERT-base) using only the generated QA pairs (QA-based evaluation) or by using both the generated and human-labeled pairs (semisupervised learning) for training, against stateof-the-art baseline models. The results show that our model obtains impressive performance gains over all baselines on both tasks,
+using only a fraction of data for training.
 If you have any questions, please email me. {Id}@gmail.com where Id is lsnfamily02
