@@ -24,6 +24,6 @@ achieves impressive performances on both tasks, largely outperforming existing Q
 __Graphical Model__
 <br />
 <img align="left" width="700" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/graphical_model.png">
-
+<br />
 __TBA__
 If you have any questions, please email me. {Id}@gmail.com where Id is lsnfamily02
