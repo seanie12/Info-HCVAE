@@ -5,6 +5,7 @@ Information-Maximizing Hierarchical Conditional VAEs (**ACL 2020**, **long paper
 
 
 ## Abstract
+<img align="middle" width="700" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/concept.png">
 One of the most crucial challenges in question answering (QA) is the scarcity of labeled data, since it is costly to obtain question-answer (QA) pairs for a target text domain with human annotation. An alternative approach to
 tackle the problem is to use automatically generated QA pairs from either the problem context or from large amount of unstructured texts (e.g. Wikipedia). In this work, we propose a hierarchical conditional variational autoencoder
 (HCVAE) for generating QA pairs given unstructured texts as contexts, while maximizing
@@ -20,7 +21,8 @@ generated QA pairs, by maximizing their mutual information. This is a novel appr
 - We evaluate our framework on several benchmark datasets by either training a new model entirely using generated QA pairs (QA-based evaluation), or use both ground-truth and generated QA pairs (semi-supervised QA). Our model
 achieves impressive performances on both tasks, largely outperforming existing QAG baselines.
 
-__Structure of the inference and generative network__
+__Graphical Model__
+<img align="middle" width="700" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/graphical_model.png">
 
 The code will be uploaded by the end of June. <br />
 
