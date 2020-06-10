@@ -22,7 +22,7 @@ generated QA pairs, by maximizing their mutual information. This is a novel appr
 achieves impressive performances on both tasks, largely outperforming existing QAG baselines.
 
 __Graphical Model__
-<img align="middle" width="300" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/graphical_model.png">
+<img align="left" width="300" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/graphical_model.png">
 
 The code will be uploaded by the end of June. <br />
 
