@@ -21,9 +21,7 @@ generated QA pairs, by maximizing their mutual information. This is a novel appr
 - We evaluate our framework on several benchmark datasets by either training a new model entirely using generated QA pairs (QA-based evaluation), or use both ground-truth and generated QA pairs (semi-supervised QA). Our model
 achieves impressive performances on both tasks, largely outperforming existing QAG baselines.
 
-__Graphical Model__
-<br />
-<img align="left" width="700" src="https://github.com/seanie12/Info-HCVAE/blob/master/images/graphical_model.png">
-<br class=”blank” />
 __TBA__
+The code will be uploaded by the end of June.
+<br />
 If you have any questions, please email me. {Id}@gmail.com where Id is lsnfamily02
