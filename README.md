@@ -32,7 +32,6 @@ This code is written in Python. Dependencies include
 * python >= 3.6
 * pytorch >= 1.4
 * json-lines
-* nltk
 * tqdm
 * [pytorch_scatter](https://github.com/rusty1s/pytorch_scatter)
 * [transfomers](https://github.com/huggingface/transformers)
