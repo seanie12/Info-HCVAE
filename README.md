@@ -43,6 +43,4 @@ This code is written in Python. Dependencies include
 mkdir data 
 wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./data/train-v1.1.json
 wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./data/dev-v1.1.json
-cd data
-python process_data.py
 ```
