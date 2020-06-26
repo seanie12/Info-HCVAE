@@ -39,7 +39,20 @@ This code is written in Python. Dependencies include
 
 ## Download data and Preprocess
 ```bash
-mkdir data 
-wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./data/train-v1.1.json
-wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./data/dev-v1.1.json
+mkdir data/squad 
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./data/squad/train-v1.1.json
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./data/squad/dev-v1.1.json
+```
+
+
+
+## Reference
+To cite the code/data/paper, please use this BibTex
+```bibtex
+@inproceedings{lee2020generating,
+  title={Generating Diverse and Consistent QA pairs from Contexts with Information-Maximizing Hierarchical Conditional VAEs},
+  author={Lee, Dong Bok and Lee, Seanie and Jeong, Woo Tae and Kim, Donghwan and Hwang, Sung Ju},
+  booktitle={ACL},
+  year={2020}
+}
 ```
