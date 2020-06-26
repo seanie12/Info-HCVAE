@@ -25,3 +25,23 @@ __TBA__
 The code will be uploaded by the end of June.
 <br />
 If you have any questions, please email me. {Id}@gmail.com where Id is lsnfamily02
+
+
+## Dependencies
+This code is written in Python. Dependencies include
+* python >= 3.6
+* pytorch >= 1.4
+* nltk
+* tqdm
+* [pytorch_scatter](https://github.com/rusty1s/pytorch_scatter)
+* [transfomers](https://github.com/huggingface/transformers)
+* json-lines
+
+## Download data and Preprocess
+```bash
+mkdir data 
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./data/train-v1.1.json
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./data/dev-v1.1.json
+cd data
+python process_data.py
+```
