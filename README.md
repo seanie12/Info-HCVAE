@@ -37,7 +37,7 @@ This code is written in Python. Dependencies include
 * [transfomers](https://github.com/huggingface/transformers)
 
 
-## Download data and Preprocess
+## Download data
 ```bash
 mkdir data/squad 
 wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./data/squad/train-v1.1.json
