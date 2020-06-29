@@ -21,11 +21,6 @@ generated QA pairs, by maximizing their mutual information. This is a novel appr
 - We evaluate our framework on several benchmark datasets by either training a new model entirely using generated QA pairs (QA-based evaluation), or use both ground-truth and generated QA pairs (semi-supervised QA). Our model
 achieves impressive performances on both tasks, largely outperforming existing QAG baselines.
 
-__TBA__
-The code will be uploaded by the end of June.
-<br />
-If you have any questions, please email me. {Id}@gmail.com where Id is lsnfamily02
-
 
 ## Dependencies
 This code is written in Python. Dependencies include
@@ -50,13 +45,26 @@ Train Info-HCVAE with the following command. The checkpoint will be save at ./sa
 cd vae
 python main.py
 ```
-
-## Generate QA pairs for Semi-supervised Learning
+## Generate QA pairs 
 Generate QA pairs from unlabeled paragraphs. If you generate QA pairs from SQuAD, use option --squad.
 ```bash
 cd vae
 python translate.py --data_file "DATA DIRECTORY for paragraph" --checkpoint "directory for Info-HCVAE model" --output_file "output file directory" --k "the number of QA pairs to sample for each paragraph" --ratio "the percentage of context to use"
 ```
+
+
+## QA-based-Evaluation (QAE) & Reverse-QA-based-Evaluation (R-QAE)
+TBA
+```bash
+cd qa-eval
+```
+
+## Semi-Supervised Learning
+TBA
+
+## Pretrained Model & Synthetic QA pairs
+TBA
+
 
 ## Reference
 To cite the code/data/paper, please use this BibTex
