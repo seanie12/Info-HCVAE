@@ -140,7 +140,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', dest='debug', action='store_true')
-    parser.add_argument('--squad', dest='squad', action='store_true')
+    parser.add_argument('--squad', dest='squad', action='store_true', help="whether to generate QA from SQuAD context")
 
     parser.add_argument("--seed", default=1004, type=int)
     parser.add_argument("--bert_model", default='bert-base-uncased', type=str)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--data_file", default="../data/squad/train-v1.1.json", type=str)
-    parser.add_argument("--checkpoint", default="../ex3/vae98/best_f1_model.pt", type=str, help="checkpoint for vae model")
+    parser.add_argument("--checkpoint", default="../save/vae-checkpoint/best_f1_model.pt", type=str, help="checkpoint for vae model")
     parser.add_argument("--output_file", default="../data/synthetic_data/vae98/1.0_squad_10x_features.pkl", type=str)
 
     parser.add_argument("--ratio", default=1.0, type=float)
