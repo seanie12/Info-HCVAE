@@ -44,7 +44,19 @@ wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./dat
 wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./data/squad/dev-v1.1.json
 ```
 
+## Train Info-HCVAE
+Train Info-HCVAE with the following command. The checkpoint will be save at ./save/vae-checkpoint.
+```bash
+cd vae
+python main.py
+```
 
+## Generate QA pairs for Semi-supervised Learning
+Generate QA pairs from unlabeled paragraphs. If you generate QA pairs from SQuAD, use option --squad.
+```bash
+cd vae
+python translate.py --data_file "DATA DIRECTORY for paragraph" --checkpoint "directory for Info-HCVAE model" --output_file "output file directory" --k "the number of QA pairs to sample for each paragraph" --ratio "the percentage of context to use"
+```
 
 ## Reference
 To cite the code/data/paper, please use this BibTex
