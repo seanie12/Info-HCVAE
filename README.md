@@ -72,7 +72,7 @@ To cite the code/data/paper, please use this BibTex
 @inproceedings{lee2020generating,
   title={Generating Diverse and Consistent QA pairs from Contexts with Information-Maximizing Hierarchical Conditional VAEs},
   author={Lee, Dong Bok and Lee, Seanie and Jeong, Woo Tae and Kim, Donghwan and Hwang, Sung Ju},
-  booktitle={ACL},
+  booktitle={Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics},
   year={2020}
 }
 ```
