@@ -1,6 +1,7 @@
 # Generating Diverse and Consistent QA pairs from Contexts with Information-Maximizing Hierarchical Conditional VAEs
 This is the **Pytorch implementation** for the paper Generating Diverse and Consistent QA pairs from Contexts with
-Information-Maximizing Hierarchical Conditional VAEs (**ACL 2020**, **long paper**) : https://arxiv.org/abs/2005.13837
+Information-Maximizing Hierarchical Conditional VAEs (**ACL 2020**, **long paper**) : https://www.aclweb.org/anthology/2020.acl-main.20/ <br />
+Video is available [here](https://virtual.acl2020.org/paper_main.20.html).
 
 
 
