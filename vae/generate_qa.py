@@ -50,7 +50,7 @@ def main(args):
     
     fw = open(output_file, "w")
     for batch in tqdm(data_loader, total=len(data_loader)):
-        c_ids = batch[0]
+        c_ids = batch
         c_len = torch.sum(torch.sign(c_ids),1 )
         max_c_len = torch.max(c_len)
         c_ids = c_ids[:, :max_c_len].to(device)
@@ -94,7 +94,7 @@ if __name__ == "__main__":
                         type=int, help="batch_size")
     parser.add_argument("--data_file", type=str,
                         required=True, help="text file of paragraphs")
-    parser.add_argument("--checkpoint", default="../ex3/vae98/best_f1_model.pt",
+    parser.add_argument("--checkpoint", default="../save/vae-checkpoint/best_f1_model.pt",
                         type=str, help="checkpoint for vae model")
     parser.add_argument("--output_dir", default="../data/synthetic_data/", type=str)
 
