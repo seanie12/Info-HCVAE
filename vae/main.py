@@ -1,7 +1,6 @@
 import argparse
 import os
 import random
-import socket
 
 import numpy as np
 import torch

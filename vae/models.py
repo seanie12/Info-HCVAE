@@ -206,13 +206,13 @@ class PosteriorEncoder(nn.Module):
 
         # context enc
         c_embeddings = self.embedding(c_ids)
-        c_hs, c_state = self.question_encoder(c_embeddings, c_lengths)
+        c_hs, c_state = self.context_encoder(c_embeddings, c_lengths)
         c_h = c_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_h = c_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
         # context and answer enc
         c_a_embeddings = self.embedding(c_ids, a_ids, None)
-        c_a_hs, c_a_state = self.question_encoder(c_a_embeddings, c_lengths)
+        c_a_hs, c_a_state = self.context_answer_encoder(c_a_embeddings, c_lengths)
         c_a_h = c_a_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_a_h = c_a_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 

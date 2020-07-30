@@ -2,7 +2,6 @@ import collections
 import gzip
 import json
 import math
-import random
 import re
 import string
 import sys

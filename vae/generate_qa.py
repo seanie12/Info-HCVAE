@@ -35,7 +35,7 @@ class CustomDatset(Dataset):
 
 def main(args):
     tokenizer = BertTokenizer.from_pretrained(args.bert_model)
-    data = CustomDatset(tokenizer, args.data_file, args.max_len)
+    data = CustomDatset(tokenizer, args.data_file, args.max_length)
     data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
 
     device = torch.cuda.current_device()
