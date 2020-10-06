@@ -40,8 +40,6 @@ wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./dat
 wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./data/squad/dev-v1.1.json
 ```
 
-## Pretrained Info-HCVAE
-You can find the checkpoint of the pretrained Info-HCVAE [here](https://drive.google.com/file/d/1JqwRugYfllwQ5FL-o01q-o1mPWnPmHSM/view?usp=sharing).
 
 
 ## Train Info-HCVAE
