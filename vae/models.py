@@ -170,10 +170,10 @@ class PosteriorEncoder(nn.Module):
         self.nzadim = nzadim
 
         self.encoder = CustomLSTM(input_size=emsize,
-                                           hidden_size=nhidden,
-                                           num_layers=nlayers,
-                                           dropout=dropout,
-                                           bidirectional=True)
+                                  hidden_size=nhidden,
+                                  num_layers=nlayers,
+                                  dropout=dropout,
+                                  bidirectional=True)
 
         
 

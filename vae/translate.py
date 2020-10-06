@@ -5,7 +5,7 @@ import torch
 from transformers import BertTokenizer
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
-
+import os
 from models import DiscreteVAE
 from squad_utils import (InputFeatures, convert_examples_to_harv_features,
                          read_examples, read_squad_examples)
@@ -133,6 +133,9 @@ def main(args):
                         end_position=all_end[i].cpu().tolist(),
                         is_impossible=None))
 
+    dir_name = os.path.dirname(args.output_file)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
     with open(args.output_file, "wb") as f:
         pickle.dump(new_features, f)
 
@@ -150,7 +153,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--data_file", default="../data/squad/train-v1.1.json", type=str)
     parser.add_argument("--checkpoint", default="../save/vae-checkpoint/best_f1_model.pt", type=str, help="checkpoint for vae model")
-    parser.add_argument("--output_file", default="../data/synthetic_data/vae98/1.0_squad_10x_features.pkl", type=str)
+    parser.add_argument("--output_file", default="../data/synthetic_data/1.0_squad_10x_features.pkl", type=str)
 
     parser.add_argument("--ratio", default=1.0, type=float)
     parser.add_argument("--k", default=10, type=int, help="the number of QA pairs for each paragraph")

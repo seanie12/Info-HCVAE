@@ -44,6 +44,7 @@ def main(args):
     vae.load_state_dict(checkpoint["state_dict"])
     vae.eval()
     vae = vae.to(device)
+    
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     output_file = os.path.join(args.output_dir, "synthetic_qa.jsonl")
