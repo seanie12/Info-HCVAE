@@ -678,7 +678,7 @@ def read_squad_examples(input_file, is_training, version_2_with_negative=False,
     if debug:
         input_data = input_data[:5]
 
-    for entry in input_data:
+    for entry in tqdm(input_data, total=len(input_data)):
         paragraphs = entry["paragraphs"]
         for paragraph in paragraphs:
             paragraph_text = paragraph["context"]

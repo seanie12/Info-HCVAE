@@ -64,6 +64,13 @@ def main(args):
     tokenizer = BertTokenizer.from_pretrained(args.bert_model)
     args.tokenizer = tokenizer
 
+    device = torch.cuda.current_device()
+    checkpoint = torch.load(args.checkpoint, map_location="cpu")
+    vae = DiscreteVAE(checkpoint["args"])
+    vae.load_state_dict(checkpoint["state_dict"])
+    vae.eval()
+    vae = vae.to(device)
+    
     if args.squad:
         examples = read_squad_examples(args.data_file, is_training=True, debug=args.debug)
         features = convert_examples_to_harv_features(examples,
@@ -86,12 +93,8 @@ def main(args):
     data = TensorDataset(all_c_ids)
     data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
 
-    device = torch.cuda.current_device()
-    checkpoint = torch.load(args.checkpoint, map_location="cpu")
-    vae = DiscreteVAE(checkpoint["args"])
-    vae.load_state_dict(checkpoint["state_dict"])
-    vae.eval()
-    vae = vae.to(device)
+    
+    
     new_features = []
 
     for batch in tqdm(data_loader, total=len(data_loader)):
