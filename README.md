@@ -64,8 +64,7 @@ cd qa-eval
 python main.py --devices 0_1_2 --pretrain_file $PATH_TO_qaeval --unlabel_ratio 0.1 --lazy_loader --batch_size 24
 ```
 
-## Semi-Supervised Learning
-TBA
+## Semi-Supervised Learning for SQuAD
 ```bash
 cd qa-eval
 python main.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_ratio 1.0 --lazy_loader --batch_size 32
