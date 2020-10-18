@@ -60,6 +60,7 @@ python main.py --devices 0_1_2 --pretrain_file $PATH_TO_qaeval --unlabel_ratio 0
 ```
 
 ## Semi-Supervised Learning for SQuAD
+As QAE, you should download the data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory.
 ```bash
 cd qa-eval
 python main.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_ratio 1.0 --lazy_loader --batch_size 32
