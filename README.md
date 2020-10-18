@@ -34,7 +34,7 @@ This code is written in Python. Dependencies include
 
 
 ## Download SQuAD 
-Download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing). It contains SQuAD training file and our own dev/test split. We preprocess it and convert to examples.pkl and features.pkl. Those pickle files are in data/pickle-file folder.
+Download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing). It contains SQuAD training file(data/squad/train-v1.1.json) and our own dev/test split(data/squad/my_dev.json, data/squad/my_test.json). We preprocess it and convert to examples.pkl and features.pkl. Those pickle files are in data/pickle-file folder.
 
 
 ## Train Info-HCVAE
