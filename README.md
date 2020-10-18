@@ -33,7 +33,7 @@ This code is written in Python. Dependencies include
 * [transfomers](https://github.com/huggingface/transformers)
 
 
-## Download data
+## Download SQuAD 
 ```bash
 mkdir data/squad 
 wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./data/squad/train-v1.1.json
@@ -56,8 +56,10 @@ python translate.py --data_file "DATA DIRECTORY for paragraph" --checkpoint "dir
 ```
 
 
-## QA-based-Evaluation (QAE) & Reverse-QA-based-Evaluation (R-QAE)
+## QA-based-Evaluation (QAE) 
+You should download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory. Uncompress it and the "data" folder contains all the files required for QAE and Semi-supervised Learning.
 ```bash
+
 cd qa-eval
 python main.py --devices 0_1_2 --pretrain_file $PATH_TO_qaeval --unlabel_ratio 0.1 --lazy_loader --batch_size 24
 ```
@@ -69,8 +71,8 @@ cd qa-eval
 python main.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_ratio 1.0 --lazy_loader --batch_size 32
 ```
 
-## Pretrained Model & Synthetic QA pairs
-TBA
+## Synthetic QA pairs
+Download data from [here]() and uncompress it under the root directory. The folder data/harv_synthetic_data_qae contains generated QA pairs from Harvesting QA dataset without any filtering. Another folder data/harv_synthetic_data_semi contains the same generated QA pairs but with postprocessing. We replace the generated answer with pretrained BERT QA model if its F1 is lower than the threshold.
 
 
 ## Reference
