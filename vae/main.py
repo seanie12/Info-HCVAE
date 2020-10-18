@@ -71,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=1004, type=int)
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument('--train_dir', default='../data/squad/train-v1.1.json')
-    parser.add_argument('--dev_dir', default='../data/squad/dev-v1.1.json')
+    parser.add_argument('--dev_dir', default='../data/squad/my_dev.json')
     
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
