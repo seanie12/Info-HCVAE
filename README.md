@@ -34,8 +34,13 @@ This code is written in Python. Dependencies include
 
 
 ## Download SQuAD 
-Download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing). It contains SQuAD training file(data/squad/train-v1.1.json) and our own dev/test split(data/squad/my_dev.json, data/squad/my_test.json). We preprocess it and convert to examples.pkl and features.pkl. Those pickle files are in data/pickle-file folder.
+Download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing). It contains SQuAD training file(data/squad/train-v1.1.json) and our own dev/test split(data/squad/my_dev.json, data/squad/my_test.json). We preprocess it and convert to examples.pkl and features.pkl. Those pickle files are in data/pickle-file folder. If you want to download the original data, run the following commands
 
+```bash
+mkdir squad
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json -O ./squad/train-v1.1.json
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./squad/dev-v1.1.json
+```
 
 ## Train Info-HCVAE
 Train Info-HCVAE with the following command. The checkpoint will be save at ./save/vae-checkpoint.
@@ -50,17 +55,15 @@ cd vae
 python translate.py --data_file "DATA DIRECTORY for paragraph" --checkpoint "directory for Info-HCVAE model" --output_file "output file directory" --k "the number of QA pairs to sample for each paragraph" --ratio "the percentage of context to use"
 ```
 
-
 ## QA-based-Evaluation (QAE) 
-You should download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory. Uncompress it and the "data" folder contains all the files required for QAE and Semi-supervised Learning.
+It requires **3 1080ti GPUS (11GB memory)** to reproduce the results. You should download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory. Uncompress it and the "data" folder contains all the files required for QAE and Semi-supervised Learning.
 ```bash
-
 cd qa-eval
 python main.py --devices 0_1_2 --pretrain_file $PATH_TO_qaeval --unlabel_ratio 0.1 --lazy_loader --batch_size 24
 ```
 
 ## Semi-Supervised Learning for SQuAD
-As QAE, you should download the data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory.
+It requires **4 1080ti GPUS (11GB memory)** As QAE, you should download the data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory.
 ```bash
 cd qa-eval
 python main.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_ratio 1.0 --lazy_loader --batch_size 32
