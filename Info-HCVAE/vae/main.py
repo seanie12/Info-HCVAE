@@ -82,6 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
     parser.add_argument("--clip", default=5.0, type=float, help="max grad norm")
+    parser.add_argument("--devuce", default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'), type=int)
 
     parser.add_argument("--bert_model", default='bert-base-uncased', type=str)
     parser.add_argument('--enc_nhidden', type=int, default=300)
