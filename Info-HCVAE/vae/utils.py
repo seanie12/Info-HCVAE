@@ -8,8 +8,13 @@ from squad_utils import (convert_examples_to_features_answer_id,
                          read_squad_examples)
 
 
-def get_squad_data_loader(tokenizer, file, shuffle, args):
+def get_squad_data_loader(tokenizer, file, shuffle, is_train_set, args):
     examples = read_squad_examples(file, is_training=True, debug=args.debug)
+    if is_train_set:
+        import math
+        num_examples_to_use = int(math.ceil((args.train_percentage / 100)*len(examples)))
+        examples = examples[:num_examples_to_use]
+
     features = convert_examples_to_features_answer_id(examples,
                                                       tokenizer=tokenizer,
                                                       max_seq_length=args.max_c_len,
