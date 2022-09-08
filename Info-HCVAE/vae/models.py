@@ -188,25 +188,21 @@ class PosteriorEncoder(nn.Module):
         c_mask, c_lengths = return_mask_lengths(c_ids)
         q_mask, q_lengths = return_mask_lengths(q_ids)
 
-        # convert lengths to cpu int64 tensor
-        c_lengths = c_lengths.to("cpu")
-        q_lengths = q_lengths.to("cpu")
-
         # question enc
         q_embeddings = self.embedding(q_ids)
-        q_hs, q_state = self.encoder(q_embeddings, q_lengths)
+        q_hs, q_state = self.encoder(q_embeddings, q_lengths.to("cpu"))
         q_h = q_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         q_h = q_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
         # context enc
         c_embeddings = self.embedding(c_ids)
-        c_hs, c_state = self.encoder(c_embeddings, c_lengths)
+        c_hs, c_state = self.encoder(c_embeddings, c_lengths.to("cpu"))
         c_h = c_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_h = c_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
         # context and answer enc
         c_a_embeddings = self.embedding(c_ids, a_ids, None)
-        c_a_hs, c_a_state = self.encoder(c_a_embeddings, c_lengths)
+        c_a_hs, c_a_state = self.encoder(c_a_embeddings, c_lengths.to("cpu"))
         c_a_h = c_a_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_a_h = c_a_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
@@ -274,7 +270,7 @@ class PriorEncoder(nn.Module):
         c_mask, c_lengths = return_mask_lengths(c_ids)
 
         c_embeddings = self.embedding(c_ids)
-        c_hs, c_state = self.context_encoder(c_embeddings, c_lengths)
+        c_hs, c_state = self.context_encoder(c_embeddings, c_lengths.to("cpu"))
         c_h = c_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_h = c_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
@@ -296,11 +292,10 @@ class PriorEncoder(nn.Module):
         return zq_mu, zq_logvar, zq, za_prob, za
 
     def interpolation(self, c_ids, zq):
-
         c_mask, c_lengths = return_mask_lengths(c_ids)
 
         c_embeddings = self.embedding(c_ids)
-        c_hs, c_state = self.context_encoder(c_embeddings, c_lengths)
+        c_hs, c_state = self.context_encoder(c_embeddings, c_lengths.to("cpu"))
         c_h = c_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_h = c_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
@@ -342,7 +337,7 @@ class AnswerDecoder(nn.Module):
         H = self.embedding(c_ids, c_mask)
         U = init_state.unsqueeze(1).repeat(1, max_c_len, 1)
         G = torch.cat([H, U, H * U, torch.abs(H - U)], dim=-1)
-        M, _ = self.context_lstm(G, c_lengths)
+        M, _ = self.context_lstm(G, c_lengths.to("cpu"))
 
         start_logits = self.start_linear(M).squeeze(-1)
         end_logits = self.end_linear(M).squeeze(-1)
@@ -401,8 +396,9 @@ class ContextEncoderforQG(nn.Module):
 
     def forward(self, c_ids, a_ids):
         c_mask, c_lengths = return_mask_lengths(c_ids)
+
         c_embeddings = self.embedding(c_ids, c_mask, a_ids)
-        c_outputs, _ = self.context_lstm(c_embeddings, c_lengths)
+        c_outputs, _ = self.context_lstm(c_embeddings, c_lengths.to("cpu"))
         # attention
         mask = torch.matmul(c_mask.unsqueeze(2), c_mask.unsqueeze(1))
         c_attned_by_c, _ = cal_attn(self.context_linear(c_outputs),
@@ -482,7 +478,7 @@ class QuestionDecoder(nn.Module):
 
         # question dec
         q_embeddings = self.embedding(q_ids)
-        q_outputs, _ = self.question_lstm(q_embeddings, q_lengths, init_state)
+        q_outputs, _ = self.question_lstm(q_embeddings, q_lengths.to("cpu"), init_state)
 
         # attention
         mask = torch.matmul(q_mask.unsqueeze(2), c_mask.unsqueeze(1))

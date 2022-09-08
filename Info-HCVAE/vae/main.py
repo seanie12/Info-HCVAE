@@ -15,9 +15,9 @@ from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
 def main(args):
     tokenizer = BertTokenizer.from_pretrained(args.bert_model)
     train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
-                                         shuffle=True, args=args)
+                                         shuffle=True, is_train=True, args=args)
     eval_data = get_squad_data_loader(tokenizer, args.dev_dir,
-                                      shuffle=False, args=args)
+                                      shuffle=False, is_train=False, args=args)
 
     args.device = torch.cuda.current_device()
 
@@ -72,6 +72,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument('--train_dir', default='../data/squad/train-v1.1.json')
     parser.add_argument('--dev_dir', default='../data/squad/my_dev.json')
+    parser.add_argument("--train_percentage", default=100, type=int, help="training data percentage of questions to use")
     
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
