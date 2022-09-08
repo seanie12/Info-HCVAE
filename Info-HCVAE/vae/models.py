@@ -188,6 +188,10 @@ class PosteriorEncoder(nn.Module):
         c_mask, c_lengths = return_mask_lengths(c_ids)
         q_mask, q_lengths = return_mask_lengths(q_ids)
 
+        # convert lengths to cpu int64 tensor
+        c_lengths = c_lengths.to("cpu")
+        q_lengths = q_lengths.to("cpu")
+
         # question enc
         q_embeddings = self.embedding(q_ids)
         q_hs, q_state = self.encoder(q_embeddings, q_lengths)
