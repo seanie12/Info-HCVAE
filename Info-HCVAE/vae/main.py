@@ -15,9 +15,9 @@ from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
 def main(args):
     tokenizer = BertTokenizer.from_pretrained(args.bert_model)
     train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
-                                         shuffle=True, is_train=True, args=args)
+                                         shuffle=True, is_train_set=True, args=args)
     eval_data = get_squad_data_loader(tokenizer, args.dev_dir,
-                                      shuffle=False, is_train=False, args=args)
+                                      shuffle=False, is_train_set=False, args=args)
 
     args.device = torch.cuda.current_device()
 

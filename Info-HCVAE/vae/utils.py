@@ -8,8 +8,13 @@ from squad_utils import (convert_examples_to_features_answer_id,
                          read_squad_examples)
 
 
-def get_squad_data_loader(tokenizer, file, shuffle, is_train, args):
+def get_squad_data_loader(tokenizer, file, shuffle, is_train_set, args):
     examples = read_squad_examples(file, is_training=True, debug=args.debug)
+    if is_train_set:
+        import math
+        num_examples_to_use = int(math.ceil((args.train_percentage / 100)*len(examples)))
+        examples = examples[:num_examples_to_use]
+
     features = convert_examples_to_features_answer_id(examples,
                                                       tokenizer=tokenizer,
                                                       max_seq_length=args.max_c_len,
@@ -24,18 +29,6 @@ def get_squad_data_loader(tokenizer, file, shuffle, is_train, args):
     all_a_ids = (all_tag_ids != 0).long()
     all_start_positions = torch.tensor([f.noq_start_position for f in features], dtype=torch.long)
     all_end_positions = torch.tensor([f.noq_end_position for f in features], dtype=torch.long)
-
-    if is_train:
-        assert max(len(all_c_ids), len(all_q_ids), len(all_tag_ids), len(all_a_ids), len(all_start_positions), len(all_end_positions)) == \
-            min(len(all_c_ids), len(all_q_ids), len(all_tag_ids), len(all_a_ids), len(all_start_positions), len(all_end_positions)),\
-            "The lengths of all_c_ids, all_q_ids, all_tags_ids, all_a_ids, all_start_positions, all_end_positions are not equal (!=)."
-        num_data_to_use = int((args.train_percentage / 100)*len(all_q_ids))
-        all_c_ids = all_c_ids[:num_data_to_use]
-        all_q_ids = all_q_ids[:num_data_to_use]
-        all_tag_ids = all_tag_ids[:num_data_to_use]
-        all_a_ids = all_a_ids[:num_data_to_use]
-        all_start_positions = all_start_positions[:num_data_to_use]
-        all_end_positions = all_end_positions[:num_data_to_use]
 
     all_data = TensorDataset(all_c_ids, all_q_ids, all_a_ids, all_start_positions, all_end_positions)
     data_loader = DataLoader(all_data, args.batch_size, shuffle=shuffle)
