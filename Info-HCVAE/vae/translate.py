@@ -2,7 +2,7 @@ import argparse
 import pickle
 
 import torch
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 import os
@@ -61,7 +61,7 @@ def post_process(q_ids, start_positions, end_positions, c_ids, total_max_len=384
 
 
 def main(args):
-    tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+    tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
     args.tokenizer = tokenizer
 
     device = torch.cuda.current_device()
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     parser.add_argument('--squad', dest='squad', action='store_true', help="whether to generate QA from SQuAD context")
 
     parser.add_argument("--seed", default=1004, type=int)
-    parser.add_argument("--bert_model", default='bert-base-uncased', type=str)
+    parser.add_argument("--huggingface_model", default='bert-base-uncased', type=str)
     parser.add_argument("--max_c_len", default=384 - 64, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=0, type=int, help="max query length")
 

@@ -3,7 +3,7 @@ import json
 import os
 
 import torch
-from transformers import BertTokenizer
+from transformers import BertTokenizer, AutoTokenizer
 from tqdm import tqdm
 
 from qgevalcap.eval import eval_qg
@@ -49,7 +49,7 @@ class Result(object):
 
 
 def eval_vae(epoch, args, trainer, eval_data):
-    tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+    tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
     RawResult = collections.namedtuple("RawResult",
                                        ["unique_id", "start_logits", "end_logits"])
 

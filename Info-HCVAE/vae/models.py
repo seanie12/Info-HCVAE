@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch_scatter import scatter_max
-from transformers import BertModel, BertTokenizer
+from transformers import AutoModel, AutoTokenizer
 
 
 def return_mask_lengths(ids):
@@ -64,14 +64,14 @@ class GaussianKLLoss(nn.Module):
 
 
 class Embedding(nn.Module):
-    def __init__(self, bert_model):
+    def __init__(self, huggingface_model):
         super(Embedding, self).__init__()
-        bert_embeddings = BertModel.from_pretrained(bert_model).embeddings
-        self.word_embeddings = bert_embeddings.word_embeddings
-        self.token_type_embeddings = bert_embeddings.token_type_embeddings
-        self.position_embeddings = bert_embeddings.position_embeddings
-        self.LayerNorm = bert_embeddings.LayerNorm
-        self.dropout = bert_embeddings.dropout
+        transformer_embeddings = AutoModel.from_pretrained(huggingface_model).embeddings
+        self.word_embeddings = transformer_embeddings.word_embeddings
+        self.token_type_embeddings = transformer_embeddings.token_type_embeddings
+        self.position_embeddings = transformer_embeddings.position_embeddings
+        self.LayerNorm = transformer_embeddings.LayerNorm
+        self.dropout = transformer_embeddings.dropout
 
     def forward(self, input_ids, token_type_ids=None, position_ids=None):
         if token_type_ids is None:
@@ -94,9 +94,9 @@ class Embedding(nn.Module):
 
 
 class ContextualizedEmbedding(nn.Module):
-    def __init__(self, bert_model):
+    def __init__(self, huggingface_model):
         super(ContextualizedEmbedding, self).__init__()
-        bert = BertModel.from_pretrained(bert_model)
+        bert = AutoModel.from_pretrained(huggingface_model)
         self.embedding = bert.embeddings
         self.encoder = bert.encoder
         self.num_hidden_layers = bert.config.num_hidden_layers
@@ -644,14 +644,14 @@ class QuestionDecoder(nn.Module):
 class DiscreteVAE(nn.Module):
     def __init__(self, args):
         super(DiscreteVAE, self).__init__()
-        tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+        tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
         padding_idx = tokenizer.vocab['[PAD]']
         sos_id = tokenizer.vocab['[CLS]']
         eos_id = tokenizer.vocab['[SEP]']
         ntokens = len(tokenizer.vocab)
 
-        bert_model = args.bert_model
-        if "large" in bert_model:
+        huggingface_model = args.huggingface_model
+        if "large" in huggingface_model:
             emsize = 1024
         else:
             emsize = 768
@@ -674,8 +674,8 @@ class DiscreteVAE(nn.Module):
 
         max_q_len = args.max_q_len
 
-        embedding = Embedding(bert_model)
-        contextualized_embedding = ContextualizedEmbedding(bert_model)
+        embedding = Embedding(huggingface_model)
+        contextualized_embedding = ContextualizedEmbedding(huggingface_model)
         # freeze embedding
         for param in embedding.parameters():
             param.requires_grad = False

@@ -5,7 +5,7 @@ import os
 import torch
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 from tqdm import tqdm
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 
 from models import DiscreteVAE
 
@@ -34,7 +34,7 @@ class CustomDatset(Dataset):
 
 
 def main(args):
-    tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+    tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
     data = CustomDatset(tokenizer, args.data_file, args.max_length)
     data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
 
@@ -87,7 +87,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", default=1004, type=int)
-    parser.add_argument("--bert_model", default='bert-base-uncased', type=str)
+    parser.add_argument("--huggingface_model", default='bert-base-uncased', type=str)
     parser.add_argument("--max_length", default=384,
                         type=int, help="max context length")
     

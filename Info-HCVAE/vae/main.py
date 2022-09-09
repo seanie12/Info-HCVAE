@@ -5,7 +5,7 @@ import random
 import numpy as np
 import torch
 from tqdm import tqdm, trange
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 
 from eval import eval_vae
 from trainer import VAETrainer
@@ -13,7 +13,7 @@ from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
 
 
 def main(args):
-    tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+    tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
     train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
                                          shuffle=True, is_train_set=True, args=args)
     eval_data = get_squad_data_loader(tokenizer, args.dev_dir,
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
     parser.add_argument("--clip", default=5.0, type=float, help="max grad norm")
 
-    parser.add_argument("--bert_model", default='bert-base-uncased', type=str)
+    parser.add_argument("--huggingface_model", default='bert-base-uncased', type=str)
     parser.add_argument('--enc_nhidden', type=int, default=300)
     parser.add_argument('--enc_nlayers', type=int, default=1)
     parser.add_argument('--enc_dropout', type=float, default=0.2)
