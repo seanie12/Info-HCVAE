@@ -22,6 +22,8 @@ def main(args):
     args.device = torch.cuda.current_device()
 
     trainer = VAETrainer(args)
+    if args.checkpoint_file is not None:
+        trainer.load_model_state_dict(args.checkpoint_file)
 
     loss_log1 = tqdm(total=0, bar_format='{desc}', position=2)
     loss_log2 = tqdm(total=0, bar_format='{desc}', position=3)
@@ -44,7 +46,7 @@ def main(args):
             loss_log1.set_description_str(str1)
             loss_log2.set_description_str(str2)
 
-        if epoch > 10:
+        if (epoch + 1) % args.eval_freq == 0:
             metric_dict, bleu, _ = eval_vae(epoch, args, trainer, eval_data)
             f1 = metric_dict["f1"]
             em = metric_dict["exact_match"]
@@ -65,8 +67,8 @@ def main(args):
             _str = _str.format(best_bleu, best_em, best_f1)
             best_eval_log.set_description_str(_str)
 
-        if epoch % args.save_epochs == 0:
-            trainer.save(os.path.join(args.save_by_epoch_dir, "model-epoch-{:02d}.pt".format(epoch)))
+        if (epoch + 1) % args.save_freq == 0:
+            trainer.save(os.path.join(args.save_by_epoch_dir, "model-epoch-{:02d}.pt".format(epoch + 1)))
 
 
 if __name__ == "__main__":
@@ -81,8 +83,10 @@ if __name__ == "__main__":
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
+    parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=20, type=int)
-    parser.add_argument("--save_epochs", default=2, type=int)
+    parser.add_argument("--save_freq", default=2, type=int, help="Model saving should be executed after how many epochs?")
+    parser.add_argument("--eval_freq", default=10, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
