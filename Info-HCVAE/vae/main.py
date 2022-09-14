@@ -34,7 +34,7 @@ def main(args):
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         for batch in tqdm(train_loader, desc="Train iter", leave=False, position=1):
             c_ids, q_ids, a_ids, start_positions, end_positions \
-            = batch_to_device(batch, args.device)
+                = batch_to_device(batch, args.device)
             trainer.train(c_ids, q_ids, a_ids, start_positions, end_positions)
             
             str1 = 'Q REC : {:06.4f} A REC : {:06.4f}'
@@ -56,14 +56,17 @@ def main(args):
                 best_em = em
             if f1 > best_f1:
                 best_f1 = f1
-                trainer.save(os.path.join(args.model_dir, "best_f1_model.pt"))
+                trainer.save(os.path.join(args.best_model_dir, "best_f1_model.pt"))
             if bleu > best_bleu:
                 best_bleu = bleu
-                trainer.save(os.path.join(args.model_dir, "best_bleu_model.pt"))
+                trainer.save(os.path.join(args.best_model_dir, "best_bleu_model.pt"))
 
             _str = 'BEST BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
             _str = _str.format(best_bleu, best_em, best_f1)
             best_eval_log.set_description_str(_str)
+
+        if epoch % args.save_epochs == 0:
+            trainer.save(os.path.join(args.save_by_epoch_dir, "model-epoch-{:02d}.pt".format(epoch)))
 
 
 if __name__ == "__main__":
@@ -79,6 +82,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--epochs", default=20, type=int)
+    parser.add_argument("--save_epochs", default=2, type=int)
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
@@ -108,6 +112,13 @@ if __name__ == "__main__":
     model_dir = args.model_dir
     os.makedirs(model_dir, exist_ok=True)
     args.model_dir = os.path.abspath(model_dir)
+
+    save_by_epoch_dir = os.path.join(args.model_dir, "per_epoch")
+    best_model_dir = os.path.join(args.model_dir, "best_models")
+    os.makedirs(save_by_epoch_dir, exist_ok=True)
+    os.makedirs(best_model_dir, exist_ok=True)
+    args.save_by_epoch_dir = save_by_epoch_dir
+    args.best_model_dir = best_model_dir
 
     random.seed(args.seed)
     np.random.seed(args.seed)

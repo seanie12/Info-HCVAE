@@ -221,9 +221,9 @@ class RNNAttention(nn.Module):
         return output
 
 
-class Block(nn.Module):
+class GPT2RnnBlock(nn.Module):
     def __init__(self, config):
-        """gpt2.modeling_gpt2.Block modified for use with RNNs
+        """gpt2.modeling_gpt2.GPT2RnnBlock modified for use with RNNs
 
         Args:
           config (GPT2Config): configuration for this module
@@ -297,7 +297,7 @@ class GPT2T2R(nn.Module, GenerationMixin):
         self.wte = nn.Embedding(config.vocab_size, config.n_embd)
         self.wpe = nn.Embedding(config.n_positions, config.n_embd)
         self.drop = nn.Dropout(config.embd_pdrop)
-        self.h = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
+        self.h = nn.ModuleList([GPT2RnnBlock(config) for _ in range(config.n_layer)])
         self.ln_f = nn.LayerNorm(config.n_embd, eps=config.layer_norm_epsilon)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
@@ -382,10 +382,10 @@ class GPT2T2R(nn.Module, GenerationMixin):
         hidden_states = inputs_embeds + position_embeds
         hidden_states = self.drop(hidden_states)
 
-        # pass through blocks
-        for i, block in enumerate(self.h):
-            # block always returns 3 items
-            hidden_states, _, _ = block(
+        # pass through GPT2Rnnblocks
+        for i, GPT2Rnnblock in enumerate(self.h):
+            # GPT2Rnnblock always returns 3 items
+            hidden_states, _, _ = GPT2Rnnblock(
                 hidden_states=hidden_states,
                 attention_mask=attention_mask,
                 s=None, z=None
@@ -411,8 +411,8 @@ class GPT2T2R(nn.Module, GenerationMixin):
         """Prepares the model for inference by fusing parameters in RNNAttention Layer
         """
         print("Preparing Model for inference")
-        for block in self.h:
-            block.infer_init()
+        for GPT2Rnnblock in self.h:
+            GPT2Rnnblock.infer_init()
         self.infer_ready_flag = True
 
     def init_hidden(self):
@@ -431,10 +431,10 @@ class GPT2T2R(nn.Module, GenerationMixin):
         # x, s, z are tensors
         # i is used for positional embedding
         hidden_states = self.wte(x) + self.wpe.weight.data[i].unsqueeze(0)
-        # pass through blocks
+        # pass through GPT2Rnnblocks
         new_s_rnn, new_z_rnn = [], []
-        for i, (block, s, z) in enumerate(zip(self.h, s_rnn, z_rnn)):
-            hidden_states, s, z = block(
+        for i, (GPT2Rnnblock, s, z) in enumerate(zip(self.h, s_rnn, z_rnn)):
+            hidden_states, s, z = GPT2Rnnblock(
                 hidden_states=hidden_states,
                 attention_mask=None,
                 s=s, z=z
@@ -476,7 +476,7 @@ if __name__ == "__main__":
         feature_size=2
     )
 
-    # test RNNAttention Block
+    # test RNNAttention GPT2RnnBlock
     print("-" * 70)
     print("Testing RNNAttention")
 
@@ -502,7 +502,7 @@ if __name__ == "__main__":
     print("-" * 70)
     print("Testing T2R Model (Training Mode)")
 
-    t2r = T2R(tinyconf)
+    t2r = GPT2T2R(tinyconf)
     output = t2r(
         input_ids=torch.randint(low=0, high=tinyconf.vocab_size, size=(1, 10))
     )
