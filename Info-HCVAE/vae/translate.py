@@ -96,18 +96,30 @@ def main(args):
     
     
     new_features = []
+    qa_text = None
+    if args.out_qa_json is not None:
+        qa_text = dict({"data": []})
 
     for batch in tqdm(data_loader, total=len(data_loader)):
         c_ids = batch[0]
         _, c_len = return_mask_lengths(c_ids)
         max_c_len = torch.max(c_len)
         c_ids = c_ids[:, :max_c_len].to(device)
+
+        c_text = args.tokenizer.decode(c_ids)
         
         # sample latent variable K times
         for _ in range(args.k):
             with torch.no_grad():
                 _, _, zq, _, za = vae.prior_encoder(c_ids)
                 batch_q_ids, batch_start, batch_end = vae.generate(zq, za, c_ids)
+
+                if args.out_qa_json is not None: # out QA text to json
+                    for idx in range(batch_q_ids.size(0)):
+                        q_ids, start_pos, end_pos = batch_q_ids[idx], batch_start[idx], batch_end[idx]
+                        q_text = args.tokenizer.decode(q_ids)
+                        ans_text = args.tokenizer.encode(c_ids[start_pos:end_pos])
+                        qa_text["data"].append({"context": c_text, "question": q_text, "answer": ans_text})
 
                 all_input_ids, all_seg_ids, \
                 all_input_mask, all_start, all_end = post_process(batch_q_ids, batch_start, batch_end, c_ids)
@@ -142,6 +154,14 @@ def main(args):
     with open(args.output_file, "wb") as f:
         pickle.dump(new_features, f)
 
+    ## For outputting text
+    import json
+    dir_name = os.path.dirname(args.out_qa_json)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+    with open(args.out_qa_json, "wt") as f:
+        json.dump(qa_text, f, indent=4)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -157,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_file", default="../data/squad/train-v1.1.json", type=str)
     parser.add_argument("--checkpoint", default="../save/vae-checkpoint/best_f1_model.pt", type=str, help="checkpoint for vae model")
     parser.add_argument("--output_file", default="../data/synthetic_data/1.0_squad_10x_features.pkl", type=str)
+    parser.add_argument("--out_qa_json", default="../data/generated_qas.json", type=bool)
 
     parser.add_argument("--ratio", default=1.0, type=float)
     parser.add_argument("--k", default=10, type=int, help="the number of QA pairs for each paragraph")
