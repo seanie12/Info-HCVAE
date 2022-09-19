@@ -71,6 +71,7 @@ def main(args):
     vae.eval()
     vae = vae.to(device)
     
+    # Add shuffling functionality if wanting to use a small percentage of data correctly
     if args.squad:
         examples = read_squad_examples(args.data_file, is_training=True, debug=args.debug)
         features = convert_examples_to_harv_features(examples,
