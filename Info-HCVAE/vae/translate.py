@@ -89,7 +89,7 @@ def main(args):
                                                      is_training=True)
 
     features = features[:int(len(features) * args.ratio)]
-    all_c_ids = torch.tensor([f.c_ids for f in features], dtype=torch.long)
+    all_c_ids = torch.tensor([f.c_ids for f in features][:args.data_ratio*len(features)], dtype=torch.long)
     data = TensorDataset(all_c_ids)
     data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
 
@@ -106,7 +106,7 @@ def main(args):
         max_c_len = torch.max(c_len)
         c_ids = c_ids[:, :max_c_len].to(device)
 
-        c_text = args.tokenizer.decode(c_ids)
+        c_texts = [args.tokenizer.decode(c_ids[idx]) for idx in range(c_ids.size(0))]
         
         # sample latent variable K times
         for _ in range(args.k):
@@ -119,7 +119,7 @@ def main(args):
                         q_ids, start_pos, end_pos = batch_q_ids[idx], batch_start[idx], batch_end[idx]
                         q_text = args.tokenizer.decode(q_ids)
                         ans_text = args.tokenizer.encode(c_ids[start_pos:end_pos])
-                        qa_text["data"].append({"context": c_text, "question": q_text, "answer": ans_text})
+                        qa_text["data"].append({"context": c_texts[idx], "question": q_text, "answer": ans_text})
 
                 all_input_ids, all_seg_ids, \
                 all_input_mask, all_start, all_end = post_process(batch_q_ids, batch_start, batch_end, c_ids)
@@ -179,6 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--output_file", default="../data/synthetic_data/1.0_squad_10x_features.pkl", type=str)
     parser.add_argument("--out_qa_json", default="../data/generated_qas.json", type=bool)
 
+    parser.add_argument("--data_ratio", default=1.0, type=float, help="how many percentage of the number of paragraphs are considered for generation")
     parser.add_argument("--ratio", default=1.0, type=float)
     parser.add_argument("--k", default=10, type=int, help="the number of QA pairs for each paragraph")
 
