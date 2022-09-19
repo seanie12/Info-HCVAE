@@ -119,7 +119,7 @@ def main(args):
                     for idx in range(batch_q_ids.size(0)):
                         q_ids, start_pos, end_pos = batch_q_ids[idx], batch_start[idx], batch_end[idx]
                         q_text = args.tokenizer.decode(q_ids)
-                        ans_text = args.tokenizer.decode(c_ids[start_pos:end_pos])
+                        ans_text = args.tokenizer.decode(c_ids[idx, start_pos:end_pos])
                         qa_text["data"].append({"context": c_texts[idx], "question": q_text, "answer": ans_text})
 
                 all_input_ids, all_seg_ids, \
