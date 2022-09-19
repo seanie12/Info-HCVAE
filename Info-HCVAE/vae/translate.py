@@ -90,7 +90,7 @@ def main(args):
                                                      is_training=True)
 
     features = features[:int(len(features) * args.ratio)]
-    all_c_ids = torch.tensor([f.c_ids for f in features][:args.data_ratio*len(features)], dtype=torch.long)
+    all_c_ids = torch.tensor([f.c_ids for f in features][:int(args.data_ratio*len(features))], dtype=torch.long)
     data = TensorDataset(all_c_ids)
     data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
 
