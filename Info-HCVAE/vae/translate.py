@@ -178,7 +178,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_file", default="../data/squad/train-v1.1.json", type=str)
     parser.add_argument("--checkpoint", default="../save/vae-checkpoint/best_f1_model.pt", type=str, help="checkpoint for vae model")
     parser.add_argument("--output_file", default="../data/synthetic_data/1.0_squad_10x_features.pkl", type=str)
-    parser.add_argument("--out_qa_json", default="../data/generated_qas.json", type=bool)
+    parser.add_argument("--out_qa_json", default="../data/generated_qas.json", type=str)
 
     parser.add_argument("--data_ratio", default=1.0, type=float, help="how many percentage of the number of paragraphs are considered for generation")
     parser.add_argument("--ratio", default=1.0, type=float)
