@@ -170,7 +170,7 @@ class Trainer(object):
                       .format(user_friendly_time(time_since(start)), f1, em))
             
             os.makedirs("./save/qa-model/", exist_ok=True)
-            torch.save(self.model.state_dict(), "./save/qa-model/")
+            torch.save(self.model.state_dict(), "./save/qa-model/bert-qa-epoch-{:02d}.pt".format(epoch))
 
         if self.args.rank == 0:
 
