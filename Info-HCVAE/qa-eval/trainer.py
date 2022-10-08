@@ -51,7 +51,7 @@ class Trainer(object):
         self.get_dev_loader()
         self.get_test_loader()
 
-        self.args.batch_size = int(self.args.batch_size / ngpus_per_node)
+        self.args.batch_size = int(self.args.batch_size)
         self.get_pretrain_loader()
 
         self.pretrain_t_total = len(self.pretrain_loader) * self.args.pretrain_epochs
