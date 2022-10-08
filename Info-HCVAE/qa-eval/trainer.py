@@ -168,6 +168,9 @@ class Trainer(object):
                 f1 = result_dict["f1"]
                 print("\nPRETRAIN took {} DEV - F1: {:.4f}, EM: {:.4f}\n"
                       .format(user_friendly_time(time_since(start)), f1, em))
+            
+            os.makedirs("./save/qa-model/", exist_ok=True)
+            torch.save(self.model.state_dict(), "./save/qa-model/")
 
         if self.args.rank == 0:
 
