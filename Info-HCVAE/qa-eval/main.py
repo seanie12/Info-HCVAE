@@ -94,12 +94,7 @@ def main(args):
     all_seg_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
     args.test_dataset = TensorDataset(all_input_ids, all_input_mask, all_seg_ids)
 
-    # distributed_main(args)
-    trainer = Trainer(args)
-
-    # trainer.make_model_env(gpu, ngpus_per_node)
-    # model.make_run_env()
-    trainer.train()
+    distributed_main(args)
 
 
 if __name__ == "__main__":
@@ -136,7 +131,7 @@ if __name__ == "__main__":
     parser.add_argument("--rank", default=0, help="The priority rank of current node.")
     parser.add_argument("--dist_backend", default="nccl", help="Backend communication method. NCCL is used for DistributedDataParallel")
     parser.add_argument("--dist_url", default="tcp://127.0.0.1:9990", help="DistributedDataParallel server")
-    parser.add_argument("--multiprocessing_distributed", default=True, help="Use multiprocess distribution or not")
+    parser.add_argument("--multiprocessing_distributed", default=False, help="Use multiprocess distribution or not")
     parser.add_argument("--random_seed", default=2019, help="random state (seed)")
     args = parser.parse_args()
 
