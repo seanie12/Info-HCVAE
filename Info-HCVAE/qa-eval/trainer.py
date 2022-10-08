@@ -44,6 +44,31 @@ class Trainer(object):
         self.set_random_seed(random_seed=args.random_seed)
         self.tokenizer = BertTokenizer.from_pretrained(args.bert_model)
 
+
+    def make_model_env_no_dist(self):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = BertForQuestionAnswering.from_pretrained(self.args.bert_model).to(device)
+        self.get_dev_loader()
+        self.get_test_loader()
+
+        self.args.batch_size = int(self.args.batch_size / ngpus_per_node)
+        self.get_pretrain_loader()
+
+        self.pretrain_t_total = len(self.pretrain_loader) * self.args.pretrain_epochs
+
+        no_decay = ['bias', 'LayerNorm.weight']
+        self.optimizer_grouped_parameters = [
+            {'params': [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
+             'weight_decay': self.args.weight_decay},
+            {'params': [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        ]
+
+        self.optimizer = AdamW(self.optimizer_grouped_parameters,
+        lr=self.args.pretrain_lr, eps=self.args.adam_epsilon)
+        self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
+        num_warmup_steps=self.args.warmup_steps, num_training_steps=self.pretrain_t_total)
+
+
     def make_model_env(self, gpu, ngpus_per_node):
         if gpu is not None:
             self.args.gpu = self.args.devices[gpu]
