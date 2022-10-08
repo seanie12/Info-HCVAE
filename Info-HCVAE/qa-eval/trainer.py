@@ -119,9 +119,10 @@ class Trainer(object):
     def get_pretrain_loader(self):
         data = self.args.pretrain_dataset
 
-        self.pretrain_sampler = DistributedSampler(data)
-        self.pretrain_loader = DataLoader(data, num_workers=self.args.workers, pin_memory=True,
-                                          sampler=self.pretrain_sampler, batch_size=self.args.batch_size)
+        # self.pretrain_sampler = DistributedSampler(data)
+        # self.pretrain_loader = DataLoader(data, num_workers=self.args.workers, pin_memory=True,
+        #                                   sampler=self.pretrain_sampler, batch_size=self.args.batch_size)
+        self.pretrain_loader = DataLoader(data, batch_size=self.args.batch_size)
 
 
     def get_dev_loader(self):
