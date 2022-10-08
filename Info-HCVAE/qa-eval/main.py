@@ -94,7 +94,12 @@ def main(args):
     all_seg_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
     args.test_dataset = TensorDataset(all_input_ids, all_input_mask, all_seg_ids)
 
-    distributed_main(args)
+    # distributed_main(args)
+    trainer = Trainer(args)
+
+    # trainer.make_model_env(gpu, ngpus_per_node)
+    # model.make_run_env()
+    trainer.train()
 
 
 if __name__ == "__main__":
