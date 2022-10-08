@@ -146,7 +146,7 @@ class Trainer(object):
         for epoch in range(0, self.args.pretrain_epochs):
 
             num_batches = len(self.pretrain_loader)
-            self.pretrain_sampler.set_epoch(epoch)
+            # self.pretrain_sampler.set_epoch(epoch)
             start = time.time()
 
             # pretrain with unsupervised dataset
