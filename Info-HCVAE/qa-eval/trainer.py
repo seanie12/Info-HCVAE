@@ -140,6 +140,7 @@ class Trainer(object):
         self.test_features = self.args.test_features
 
     def train(self):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         self.model.zero_grad()
 
@@ -156,11 +157,11 @@ class Trainer(object):
 
                 seq_len = torch.sum(torch.sign(input_ids), 1)
                 max_len = torch.max(seq_len)
-                input_ids = input_ids[:, :max_len].clone().cuda(self.args.gpu, non_blocking=True)
-                input_mask = input_mask[:, :max_len].clone().cuda(self.args.gpu, non_blocking=True)
-                seg_ids = seg_ids[:, :max_len].clone().cuda(self.args.gpu, non_blocking=True)
-                start_positions = start_positions.clone().cuda(self.args.gpu, non_blocking=True)
-                end_positions = end_positions.clone().cuda(self.args.gpu, non_blocking=True)
+                input_ids = input_ids[:, :max_len].clone().to(device)
+                input_mask = input_mask[:, :max_len].clone().to(device)
+                seg_ids = seg_ids[:, :max_len].clone().to(device)
+                start_positions = start_positions.clone().to(device)
+                end_positions = end_positions.clone().to(device)
 
                 inputs = {
                     "input_ids": input_ids,
@@ -207,6 +208,8 @@ class Trainer(object):
                   .format(f1, em))
 
     def evaluate_model(self, msg, dev=True):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         if dev:
             eval_examples = self.dev_examples
             eval_features = self.dev_features
@@ -229,9 +232,9 @@ class Trainer(object):
             seq_len = torch.sum(torch.sign(input_ids), 1)
             max_len = torch.max(seq_len)
 
-            input_ids = input_ids[:, :max_len].clone().cuda(self.args.gpu, non_blocking=True)
-            input_mask = input_mask[:, :max_len].clone().cuda(self.args.gpu, non_blocking=True)
-            seg_ids = seg_ids[:, :max_len].clone().cuda(self.args.gpu, non_blocking=True)
+            input_ids = input_ids[:, :max_len].clone().to(device)
+            input_mask = input_mask[:, :max_len].clone().to(device)
+            seg_ids = seg_ids[:, :max_len].clone().to(device)
 
             with torch.no_grad():
                 inputs = {
