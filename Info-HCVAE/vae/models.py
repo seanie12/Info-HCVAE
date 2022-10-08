@@ -645,9 +645,9 @@ class DiscreteVAE(nn.Module):
     def __init__(self, args):
         super(DiscreteVAE, self).__init__()
         tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
-        padding_idx = tokenizer.vocab['[PAD]']
-        sos_id = tokenizer.vocab['[CLS]']
-        eos_id = tokenizer.vocab['[SEP]']
+        padding_idx = tokenizer.vocab['[PAD]'] if '[PAD]' in tokenizer.vocab else tokenizer.vocab['<pad>']
+        sos_id = tokenizer.vocab['[CLS]'] if '[CLS]' in tokenizer.vocab else tokenizer.vocab['<s>']
+        eos_id = tokenizer.vocab['[SEP]'] if '[SEP]' in tokenizer.vocab else tokenizer.vocab['</s>']
         ntokens = len(tokenizer.vocab)
 
         huggingface_model = args.huggingface_model
