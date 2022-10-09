@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
     # training option
     parser.add_argument("--bert_model", default="bert-base-uncased", type=str)
+    parser.add_argument("--model_save_path", default="./save/qa-model", type=str)
     parser.add_argument("--pretrain_epochs", default=2, type=int, help="number of epochs")
     parser.add_argument("--batch_size", default=24, type=int, help="batch size")
     parser.add_argument("--pretrain_lr", default=5e-5, type=float)
