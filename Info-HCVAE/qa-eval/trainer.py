@@ -142,6 +142,8 @@ class Trainer(object):
     def train(self):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        os.makedirs(self.args.model_save_path, exist_ok=True)
+
         self.model.zero_grad()
 
         for epoch in range(0, self.args.pretrain_epochs):
@@ -185,6 +187,9 @@ class Trainer(object):
                                 float(loss.item()))
                     print(msg, end="\r")
 
+                if (step + 1) % 5000 == 0:
+                    torch.save(self.model.state_dict(), os.path.join(self.args.model_save_path, "bert-qa-step-{:07d}-epoch-{:02d}.pt".format(step, epoch)))
+
                 if self.args.debug:
                     break
 
@@ -195,9 +200,8 @@ class Trainer(object):
                 f1 = result_dict["f1"]
                 print("\nPRETRAIN took {} DEV - F1: {:.4f}, EM: {:.4f}\n"
                       .format(user_friendly_time(time_since(start)), f1, em))
-            
-            os.makedirs("./save/qa-model/", exist_ok=True)
-            torch.save(self.model.state_dict(), "./save/qa-model/bert-qa-epoch-{:02d}.pt".format(epoch))
+
+            torch.save(self.model.state_dict(), os.path.join(self.args.model_save_path, "bert-qa-epoch-{:02d}.pt".format(epoch)))
 
         if self.args.rank == 0:
 
