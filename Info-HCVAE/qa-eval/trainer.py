@@ -144,9 +144,14 @@ class Trainer(object):
 
         os.makedirs(self.args.model_save_path, exist_ok=True)
 
+        if self.args.ckpt_path is not None:
+            self.model.load_state_dict(torch.load(self.args.ckpt_path))
+
         self.model.zero_grad()
 
         for epoch in range(0, self.args.pretrain_epochs):
+            if epoch < self.args.resume_epochs:
+                continue
 
             num_batches = len(self.pretrain_loader)
             # self.pretrain_sampler.set_epoch(epoch)
@@ -154,6 +159,9 @@ class Trainer(object):
 
             # pretrain with unsupervised dataset
             for step, batch in enumerate(self.pretrain_loader, start=1):
+                if step <= self.args.resume_steps:
+                    continue
+
                 self.model.train()
                 input_ids, input_mask, seg_ids, start_positions, end_positions = batch
 

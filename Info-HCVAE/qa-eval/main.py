@@ -114,7 +114,10 @@ if __name__ == "__main__":
 
     # training option
     parser.add_argument("--bert_model", default="bert-base-uncased", type=str)
+    parser.add_argument("--ckpt_path", default=None, type=str)
     parser.add_argument("--model_save_path", default="./save/qa-model", type=str)
+    parser.add_argument("--resume_epochs", default=1, type=int)
+    parser.add_argument("--resume_steps", default=-1, type=int)
     parser.add_argument("--pretrain_epochs", default=2, type=int, help="number of epochs")
     parser.add_argument("--batch_size", default=24, type=int, help="batch size")
     parser.add_argument("--pretrain_lr", default=5e-5, type=float)
@@ -127,7 +130,7 @@ if __name__ == "__main__":
     # directory option
     parser.add_argument("--lazy_loader", action="store_true", help="lazy loader")
     parser.add_argument("--pretrain_file",
-    default="../data/synthetic_data/vae98/harv1.0/0.2_replaced_1.0_harv_features.txt",
+    default="../data/harv_synthetic_data_semi/0.4_replaced_1.0_harv_features.txt",
     type=str, help="path of training data file")
     # gpu option
     parser.add_argument("--use_cuda", default=True, help="use cuda or not")
