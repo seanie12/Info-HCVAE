@@ -64,33 +64,37 @@ class GaussianKLLoss(nn.Module):
 
 
 class Embedding(nn.Module):
-    def __init__(self, huggingface_model):
+    def __init__(self, huggingface_model, use_custom_embeddings=True):
         super(Embedding, self).__init__()
-        transformer_embeddings = AutoModel.from_pretrained(huggingface_model).embeddings
-        self.word_embeddings = transformer_embeddings.word_embeddings
-        self.token_type_embeddings = transformer_embeddings.token_type_embeddings
-        self.position_embeddings = transformer_embeddings.position_embeddings
-        self.LayerNorm = transformer_embeddings.LayerNorm
-        self.dropout = transformer_embeddings.dropout
+        self.transformer_embeddings = AutoModel.from_pretrained(huggingface_model).embeddings
+        self.word_embeddings = self.transformer_embeddings.word_embeddings
+        self.token_type_embeddings = self.transformer_embeddings.token_type_embeddings
+        self.position_embeddings = self.transformer_embeddings.position_embeddings
+        self.LayerNorm = self.transformer_embeddings.LayerNorm
+        self.dropout = self.transformer_embeddings.dropout
+        self.use_custom_embeddings = use_custom_embeddings
 
     def forward(self, input_ids, token_type_ids=None, position_ids=None):
-        if token_type_ids is None:
-            token_type_ids = torch.zeros_like(input_ids)
-        if position_ids is None:
-            seq_length = input_ids.size(1)
-            position_ids = torch.arange(
-                seq_length, dtype=torch.long, device=input_ids.device)
-            position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
+        if self.use_custom_embeddings:
+            if token_type_ids is None:
+                token_type_ids = torch.zeros_like(input_ids)
+            if position_ids is None:
+                seq_length = input_ids.size(1)
+                position_ids = torch.arange(
+                    seq_length, dtype=torch.long, device=input_ids.device)
+                position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
 
-        words_embeddings = self.word_embeddings(input_ids)
-        token_type_embeddings = self.token_type_embeddings(token_type_ids)
-        position_embeddings = self.position_embeddings(position_ids)
+            words_embeddings = self.word_embeddings(input_ids)
+            token_type_embeddings = self.token_type_embeddings(token_type_ids)
+            position_embeddings = self.position_embeddings(position_ids)
 
-        embeddings = words_embeddings + token_type_embeddings + position_embeddings
-        embeddings = self.LayerNorm(embeddings)
-        embeddings = self.dropout(embeddings)
+            embeddings = words_embeddings + token_type_embeddings + position_embeddings
+            embeddings = self.LayerNorm(embeddings)
+            embeddings = self.dropout(embeddings)
 
-        return embeddings
+            return embeddings
+        else:
+            return self.transformer_embeddings(input_ids=input_ids, token_type_ids=token_type_ids, position_ids=position_ids)
 
 
 class ContextualizedEmbedding(nn.Module):
@@ -674,7 +678,7 @@ class DiscreteVAE(nn.Module):
 
         max_q_len = args.max_q_len
 
-        embedding = Embedding(huggingface_model)
+        embedding = Embedding(huggingface_model, use_custom_embeddings=args.use_custom_embeddings_impl)
         contextualized_embedding = ContextualizedEmbedding(huggingface_model)
         # freeze embedding
         for param in embedding.parameters():
