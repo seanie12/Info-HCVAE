@@ -13,7 +13,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim as optim
-from transformers import BertForQuestionAnswering, BertTokenizer, AdamW
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer, AdamW
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
@@ -42,12 +42,12 @@ class Trainer(object):
     def __init__(self, args):
         self.args = args
         self.set_random_seed(random_seed=args.random_seed)
-        self.tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+        self.tokenizer = AutoTokenizer.from_pretrained(args.bert_model)
 
 
     def make_model_env_no_dist(self):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model = BertForQuestionAnswering.from_pretrained(self.args.bert_model).to(device)
+        self.model = AutoModelForQuestionAnswering.from_pretrained(self.args.bert_model).to(device)
         self.get_dev_loader()
         self.get_test_loader()
 
@@ -85,7 +85,7 @@ class Trainer(object):
             if self.args.debug:
                 print("debugging mode on.")
 
-        self.model = BertForQuestionAnswering.from_pretrained(self.args.bert_model)
+        self.model = AutoModelForQuestionAnswering.from_pretrained(self.args.bert_model)
         if self.args.rank == 0:
             self.get_dev_loader()
             self.get_test_loader()
