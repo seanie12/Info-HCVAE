@@ -150,7 +150,7 @@ class Trainer(object):
         self.model.zero_grad()
 
         for epoch in range(0, self.args.pretrain_epochs):
-            if epoch < self.args.resume_epochs:
+            if epoch+1 < self.args.resume_epochs:
                 continue
 
             num_batches = len(self.pretrain_loader)
