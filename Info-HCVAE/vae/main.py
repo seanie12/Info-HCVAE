@@ -34,7 +34,7 @@ def main(args):
 
     best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
-        if epoch+1 <= args.resume_epochs:
+        if epoch+1 < args.resume_epochs:
             continue
         for batch in tqdm(train_loader, desc="Train iter (epoch {:02d})".format(epoch + 1), leave=False, position=1):
             c_ids, q_ids, a_ids, start_positions, end_positions \
