@@ -34,6 +34,8 @@ def main(args):
 
     best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
+        if epoch+1 <= args.resume_epochs:
+            continue
         for batch in tqdm(train_loader, desc="Train iter (epoch {:02d})".format(epoch + 1), leave=False, position=1):
             c_ids, q_ids, a_ids, start_positions, end_positions \
                 = batch_to_device(batch, args.device)
@@ -86,6 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=20, type=int)
+    parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--save_freq", default=2, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=10, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
