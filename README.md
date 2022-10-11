@@ -56,14 +56,14 @@ python translate.py --data_file "DATA DIRECTORY for paragraph" --checkpoint "dir
 ```
 
 ## QA-based-Evaluation (QAE) 
-It requires **3 1080ti GPUS (11GB memory)** to reproduce the results. You should download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory. Uncompress it and the "data" folder contains all the files required for QAE and Semi-supervised Learning.
+It requires **3 1080ti GPUS (11GB memory)** to reproduce the results. You should download data from [here](https://drive.google.com/file/d/1FKqjEQ1AEnKI5xfVA8zFTwcLJgQ8pMoq/view?usp=sharing) and place it under the root directory. Uncompress it and the "data" folder contains all the files required for QAE and Semi-supervised Learning.
 ```bash
 cd qa-eval
 python main.py --devices 0_1_2 --pretrain_file $PATH_TO_qaeval --unlabel_ratio 0.1 --lazy_loader --batch_size 24
 ```
 
 ## Semi-Supervised Learning for SQuAD
-It requires **4 1080ti GPUS (11GB memory)** As QAE, you should download the data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory.
+It requires **4 1080ti GPUS (11GB memory)** As QAE, you should download the data from [here](https://drive.google.com/file/d/1FKqjEQ1AEnKI5xfVA8zFTwcLJgQ8pMoq/view?usp=sharing) and place it under the root directory.
 ```bash
 cd qa-eval
 python main.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_ratio 1.0 --lazy_loader --batch_size 32
