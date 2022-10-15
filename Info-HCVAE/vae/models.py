@@ -695,7 +695,8 @@ class DiscreteVAE(nn.Module):
 
         max_q_len = args.max_q_len
 
-        embedding = Embedding(huggingface_model, use_custom_embeddings=args.use_custom_embeddings_impl)
+        embedding = Embedding(huggingface_model,
+                        use_custom_embeddings=args.use_custom_embeddings_impl if args.use_custom_embeddings_impl is not None else True)
         contextualized_embedding = ContextualizedEmbedding(huggingface_model)
         # freeze embedding
         for param in embedding.parameters():
