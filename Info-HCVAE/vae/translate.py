@@ -66,8 +66,9 @@ def main(args):
 
     device = torch.cuda.current_device()
     checkpoint = torch.load(args.checkpoint, map_location="cpu")
-    vae = DiscreteVAE(checkpoint["args"])
-    vae.load_state_dict(checkpoint["state_dict"])
+    vae = DiscreteVAE(checkpoint["args"], state_dict=checkpoint["state_dict"], vietnamese_mode=args.vietnamese,
+                    vietnamese_model=args.huggingface_model)
+    # vae.load_state_dict(checkpoint["state_dict"])
     vae.eval()
     vae = vae.to(device)
     
@@ -171,6 +172,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--seed", default=1004, type=int)
     parser.add_argument("--huggingface_model", default='bert-base-uncased', type=str)
+    parser.add_argument("--vietnamese", default=False, type=bool)
     parser.add_argument("--max_c_len", default=384 - 64, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=0, type=int, help="max query length")
 

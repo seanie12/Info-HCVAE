@@ -127,6 +127,12 @@ class ContextualizedEmbedding(nn.Module):
         sequence_output = encoder_outputs[0]
 
         return sequence_output
+    
+    def reload_model(self, new_model):
+        bert = AutoModel.from_pretrained(new_model)
+        self.embedding = bert.embeddings
+        self.encoder = bert.encoder
+        self.num_hidden_layers = bert.config.num_hidden_layers
 
 
 class CustomLSTM(nn.Module):
@@ -646,9 +652,11 @@ class QuestionDecoder(nn.Module):
 
 
 class DiscreteVAE(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, state_dict=None, vietnamese_mode=False, vietnamese_model='vinai/phobert-base'):
         super(DiscreteVAE, self).__init__()
         tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
+        if vietnamese_mode:
+            tokenizer = AutoTokenizer.from_pretrained(vietnamese_model)
         padding_idx = tokenizer.vocab['[PAD]'] if '[PAD]' in tokenizer.vocab else tokenizer.vocab['<pad>']
         sos_id = tokenizer.vocab['[CLS]'] if '[CLS]' in tokenizer.vocab else tokenizer.vocab['<s>']
         eos_id = tokenizer.vocab['[SEP]'] if '[SEP]' in tokenizer.vocab else tokenizer.vocab['</s>']
@@ -712,6 +720,11 @@ class DiscreteVAE(nn.Module):
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
+
+        if state_dict is not None:
+            self.load_state_dict(state_dict)
+        if vietnamese_mode:
+            contextualized_embedding.reload_model(vietnamese_model)
 
     def return_init_state(self, zq, za):
 
