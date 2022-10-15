@@ -655,12 +655,21 @@ class DiscreteVAE(nn.Module):
     def __init__(self, args, state_dict=None, vietnamese_mode=False, vietnamese_model='vinai/phobert-base'):
         super(DiscreteVAE, self).__init__()
         tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
+        padding_idx = -1
+        sos_id = -1
+        eos_id = -1
+        ntokens = -1
         if vietnamese_mode:
             tokenizer = AutoTokenizer.from_pretrained(vietnamese_model)
-        padding_idx = tokenizer.vocab['[PAD]'] if '[PAD]' in tokenizer.vocab else tokenizer.vocab['<pad>']
-        sos_id = tokenizer.vocab['[CLS]'] if '[CLS]' in tokenizer.vocab else tokenizer.vocab['<s>']
-        eos_id = tokenizer.vocab['[SEP]'] if '[SEP]' in tokenizer.vocab else tokenizer.vocab['</s>']
-        ntokens = len(tokenizer.vocab) if tokenizer.vocab is not None else tokenizer.vocab_size()
+            padding_idx = tokenizer.encoder['<pad>']
+            sos_id = tokenizer.encoder['<s>']
+            eos_id = tokenizer.encoder['</s>']
+            ntokens = tokenizer.vocab_size()
+        else:
+            padding_idx = tokenizer.vocab['[PAD]'] if '[PAD]' in tokenizer.vocab else tokenizer.vocab['<pad>']
+            sos_id = tokenizer.vocab['[CLS]'] if '[CLS]' in tokenizer.vocab else tokenizer.vocab['<s>']
+            eos_id = tokenizer.vocab['[SEP]'] if '[SEP]' in tokenizer.vocab else tokenizer.vocab['</s>']
+            ntokens = len(tokenizer.vocab)
 
         huggingface_model = args.huggingface_model
         if "large" in huggingface_model:
