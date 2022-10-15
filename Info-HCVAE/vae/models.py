@@ -660,7 +660,7 @@ class DiscreteVAE(nn.Module):
         padding_idx = tokenizer.vocab['[PAD]'] if '[PAD]' in tokenizer.vocab else tokenizer.vocab['<pad>']
         sos_id = tokenizer.vocab['[CLS]'] if '[CLS]' in tokenizer.vocab else tokenizer.vocab['<s>']
         eos_id = tokenizer.vocab['[SEP]'] if '[SEP]' in tokenizer.vocab else tokenizer.vocab['</s>']
-        ntokens = len(tokenizer.vocab)
+        ntokens = len(tokenizer.vocab) if tokenizer.vocab is not None else tokenizer.vocab_size()
 
         huggingface_model = args.huggingface_model
         if "large" in huggingface_model:
