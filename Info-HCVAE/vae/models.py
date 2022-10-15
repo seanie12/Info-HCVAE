@@ -652,7 +652,7 @@ class QuestionDecoder(nn.Module):
 
 
 class DiscreteVAE(nn.Module):
-    def __init__(self, args, state_dict=None, vietnamese_mode=False, vietnamese_model='vinai/phobert-base'):
+    def __init__(self, args, state_dict=None, vietnamese_mode=False, vietnamese_model='vinai/phobert-base', use_custom_embeddings=False):
         super(DiscreteVAE, self).__init__()
         tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
         padding_idx = -1
@@ -695,8 +695,7 @@ class DiscreteVAE(nn.Module):
 
         max_q_len = args.max_q_len
 
-        embedding = Embedding(huggingface_model,
-                        use_custom_embeddings=args.use_custom_embeddings_impl if args.use_custom_embeddings_impl is not None else True)
+        embedding = Embedding(huggingface_model, use_custom_embeddings=use_custom_embeddings)
         contextualized_embedding = ContextualizedEmbedding(huggingface_model)
         # freeze embedding
         for param in embedding.parameters():
