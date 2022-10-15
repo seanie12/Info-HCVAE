@@ -664,7 +664,7 @@ class DiscreteVAE(nn.Module):
             padding_idx = tokenizer.encoder['<pad>']
             sos_id = tokenizer.encoder['<s>']
             eos_id = tokenizer.encoder['</s>']
-            ntokens = tokenizer.vocab_size()
+            ntokens = tokenizer.vocab_size
         else:
             padding_idx = tokenizer.vocab['[PAD]'] if '[PAD]' in tokenizer.vocab else tokenizer.vocab['<pad>']
             sos_id = tokenizer.vocab['[CLS]'] if '[CLS]' in tokenizer.vocab else tokenizer.vocab['<s>']
