@@ -1,109 +1,117 @@
 {
-    "keys": [
-        "id",
-        "title",
-        "context",
-        "question",
-        "answers"
-    ],
     "data": [
         {
-            "id": "106",
-            "title": "International University - VNU HCMC",
-            "context": "Ngành Kỹ_thuật Hoá_học ( 7520301 ) có chỉ_tiêu 40 . Ngành Công_nghệ_Thông_tin ( 7480201 _ UN ) có chỉ_tiêu 20 . Ngành Kỹ_thuật Máy_tính ( 7480106 _ SB ) có chỉ_tiêu 20 . Ngành Công_nghệ_Thông_tin ( 7480201 ) có chỉ_tiêu 50 . Ngành Logistics và Quản_lý chuỗi cung_ứng ( 7510605 ) có chỉ_tiêu 160 . Ngành Công_nghệ_Sinh_học định_hướng Y_sinh ( 4+0 ) ( 7420201 _ WE 4 ) có chỉ_tiêu 50 . Ngành Công_nghệ_Thông_tin ( 4+0 ) ( 7480201 _ WE 4 ) có chỉ_tiêu 50 . Ngành Kỹ_thuật Y_Sinh ( 7520212 ) có chỉ_tiêu 105 . Ngành Kỹ_thuật Môi_trường ( 7520320 ) có chỉ_tiêu 30 . Ngành Khoa_học Máy_tính ( 7480101 ) ở phương_thức Xét tuyển dựa trên kết_quả kỳ thi THPT QG năm 2021 có chỉ_tiêu 120 . Ngành Toán ứng_dụng ( Kỹ_thuật Tài_chính và Quản_trị rủi_ro ) ( 7460112 ) có chỉ_tiêu 50 . Ngành Quản_trị kinh_doanh ( 4+0 ) ( 7340101 _ WE 4 ) có chỉ_tiêu 300 . Ngành Kỹ_thuật Hệ_thống Công_nghiệp ( 7520118 ) có chỉ_tiêu 105 . Ngành Kỹ_thuật Hệ_thống Công_nghiệp ( 7520118 _ SB ) có chỉ_tiêu 15 . Ngành Kỹ_thuật Điện_tử - Viễn_thông ( 7520207 _ WE ) có chỉ_tiêu 10 . Ngành Kỹ_thuật Điện_tử ( 7520207 _ SB ) có chỉ_tiêu 10 . Ngành Quản_trị Kinh_doanh ( 7340101 ) ở phương_thức Xét tuyển dựa trên kết_quả kỳ thi THPT QG năm 2021 có chỉ_tiêu 250 . Ngành Công_nghệ Thực_phẩm ( 7540101 ) có chỉ_tiêu 105 . Ngành Tài_chính – Ngân_hàng ( 7340201 ) có chỉ_tiêu 160 . Ngành Quản_lý Xây_dựng ( 7580302 ) có chỉ_tiêu 50 . Ngành Công_nghệ_Sinh_học ( 2+2 ) ( 7420201 _ WE 2 ) có chỉ_tiêu 25 . Ngành Công_nghệ_Sinh_học ( 7420201 ) ở phương_thức Xét tuyển dựa trên kết_quả kỳ thi THPT QG năm 2021 có chỉ_tiêu 155 . Ngành Khoa_học Máy_tính ( 7480101 ) có chỉ_tiêu 100 . Ngành Công_nghệ_Thông_tin ( 2+2 ) ( 7480201 _ DK 2 ) có chỉ_tiêu 20 . Ngành Kỹ_thuật Không_gian ( 7520121 ) có chỉ_tiêu 30 . Ngành Ngôn_ngữ Anh ( 7220201 ) có chỉ_tiêu 70 .",
-            "question": "Chỉ_tiêu tuyển_sinh ngành Kỹ_thuật Môi_trường là bao_nhiêu ?",
-            "answers": {
-                "text": [
-                    "Ngành Kỹ_thuật Môi_trường ( 7520320 ) có chỉ_tiêu 30 ."
-                ],
-                "answer_start": [
-                    506
-                ]
-            }
-        },
-        {
-            "id": "619",
-            "title": "International University - VNU HCMC",
-            "context": "Chương_trình ngành Công_nghệ Thực_phẩm gồm các môn_học : Phân_tích Thực_phẩm ( Food analysis - BTFT 302 IU ) ; Thống_kê trong sinh_học ( Biostatistics - BT 152 IU ) ; Các quá_trình thiết_bị công_nghệ thực_phẩm 1 ( Food unit operations 1 - BTFT 301 IU ) ; Di_truyền phân_tử ( Molecular_Genetics - BT 217 IU ) ; Phân_tích cảm_quan Thực_phẩm ( Food sensory analysis - BTFT 407 IU ) ; Giải_tích 1 ( Calculus 1 - MA 001 IU ) ; Công_nghệ trà , cà_phê , ca cao ( Technology of coffee , tea and cacao - BTFT 406 IU ) ; Thực_tập ngành_nghề ( Internship - BTFT 409 IU ) ; Phát_triển và tiếp_thị sản_phẩm thực_phẩm ( Food product development and marketing - BTFT 408 IU ) ; Hoá_Sinh ( Biochemistry - BT 156 IU ) ; Công_nghệ chế_biến lương_thực ( Cereal product technology - BTFT 403 IU ) ; Luận_văn tốt_nghiệp ( Thesis - BT 179 IU ) ; Nhập_môn Khoa_học và Công_nghệ Thực_phẩm ( Introduction to Food_Science and Technology - BTFT 201 IU ) ; Công nghệ sản_xuất đồ uống ( Beverage technology - BTFT 402 IU ) ; Hoá_học thực_phẩm ( Food_Chemistry - BTFT 202 IU ) ; Công_nghệ chế_biến các sản_phẩm thịt ( Meat product technology - BTFT 405 IU ) ; Các nguyên_lý Kỹ_thuật Thực_phẩm ( Food engineering principles - BTFT 203 IU ) ; Sinh_học đại_cương ( Biology - BT 155 IU ) ; Vi_sinh Thực_phẩm ( Food_Microbiology - BTFT 204 IU ) ; Dinh_dưỡng và thực_phẩm chức_năng ( Nutrition and funtional foods - BTFT 205 IU ) ; Cơ_học ứng_dụng ( Applied_Mechanics - CHE 0011 IU ) ; Hoá hữu_cơ 1 ( Organic_Chemistry 1 - CHE 1081 IU ) ; Lịch_Sử Văn_Hoá Việt_Nam ( Vietnamese_History and Culture - PE 010 IU ) ; Enzym và lên_men thực_phẩm ( Enzyme and Food_Fermentation - BTFT 206 IU ) ; Công_nghệ chế_biến sữa và các sản_phẩm từ sữa ( Dairy product technology - BTFT 401 IU ) ; Giáo_dục thể_chất 2 ( Physical_Training 2 - PT 002 IU ) ; Vật_lý 1 ( Physics 1 - PH 013 IU ) ; Các luật và tiêu_chuẩn thực_phẩm ( Food_Laws and Standards - BTFT 309 IU ) ; Giáo_dục thể_chất 1 ( Physical_Training 1 - PT 001 IU ) ; Bao_bì và phụ_gia thực_phẩm ( Food_Packaging and Food additives - BTFT 306 IU ) ; Các hệ_thống đảm_bảo chất_lượng Thực_phẩm ( Food quality assurance systems - BTFT 305 IU ) ; Khoa_học môi_trường ( Environmental_Science - PE 014 IU ) ; Quá_trình và thiết_bị Thực_phẩm 2 ( Food unit operations 2 - BTFT 304 IU ) ; Độc tố và an toàn thực phẩm ( Toxicology and food safety - BTFT 303 IU ) ; Giải_tích 2 cho khoa CNSH ( Calculus 2 ( BT ) - MA 019 IU ) ; Phân tích vi_sinh thực phẩm ( Food_Microbiology_Analysis - BTFT 310 IU ) ; Quản_lý dự_án ( Project_Management - IS 050 IU ) ; Hoá_học công_nghiệp ( Industrial_Chemistry - CHE 1111 IU ) ; Nguyên_lý tiếp_thị ( Principles of Marketing - BA 003 IU ) ; Đạo_đức và kỹ_năng nghề_nghiệp ( Engineering_Ethics and Professional_Skills - PE 020 IU ) ; Hoá_lý 1 ( Physical_Chemistry 1 - CHE 1031 IU ) ; Hoá vô_cơ ( Inorganic_Chemistry - CHE 2102 IU ) ; Tư_duy phân_tích ( Critical_Thinking - PE 008 IU ) ; Hoá_Hữu cơ ( Organic chemistry - CH 009 IU ) ; Thiết_kế thí_nghiệm ( Experimental_Design - BT 216 IU ) .",
-            "question": "Tôi muốn học môn Thực_hành mỹ_phẩm và mỹ dược thì chọn ngành nào ?",
-            "answers": {
-                "text": [
-                    "ngành Hoá_học ( Hoá_sinh )"
-                ],
-                "answer_start": [
-                    31361
-                ]
-            }
-        },
-        {
-            "id": "687",
-            "title": "International University - VNU HCMC",
-            "context": "Chương_trình ngành Kỹ_thuật Hệ_thống Công_nghiệp gồm các môn_học : Hệ_thống thông_tin quản_lý ( Management_Information_System - IS 040 IU ) ; Hệ_thống Sản_xuất tinh_gọn ( Lean_Production - IS 041 IU ) ; Thương_mại_điện_tử trong Logistics và Chuỗi cung_ứng ( E-Logistics in Supply_Chain_Management - IS 062 IU ) ; Quản_lý Sản_xuất ( Production_Management - IS 019 IU ) ; Cơ kỹ_thuật – Động_học ( Engineering Mechanic-Dynamics - IS 016 IU ) ; CAD / CAM ( CAD / CAM - IS 018 IU ) ; Đo_lường lao_động và Thiết_kế công_việc ( Work_Design & Ergonomics - IS 017 IU ) ; Kỹ_thuật dự_báo ( Time_Series & forecasting techniques - IS 058 IU ) ; Kỹ_thuật hệ_thống ( Systems_Engineering - IS 035 IU ) ; Kỹ_thuật ra quyết_định đa mục_tiêu ( Multi-Criteria Decision_Making - IS 033 IU ) ; Thiết_kế và phát_triển sản_phẩm ( Product_Design and Development - IS 034 IU ) ; Thiết_kế thực_nghiệm ( Experimental_Design - IS 031 IU ) ; Vẽ_Kỹ thuật ( Engineering_Drawing - IS 054 IU ) ; Thực_tập 2 ( Internship 2 - IS 053 IU ) ; Kỹ_Thuật Thiết_Kế Chuỗi_Cung_Ứng và Logistics ( Logistics_Engineering & Supply_Chain_Design - IS 078 IU ) ; Thiết_kế mặt_bằng hệ_thống công_nghiệp ( Facility_Layout - IS 032 IU ) ; Thực_tập 1 ( Internship 1 - IS 052 IU ) ; Tiếng anh học_thuật ( Scientific_Writing - IS 079 IU ) ; Xác_suất thống_kê cho kỹ_thuật ( Engineering_Probability & Statistics - IS 004 IU ) ; Kỹ_thuật điều_độ trong sản_xuất và dịch_vụ ( Scheduling & Sequencing - IS 027 IU ) ; Vận_trù_học 1 - Các mô_hình tất định ( Deterministic_Models in OR - IS 081 IU ) ; Luận_văn tốt_nghiệp ( Thesis - IS 048 IU ) ; Quản_lý bán_lẻ ( Retail management - IS 082 IU ) ; Mô_hình_hoá và mô_phỏng ( Simulation_Models in Industrial_Engineering - IS 028 IU ) ; Đồ_án môn_học ( Capstone_Design - IS 083 IU ) ; Quản_lý vật_tư tồn_kho ( Inventory_Management - IS 023 IU ) ; CAD / CAM / CNC ( CAD / CAM / CNC - IS 085 IU ) ; Tin_học cho kỹ_sư ( Introduction to Computing - IS 086 IU ) ; Vận_chuyển quốc_tế ( International transportation & Logistics - IS 067 IU ) ; Quản_lý Chất_lượng ( Quality_Management - IS 025 IU ) ; Kỹ_năng lãnh_đạo ( Leadership - IS 045 IU ) ; Vận_trù_học 2 - Các mô_hình ngẫu_nhiên ( Probabilistic_Models in Opeations_Research - IS 024 IU ) .",
-            "question": "Tôi muốn học môn Phân_tích dữ_liệu quan_sát thì chọn ngành nào ?",
-            "answers": {
-                "text": [
-                    "ngành Khoa_học Dữ_liệu"
-                ],
-                "answer_start": [
-                    26507
-                ]
-            }
-        },
-        {
-            "id": "152",
-            "title": "International University - VNU HCMC",
-            "context": "Ngành Công_nghệ_Thông_tin ( 3+1 ) ( Mã ngành : 7480201 _ DK 3 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Ngôn_ngữ Anh ( Mã ngành : 7220201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 27.5 . Ngành Kỹ_thuật Điện_tử ( Mã ngành : 7520207 _ SB ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ_Sinh_học ( Mã ngành : 7420201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 22.0 . Ngành Công_nghệ_Thông_tin ( 2.5+1.5 ) ( Mã ngành : 7480201 _ DK 25 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ Thực_phẩm ( Mã ngành : 7540101 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 22.0 .",
-            "question": "Điểm_chuẩn ngành Công_nghệ_Sinh_học ( 2+2 ) là bao_nhiêu ?",
-            "answers": {
-                "text": [
-                    "Ngành Công_nghệ_Sinh_học ( 2+2 ) ( Mã ngành : 7420201 _ WE 2 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 ."
-                ],
-                "answer_start": [
-                    4556
-                ]
-            }
-        },
-        {
-            "id": "631",
-            "title": "International University - VNU HCMC",
-            "context": "Ngành Hoá_học ( Hoá_sinh ) ( Mã ngành : 7440112 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 22.0 . Ngành Kỹ_thuật Xây_dựng ( Mã ngành : 7580201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 21.0 . Ngành Quản_trị Kinh_doanh ( 2+2 ) ( Mã ngành : 7340101 _ WE ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ_Thông_tin ( Mã ngành : 7480201 _ UN ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Quản_trị Kinh_doanh ( Mã ngành : 7340101 _ UH ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ_Thông_tin ( Mã ngành : 7480201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 23.0 . Ngành Công_nghệ Thực_phẩm ( Mã ngành : 7540101 _ UN ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Kỹ_thuật Hệ_thống Công_nghiệp ( Mã ngành : 7520118 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 21.0 .",
-            "question": "Tôi muốn học môn Phát_triển học_thuật thì chọn ngành nào ?",
-            "answers": {
-                "text": [
-                    "ngành Công_nghệ_Sinh_học"
-                ],
-                "answer_start": [
-                    27395
-                ]
-            }
-        },
-        {
-            "id": "52",
-            "title": "International University - VNU HCMC",
-            "context": "Phòng Đào_tạo Sau_đại_học : Tham_mưu cho Hiệu_trưởng về các công_tác quản_lý đào_tạo và bồi_dưỡng sau_đại_học thuộc trách_nhiệm và thẩm_quyền . Liên_hệ : Phòng O 2.609 - Điện_thoại : ( 84 ) - 28-37244270 - Ext : 3120 - Fax : ( 84-28 ) 37244271 . Phòng Vật_tư Thiết_bị : Phòng Vật_tư Thiết_bị . Liên_hệ : Phòng O 1.612 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3555 , 3246 - Fax : ( 028 ) 37244271 . Trung_tâm Đổi_mới sáng_tạo và Chuyển_giao công_nghệ : Trung_tâm là đơn_vị sự_nghiệp khoa_học trực_thuộc trường Đại_Học Quốc_Tế – Đại_Học Quốc_Gia TP. HCM , có chức_năng cung_cấp dịch_vụ – nghiên_cứu – đào_tạo – tư_vấn và chuyển_giao công_nghệ cho các doanh_nghiệp và các cơ_quan_chức_năng Nhà_nước . Trung_tâm là cầu_nối giữa giảng_viên và sinh_viên của Trường với các nghiên_cứu và dự_án thực_tiễn tại các doanh_nghiệp và đơn_vị chức_năng trực_thuộc nhà_nước . Liên_hệ : Phòng O 2.303 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3949 - Fax : ( 028 ) 37244271 .",
-            "question": "Cho tôi hỏi về Phòng Quan_hệ Đối_ngoại ?",
-            "answers": {
-                "text": [
-                    "Phòng Quan_hệ Đối_ngoại : Tham_mưu cho Hiệu_trưởng về công_tác đối_ngoại , quan_hệ công_chúng và truyền_thông của trường phát_triển quan_hệ hợp_tác của nhà_trường phù_hợp với luật_pháp Việt_Nam và thông_lệnh quốc_tế dự_thảo và ký_kết các dự_án hợp_tác quốc_tế , lập kế_hoạch hợp_tác quốc_tế hàng năm . Liên_hệ : Phòng O2 – 704 ."
-                ],
-                "answer_start": [
-                    2030
-                ]
-            }
-        },
-        {
-            "id": "64",
-            "title": "International University - VNU HCMC",
-            "context": "Phòng Tổ_chức cán_bộ : Phòng Tổ_chức cán_bộ . Liên_hệ : Phòng O 2.709 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3336 , 3526 , 3527 - Fax : ( 028 ) 37244271 . Phòng Hợp_tác Đào_tạo nước_ngoài : Phòng Hợp_tác Đào_tạo nước_ngoài . Liên_hệ : Phòng O 1.614 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3880 - Fax : ( 028 ) 37244271 . Trung_tâm Dịch_vụ Công_nghệ_thông_tin : Trung_tâm Dịch_vụ Công_nghệ_Thông_tin chịu trách_nhiệm quản_lý và hỗ_trợ kỹ_thuật cho toàn_bộ hệ_thống mạng Internet , mạng điện_thoại và các trang_web của trường . Bên cạnh đó Trung_tâm còn có chức_năng chụp ảnh , viết bài đưa tin những hình_ảnh hoạt_động thường_xuyên của nhà_trường nhằm xây_dựng quảng_bá hình_ảnh thương_hiệu trường ngày_càng được nhiều người biết đến . Liên_hệ : Phòng O 1.312 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3366 . Phòng Kế_hoạch Tài_chính : Phòng có chức_năng tham_mưu và giúp Hiệu_trưởng trong công_tác xây_dựng và quản_lý kế_hoạch về tài_chính của trường , theo_dõi giám_sát và kiểm_tra việc thu_chi , sử_dụng tài_chính , kế_hoạch tài_chính và các lĩnh_vực khác có liên_quan đến công_tác kế_hoạch tài_chính trong toàn trường . Liên_hệ : Phòng O 2.701 . ",
-            "question": "Cho tôi hỏi về Bộ_môn Kỹ_thuật Xây_dựng ?",
-            "answers": {
-                "text": [
-                    "Bộ_môn Kỹ_thuật Xây_dựng : Bộ_môn Kỹ_thuật Xây_dựng ( KTXD ) được thành_lập vào tháng 1 năm 2011 nhằm xây_dựng một nền_tảng vững_chắc cho sinh_viên và giúp giảng_viên phát_huy tối_đa khả_năng của mình . Liên_hệ : Phòng O 1.506 - Điện_thoại : ( 84 -28 ) 3724 4270 - số nhánh lẻ : 342 ."
-                ],
-                "answer_start": [
-                    6787
-                ]
-            }
+            "title": "IUOntologyQA",
+            "paragraphs": [
+                {
+                    "context": "Ngành Kỹ_thuật Hoá_học ( 7520301 ) có chỉ_tiêu 40 . Ngành Công_nghệ_Thông_tin ( 7480201 _ UN ) có chỉ_tiêu 20 . Ngành Kỹ_thuật Máy_tính ( 7480106 _ SB ) có chỉ_tiêu 20 . Ngành Công_nghệ_Thông_tin ( 7480201 ) có chỉ_tiêu 50 . Ngành Logistics và Quản_lý chuỗi cung_ứng ( 7510605 ) có chỉ_tiêu 160 . Ngành Công_nghệ_Sinh_học định_hướng Y_sinh ( 4+0 ) ( 7420201 _ WE 4 ) có chỉ_tiêu 50 . Ngành Công_nghệ_Thông_tin ( 4+0 ) ( 7480201 _ WE 4 ) có chỉ_tiêu 50 . Ngành Kỹ_thuật Y_Sinh ( 7520212 ) có chỉ_tiêu 105 . Ngành Kỹ_thuật Môi_trường ( 7520320 ) có chỉ_tiêu 30 . Ngành Khoa_học Máy_tính ( 7480101 ) ở phương_thức Xét tuyển dựa trên kết_quả kỳ thi THPT QG năm 2021 có chỉ_tiêu 120 . Ngành Toán ứng_dụng ( Kỹ_thuật Tài_chính và Quản_trị rủi_ro ) ( 7460112 ) có chỉ_tiêu 50 . Ngành Quản_trị kinh_doanh ( 4+0 ) ( 7340101 _ WE 4 ) có chỉ_tiêu 300 . Ngành Kỹ_thuật Hệ_thống Công_nghiệp ( 7520118 ) có chỉ_tiêu 105 . Ngành Kỹ_thuật Hệ_thống Công_nghiệp ( 7520118 _ SB ) có chỉ_tiêu 15 . Ngành Kỹ_thuật Điện_tử - Viễn_thông ( 7520207 _ WE ) có chỉ_tiêu 10 . Ngành Kỹ_thuật Điện_tử ( 7520207 _ SB ) có chỉ_tiêu 10 . Ngành Quản_trị Kinh_doanh ( 7340101 ) ở phương_thức Xét tuyển dựa trên kết_quả kỳ thi THPT QG năm 2021 có chỉ_tiêu 250 . Ngành Công_nghệ Thực_phẩm ( 7540101 ) có chỉ_tiêu 105 . Ngành Tài_chính – Ngân_hàng ( 7340201 ) có chỉ_tiêu 160 . Ngành Quản_lý Xây_dựng ( 7580302 ) có chỉ_tiêu 50 . Ngành Công_nghệ_Sinh_học ( 2+2 ) ( 7420201 _ WE 2 ) có chỉ_tiêu 25 . Ngành Công_nghệ_Sinh_học ( 7420201 ) ở phương_thức Xét tuyển dựa trên kết_quả kỳ thi THPT QG năm 2021 có chỉ_tiêu 155 . Ngành Khoa_học Máy_tính ( 7480101 ) có chỉ_tiêu 100 . Ngành Công_nghệ_Thông_tin ( 2+2 ) ( 7480201 _ DK 2 ) có chỉ_tiêu 20 . Ngành Kỹ_thuật Không_gian ( 7520121 ) có chỉ_tiêu 30 . Ngành Ngôn_ngữ Anh ( 7220201 ) có chỉ_tiêu 70 .",
+                    "qas": {
+                        "id": "106",
+                        "question": "Chỉ_tiêu tuyển_sinh ngành Kỹ_thuật Môi_trường là bao_nhiêu ?",
+                        "answers": {
+                            "text": [
+                                "Ngành Kỹ_thuật Môi_trường ( 7520320 ) có chỉ_tiêu 30 ."
+                            ],
+                            "answer_start": [
+                                506
+                            ]
+                        }
+                    }
+                },
+                {
+                    "context": "Chương_trình ngành Công_nghệ Thực_phẩm gồm các môn_học : Phân_tích Thực_phẩm ( Food analysis - BTFT 302 IU ) ; Thống_kê trong sinh_học ( Biostatistics - BT 152 IU ) ; Các quá_trình thiết_bị công_nghệ thực_phẩm 1 ( Food unit operations 1 - BTFT 301 IU ) ; Di_truyền phân_tử ( Molecular_Genetics - BT 217 IU ) ; Phân_tích cảm_quan Thực_phẩm ( Food sensory analysis - BTFT 407 IU ) ; Giải_tích 1 ( Calculus 1 - MA 001 IU ) ; Công_nghệ trà , cà_phê , ca cao ( Technology of coffee , tea and cacao - BTFT 406 IU ) ; Thực_tập ngành_nghề ( Internship - BTFT 409 IU ) ; Phát_triển và tiếp_thị sản_phẩm thực_phẩm ( Food product development and marketing - BTFT 408 IU ) ; Hoá_Sinh ( Biochemistry - BT 156 IU ) ; Công_nghệ chế_biến lương_thực ( Cereal product technology - BTFT 403 IU ) ; Luận_văn tốt_nghiệp ( Thesis - BT 179 IU ) ; Nhập_môn Khoa_học và Công_nghệ Thực_phẩm ( Introduction to Food_Science and Technology - BTFT 201 IU ) ; Công nghệ sản_xuất đồ uống ( Beverage technology - BTFT 402 IU ) ; Hoá_học thực_phẩm ( Food_Chemistry - BTFT 202 IU ) ; Công_nghệ chế_biến các sản_phẩm thịt ( Meat product technology - BTFT 405 IU ) ; Các nguyên_lý Kỹ_thuật Thực_phẩm ( Food engineering principles - BTFT 203 IU ) ; Sinh_học đại_cương ( Biology - BT 155 IU ) ; Vi_sinh Thực_phẩm ( Food_Microbiology - BTFT 204 IU ) ; Dinh_dưỡng và thực_phẩm chức_năng ( Nutrition and funtional foods - BTFT 205 IU ) ; Cơ_học ứng_dụng ( Applied_Mechanics - CHE 0011 IU ) ; Hoá hữu_cơ 1 ( Organic_Chemistry 1 - CHE 1081 IU ) ; Lịch_Sử Văn_Hoá Việt_Nam ( Vietnamese_History and Culture - PE 010 IU ) ; Enzym và lên_men thực_phẩm ( Enzyme and Food_Fermentation - BTFT 206 IU ) ; Công_nghệ chế_biến sữa và các sản_phẩm từ sữa ( Dairy product technology - BTFT 401 IU ) ; Giáo_dục thể_chất 2 ( Physical_Training 2 - PT 002 IU ) ; Vật_lý 1 ( Physics 1 - PH 013 IU ) ; Các luật và tiêu_chuẩn thực_phẩm ( Food_Laws and Standards - BTFT 309 IU ) ; Giáo_dục thể_chất 1 ( Physical_Training 1 - PT 001 IU ) ; Bao_bì và phụ_gia thực_phẩm ( Food_Packaging and Food additives - BTFT 306 IU ) ; Các hệ_thống đảm_bảo chất_lượng Thực_phẩm ( Food quality assurance systems - BTFT 305 IU ) ; Khoa_học môi_trường ( Environmental_Science - PE 014 IU ) ; Quá_trình và thiết_bị Thực_phẩm 2 ( Food unit operations 2 - BTFT 304 IU ) ; Độc tố và an toàn thực phẩm ( Toxicology and food safety - BTFT 303 IU ) ; Giải_tích 2 cho khoa CNSH ( Calculus 2 ( BT ) - MA 019 IU ) ; Phân tích vi_sinh thực phẩm ( Food_Microbiology_Analysis - BTFT 310 IU ) ; Quản_lý dự_án ( Project_Management - IS 050 IU ) ; Hoá_học công_nghiệp ( Industrial_Chemistry - CHE 1111 IU ) ; Nguyên_lý tiếp_thị ( Principles of Marketing - BA 003 IU ) ; Đạo_đức và kỹ_năng nghề_nghiệp ( Engineering_Ethics and Professional_Skills - PE 020 IU ) ; Hoá_lý 1 ( Physical_Chemistry 1 - CHE 1031 IU ) ; Hoá vô_cơ ( Inorganic_Chemistry - CHE 2102 IU ) ; Tư_duy phân_tích ( Critical_Thinking - PE 008 IU ) ; Hoá_Hữu cơ ( Organic chemistry - CH 009 IU ) ; Thiết_kế thí_nghiệm ( Experimental_Design - BT 216 IU ) .",
+                    "qas": {
+                        "id": "619",
+                        "question": "Tôi muốn học môn Thực_hành mỹ_phẩm và mỹ dược thì chọn ngành nào ?",
+                        "answers": {
+                            "text": [
+                                "ngành Hoá_học ( Hoá_sinh )"
+                            ],
+                            "answer_start": [
+                                31361
+                            ]
+                        }
+                    }
+                },
+                {
+                    "context": "Chương_trình ngành Kỹ_thuật Hệ_thống Công_nghiệp gồm các môn_học : Hệ_thống thông_tin quản_lý ( Management_Information_System - IS 040 IU ) ; Hệ_thống Sản_xuất tinh_gọn ( Lean_Production - IS 041 IU ) ; Thương_mại_điện_tử trong Logistics và Chuỗi cung_ứng ( E-Logistics in Supply_Chain_Management - IS 062 IU ) ; Quản_lý Sản_xuất ( Production_Management - IS 019 IU ) ; Cơ kỹ_thuật – Động_học ( Engineering Mechanic-Dynamics - IS 016 IU ) ; CAD / CAM ( CAD / CAM - IS 018 IU ) ; Đo_lường lao_động và Thiết_kế công_việc ( Work_Design & Ergonomics - IS 017 IU ) ; Kỹ_thuật dự_báo ( Time_Series & forecasting techniques - IS 058 IU ) ; Kỹ_thuật hệ_thống ( Systems_Engineering - IS 035 IU ) ; Kỹ_thuật ra quyết_định đa mục_tiêu ( Multi-Criteria Decision_Making - IS 033 IU ) ; Thiết_kế và phát_triển sản_phẩm ( Product_Design and Development - IS 034 IU ) ; Thiết_kế thực_nghiệm ( Experimental_Design - IS 031 IU ) ; Vẽ_Kỹ thuật ( Engineering_Drawing - IS 054 IU ) ; Thực_tập 2 ( Internship 2 - IS 053 IU ) ; Kỹ_Thuật Thiết_Kế Chuỗi_Cung_Ứng và Logistics ( Logistics_Engineering & Supply_Chain_Design - IS 078 IU ) ; Thiết_kế mặt_bằng hệ_thống công_nghiệp ( Facility_Layout - IS 032 IU ) ; Thực_tập 1 ( Internship 1 - IS 052 IU ) ; Tiếng anh học_thuật ( Scientific_Writing - IS 079 IU ) ; Xác_suất thống_kê cho kỹ_thuật ( Engineering_Probability & Statistics - IS 004 IU ) ; Kỹ_thuật điều_độ trong sản_xuất và dịch_vụ ( Scheduling & Sequencing - IS 027 IU ) ; Vận_trù_học 1 - Các mô_hình tất định ( Deterministic_Models in OR - IS 081 IU ) ; Luận_văn tốt_nghiệp ( Thesis - IS 048 IU ) ; Quản_lý bán_lẻ ( Retail management - IS 082 IU ) ; Mô_hình_hoá và mô_phỏng ( Simulation_Models in Industrial_Engineering - IS 028 IU ) ; Đồ_án môn_học ( Capstone_Design - IS 083 IU ) ; Quản_lý vật_tư tồn_kho ( Inventory_Management - IS 023 IU ) ; CAD / CAM / CNC ( CAD / CAM / CNC - IS 085 IU ) ; Tin_học cho kỹ_sư ( Introduction to Computing - IS 086 IU ) ; Vận_chuyển quốc_tế ( International transportation & Logistics - IS 067 IU ) ; Quản_lý Chất_lượng ( Quality_Management - IS 025 IU ) ; Kỹ_năng lãnh_đạo ( Leadership - IS 045 IU ) ; Vận_trù_học 2 - Các mô_hình ngẫu_nhiên ( Probabilistic_Models in Opeations_Research - IS 024 IU ) .",
+                    "qas": {
+                        "id": "687",
+                        "question": "Tôi muốn học môn Phân_tích dữ_liệu quan_sát thì chọn ngành nào ?",
+                        "answers": {
+                            "text": [
+                                "ngành Khoa_học Dữ_liệu"
+                            ],
+                            "answer_start": [
+                                26507
+                            ]
+                        }
+                    }
+                },
+                {
+                    "context": "Ngành Công_nghệ_Thông_tin ( 3+1 ) ( Mã ngành : 7480201 _ DK 3 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Ngôn_ngữ Anh ( Mã ngành : 7220201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 27.5 . Ngành Kỹ_thuật Điện_tử ( Mã ngành : 7520207 _ SB ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ_Sinh_học ( Mã ngành : 7420201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 22.0 . Ngành Công_nghệ_Thông_tin ( 2.5+1.5 ) ( Mã ngành : 7480201 _ DK 25 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ Thực_phẩm ( Mã ngành : 7540101 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 22.0 .",
+                    "qas": {
+                        "id": "152",
+                        "question": "Điểm_chuẩn ngành Công_nghệ_Sinh_học ( 2+2 ) là bao_nhiêu ?",
+                        "answers": {
+                            "text": [
+                                "Ngành Công_nghệ_Sinh_học ( 2+2 ) ( Mã ngành : 7420201 _ WE 2 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 ."
+                            ],
+                            "answer_start": [
+                                4556
+                            ]
+                        }
+                    }
+                },
+                {
+                    "title": "International University - VNU HCMC",
+                    "context": "Ngành Hoá_học ( Hoá_sinh ) ( Mã ngành : 7440112 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 22.0 . Ngành Kỹ_thuật Xây_dựng ( Mã ngành : 7580201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 21.0 . Ngành Quản_trị Kinh_doanh ( 2+2 ) ( Mã ngành : 7340101 _ WE ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ_Thông_tin ( Mã ngành : 7480201 _ UN ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Quản_trị Kinh_doanh ( Mã ngành : 7340101 _ UH ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Công_nghệ_Thông_tin ( Mã ngành : 7480201 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 23.0 . Ngành Công_nghệ Thực_phẩm ( Mã ngành : 7540101 _ UN ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 . Ngành Kỹ_thuật Hệ_thống Công_nghiệp ( Mã ngành : 7520118 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 21.0 .",
+                    "qas": {
+                        "id": "631",
+                        "question": "Tôi muốn học môn Phát_triển học_thuật thì chọn ngành nào ?",
+                        "answers": {
+                            "text": [
+                                "ngành Công_nghệ_Sinh_học"
+                            ],
+                            "answer_start": [
+                                27395
+                            ]
+                        }
+                    }
+                },
+                {
+                    "title": "International University - VNU HCMC",
+                    "context": "Phòng Đào_tạo Sau_đại_học : Tham_mưu cho Hiệu_trưởng về các công_tác quản_lý đào_tạo và bồi_dưỡng sau_đại_học thuộc trách_nhiệm và thẩm_quyền . Liên_hệ : Phòng O 2.609 - Điện_thoại : ( 84 ) - 28-37244270 - Ext : 3120 - Fax : ( 84-28 ) 37244271 . Phòng Vật_tư Thiết_bị : Phòng Vật_tư Thiết_bị . Liên_hệ : Phòng O 1.612 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3555 , 3246 - Fax : ( 028 ) 37244271 . Trung_tâm Đổi_mới sáng_tạo và Chuyển_giao công_nghệ : Trung_tâm là đơn_vị sự_nghiệp khoa_học trực_thuộc trường Đại_Học Quốc_Tế – Đại_Học Quốc_Gia TP. HCM , có chức_năng cung_cấp dịch_vụ – nghiên_cứu – đào_tạo – tư_vấn và chuyển_giao công_nghệ cho các doanh_nghiệp và các cơ_quan_chức_năng Nhà_nước . Trung_tâm là cầu_nối giữa giảng_viên và sinh_viên của Trường với các nghiên_cứu và dự_án thực_tiễn tại các doanh_nghiệp và đơn_vị chức_năng trực_thuộc nhà_nước . Liên_hệ : Phòng O 2.303 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3949 - Fax : ( 028 ) 37244271 .",
+                    "qas": {
+                        "id": "52",
+                        "question": "Cho tôi hỏi về Phòng Quan_hệ Đối_ngoại ?",
+                        "answers": {
+                            "text": [
+                                "Phòng Quan_hệ Đối_ngoại : Tham_mưu cho Hiệu_trưởng về công_tác đối_ngoại , quan_hệ công_chúng và truyền_thông của trường phát_triển quan_hệ hợp_tác của nhà_trường phù_hợp với luật_pháp Việt_Nam và thông_lệnh quốc_tế dự_thảo và ký_kết các dự_án hợp_tác quốc_tế , lập kế_hoạch hợp_tác quốc_tế hàng năm . Liên_hệ : Phòng O2 – 704 ."
+                            ],
+                            "answer_start": [
+                                2030
+                            ]
+                        }
+                    }
+                },
+                {
+                    "title": "International University - VNU HCMC",
+                    "context": "Phòng Tổ_chức cán_bộ : Phòng Tổ_chức cán_bộ . Liên_hệ : Phòng O 2.709 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3336 , 3526 , 3527 - Fax : ( 028 ) 37244271 . Phòng Hợp_tác Đào_tạo nước_ngoài : Phòng Hợp_tác Đào_tạo nước_ngoài . Liên_hệ : Phòng O 1.614 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3880 - Fax : ( 028 ) 37244271 . Trung_tâm Dịch_vụ Công_nghệ_thông_tin : Trung_tâm Dịch_vụ Công_nghệ_Thông_tin chịu trách_nhiệm quản_lý và hỗ_trợ kỹ_thuật cho toàn_bộ hệ_thống mạng Internet , mạng điện_thoại và các trang_web của trường . Bên cạnh đó Trung_tâm còn có chức_năng chụp ảnh , viết bài đưa tin những hình_ảnh hoạt_động thường_xuyên của nhà_trường nhằm xây_dựng quảng_bá hình_ảnh thương_hiệu trường ngày_càng được nhiều người biết đến . Liên_hệ : Phòng O 1.312 - Điện_thoại : ( 028 ) 37244270 – số máy lẻ : 3366 . Phòng Kế_hoạch Tài_chính : Phòng có chức_năng tham_mưu và giúp Hiệu_trưởng trong công_tác xây_dựng và quản_lý kế_hoạch về tài_chính của trường , theo_dõi giám_sát và kiểm_tra việc thu_chi , sử_dụng tài_chính , kế_hoạch tài_chính và các lĩnh_vực khác có liên_quan đến công_tác kế_hoạch tài_chính trong toàn trường . Liên_hệ : Phòng O 2.701 . ",
+                    "qas": {
+                        "id": "64",
+                        "question": "Cho tôi hỏi về Bộ_môn Kỹ_thuật Xây_dựng ?",
+                        "answers": {
+                            "text": [
+                                "Bộ_môn Kỹ_thuật Xây_dựng : Bộ_môn Kỹ_thuật Xây_dựng ( KTXD ) được thành_lập vào tháng 1 năm 2011 nhằm xây_dựng một nền_tảng vững_chắc cho sinh_viên và giúp giảng_viên phát_huy tối_đa khả_năng của mình . Liên_hệ : Phòng O 1.506 - Điện_thoại : ( 84 -28 ) 3724 4270 - số nhánh lẻ : 342 ."
+                            ],
+                            "answer_start": [
+                                6787
+                            ]
+                        }
+                    }
+                }
+            ]
         }
     ]
 }
