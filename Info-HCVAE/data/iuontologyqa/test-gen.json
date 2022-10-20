@@ -10,13 +10,9 @@
                             "id": "106",
                             "question": "Chỉ_tiêu tuyển_sinh ngành Kỹ_thuật Môi_trường là bao_nhiêu ?",
                             "answers": [
-                                    {
-                                    "text": [
-                                        "Ngành Kỹ_thuật Hoá_học"
-                                    ],
-                                    "answer_start": [
-                                        0
-                                    ]
+                                {
+                                    "text": "Ngành Kỹ_thuật Hoá_học",
+                                    "answer_start": 0
                                 }
                             ]
                         }
@@ -30,12 +26,8 @@
                             "question": "Tôi muốn học môn Thực_hành mỹ_phẩm và mỹ dược thì chọn ngành nào ?",
                             "answers": [
                                     {
-                                    "text": [
-                                        "Chương_trình ngành Công_nghệ Thực_phẩm gồm các môn_học"
-                                    ],
-                                    "answer_start": [
-                                        0
-                                    ]
+                                    "text": "Chương_trình ngành Công_nghệ Thực_phẩm gồm các môn_học",
+                                    "answer_start": 0
                                 }
                             ]
                         }
@@ -49,12 +41,8 @@
                             "question": "Tôi muốn học môn Phân_tích dữ_liệu quan_sát thì chọn ngành nào ?",
                             "answers": [
                                     {
-                                    "text": [
-                                        "Chương_trình ngành Kỹ_thuật Hệ_thống Công_nghiệp gồm các môn_học"
-                                    ],
-                                    "answer_start": [
-                                        0
-                                    ]
+                                    "text": "Chương_trình ngành Kỹ_thuật Hệ_thống Công_nghiệp gồm các môn_học",
+                                    "answer_start": 0
                                 }
                             ]
                         }
@@ -68,12 +56,8 @@
                             "question": "Điểm_chuẩn ngành Công_nghệ_Sinh_học ( 2+2 ) là bao_nhiêu ?",
                             "answers": [
                                     {
-                                    "text": [
-                                        "Ngành Công_nghệ_Thông_tin"
-                                    ],
-                                    "answer_start": [
-                                        0
-                                    ]
+                                    "text": "Ngành Công_nghệ_Thông_tin",
+                                    "answer_start": 0
                                 }
                             ]
                         }
@@ -87,12 +71,8 @@
                             "question": "Tôi muốn học môn Phát_triển học_thuật thì chọn ngành nào ?",
                             "answers": [
                                 {
-                                    "text": [
-                                        "Ngành Hoá_học ( Hoá_sinh )"
-                                    ],
-                                    "answer_start": [
-                                        0
-                                    ]
+                                    "text": "Ngành Hoá_học ( Hoá_sinh )",
+                                    "answer_start": 0
                                 }
                             ]
                         }
@@ -106,12 +86,8 @@
                             "question": "Cho tôi hỏi về Phòng Quan_hệ Đối_ngoại ?",
                             "answers": [
                                 {
-                                    "text": [
-                                        "Phòng Đào_tạo Sau_đại_học"
-                                    ],
-                                    "answer_start": [
-                                        0
-                                    ]
+                                    "text": "Phòng Đào_tạo Sau_đại_học",
+                                    "answer_start": 0
                                 }
                             ]
                         }
@@ -125,12 +101,8 @@
                             "question": "Cho tôi hỏi về Bộ_môn Kỹ_thuật Xây_dựng ?",
                             "answers": [
                                 {
-                                    "text": [
-                                        "Phòng Tổ_chức cán_bộ"
-                                    ],
-                                    "answer_start": [
-                                        0
-                                    ]
+                                    "text": "Phòng Tổ_chức cán_bộ",
+                                    "answer_start": 0
                                 }
                             ]
                         }
