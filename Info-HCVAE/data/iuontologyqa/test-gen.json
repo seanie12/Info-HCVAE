@@ -9,14 +9,16 @@
                         {
                             "id": "106",
                             "question": "Chỉ_tiêu tuyển_sinh ngành Kỹ_thuật Môi_trường là bao_nhiêu ?",
-                            "answers": {
-                                "text": [
-                                    "Ngành Kỹ_thuật Môi_trường ( 7520320 ) có chỉ_tiêu 30 ."
-                                ],
-                                "answer_start": [
-                                    0
-                                ]
-                            }
+                            "answers": [
+                                    {
+                                    "text": [
+                                        "Ngành Kỹ_thuật Hoá_học"
+                                    ],
+                                    "answer_start": [
+                                        0
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },
@@ -26,14 +28,16 @@
                         {
                             "id": "619",
                             "question": "Tôi muốn học môn Thực_hành mỹ_phẩm và mỹ dược thì chọn ngành nào ?",
-                            "answers": {
-                                "text": [
-                                    "ngành Hoá_học ( Hoá_sinh )"
-                                ],
-                                "answer_start": [
-                                    0
-                                ]
-                            }
+                            "answers": [
+                                    {
+                                    "text": [
+                                        "Chương_trình ngành Công_nghệ Thực_phẩm gồm các môn_học"
+                                    ],
+                                    "answer_start": [
+                                        0
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },
@@ -43,14 +47,16 @@
                         {
                             "id": "687",
                             "question": "Tôi muốn học môn Phân_tích dữ_liệu quan_sát thì chọn ngành nào ?",
-                            "answers": {
-                                "text": [
-                                    "ngành Khoa_học Dữ_liệu"
-                                ],
-                                "answer_start": [
-                                    0
-                                ]
-                            }
+                            "answers": [
+                                    {
+                                    "text": [
+                                        "Chương_trình ngành Kỹ_thuật Hệ_thống Công_nghiệp gồm các môn_học"
+                                    ],
+                                    "answer_start": [
+                                        0
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },
@@ -60,14 +66,16 @@
                         {
                             "id": "152",
                             "question": "Điểm_chuẩn ngành Công_nghệ_Sinh_học ( 2+2 ) là bao_nhiêu ?",
-                            "answers": {
-                                "text": [
-                                    "Ngành Công_nghệ_Sinh_học ( 2+2 ) ( Mã ngành : 7420201 _ WE 2 ) ở phương_thức Ưu_tiên xét tuyển học_sinh giỏi các trường THPT theo quy_định của ĐHQG có điểm_chuẩn 18.0 ."
-                                ],
-                                "answer_start": [
-                                    0
-                                ]
-                            }
+                            "answers": [
+                                    {
+                                    "text": [
+                                        "Ngành Công_nghệ_Thông_tin"
+                                    ],
+                                    "answer_start": [
+                                        0
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },
@@ -77,14 +85,16 @@
                         {
                             "id": "631",
                             "question": "Tôi muốn học môn Phát_triển học_thuật thì chọn ngành nào ?",
-                            "answers": {
-                                "text": [
-                                    "ngành Công_nghệ_Sinh_học"
-                                ],
-                                "answer_start": [
-                                    0
-                                ]
-                            }
+                            "answers": [
+                                {
+                                    "text": [
+                                        "Ngành Hoá_học ( Hoá_sinh )"
+                                    ],
+                                    "answer_start": [
+                                        0
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },
@@ -94,14 +104,16 @@
                         {
                             "id": "52",
                             "question": "Cho tôi hỏi về Phòng Quan_hệ Đối_ngoại ?",
-                            "answers": {
-                                "text": [
-                                    "Phòng Quan_hệ Đối_ngoại : Tham_mưu cho Hiệu_trưởng về công_tác đối_ngoại , quan_hệ công_chúng và truyền_thông của trường phát_triển quan_hệ hợp_tác của nhà_trường phù_hợp với luật_pháp Việt_Nam và thông_lệnh quốc_tế dự_thảo và ký_kết các dự_án hợp_tác quốc_tế , lập kế_hoạch hợp_tác quốc_tế hàng năm . Liên_hệ : Phòng O2 – 704 ."
-                                ],
-                                "answer_start": [
-                                    0
-                                ]
-                            }
+                            "answers": [
+                                {
+                                    "text": [
+                                        "Phòng Đào_tạo Sau_đại_học"
+                                    ],
+                                    "answer_start": [
+                                        0
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },
@@ -111,14 +123,16 @@
                         {
                             "id": "64",
                             "question": "Cho tôi hỏi về Bộ_môn Kỹ_thuật Xây_dựng ?",
-                            "answers": {
-                                "text": [
-                                    "Bộ_môn Kỹ_thuật Xây_dựng : Bộ_môn Kỹ_thuật Xây_dựng ( KTXD ) được thành_lập vào tháng 1 năm 2011 nhằm xây_dựng một nền_tảng vững_chắc cho sinh_viên và giúp giảng_viên phát_huy tối_đa khả_năng của mình . Liên_hệ : Phòng O 1.506 - Điện_thoại : ( 84 -28 ) 3724 4270 - số nhánh lẻ : 342 ."
-                                ],
-                                "answer_start": [
-                                    0
-                                ]
-                            }
+                            "answers": [
+                                {
+                                    "text": [
+                                        "Phòng Tổ_chức cán_bộ"
+                                    ],
+                                    "answer_start": [
+                                        0
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 }
