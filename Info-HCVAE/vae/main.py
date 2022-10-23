@@ -18,6 +18,7 @@ def main(args):
     eval_data = None
     
     print(args.load_saved_dataloader)
+    print(args.use_custom_embeddings_impl)
     if args.load_saved_dataloader:
         train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt"), "r"))
         eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt"), "r"))
