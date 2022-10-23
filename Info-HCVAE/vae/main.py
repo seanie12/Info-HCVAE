@@ -25,8 +25,8 @@ def main(args):
         torch.save(train_loader, os.path.join(args.dataloader_dir, "train_loader.pt"))
         torch.save(eval_data, os.path.join(args.dataloader_dir, "eval_loader.pt"))
     else:
-        train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt", "r")))
-        eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt", "r")))
+        train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt"), "r"))
+        eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt"), "r"))
 
     args.device = torch.cuda.current_device()
 
@@ -41,7 +41,7 @@ def main(args):
 
     print("MODEL DIR: " + args.model_dir)
 
-    best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
+    best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         if epoch+1 < args.resume_epochs:
             continue
@@ -93,13 +93,15 @@ if __name__ == "__main__":
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
     parser.add_argument("--use_custom_embeddings_impl", default=True, type=bool, help="whether to use customized Embedding class")
+    parser.add_argument("--load_saved_dataloader", default=False, type=bool)
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
-    parser.add_argument("--load_saved_dataloader", default=False, type=bool)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=20, type=int)
     parser.add_argument("--resume_epochs", default=1, type=int)
+    parser.add_argument("--prev_best_bleu", default=0.0, type=float)
+    parser.add_argument("--prev_best_f1", default=0.0, type=float)
     parser.add_argument("--save_freq", default=2, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=10, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
