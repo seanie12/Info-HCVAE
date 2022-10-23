@@ -533,7 +533,8 @@ class QuestionDecoder(nn.Module):
         if not self.use_lstm_averager:
             a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
         else:
-            a_mean_emb = self.answer_averager(a_emb, (c_lengths * a_ids.float().unsqueeze(2)).to("cpu"))
+            a_lengths = c_lengths * a_ids.float().unsqueeze(2)
+            a_mean_emb = self.answer_averager(a_emb, a_lengths.to("cpu"))
         fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
                                      a_mean_emb[:-1]], dim=0)
 
