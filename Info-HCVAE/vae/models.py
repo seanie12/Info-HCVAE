@@ -426,7 +426,7 @@ class QuestionDecoder(nn.Module):
                  embedding, contextualized_embedding, emsize,
                  nhidden, ntokens, nlayers,
                  dropout=0.0,
-                 max_q_len=64):
+                 max_q_len=64, use_lstm_averager=True):
         super(QuestionDecoder, self).__init__()
 
         self.sos_id = sos_id
@@ -461,6 +461,18 @@ class QuestionDecoder(nn.Module):
         for param in self.logit_linear.parameters():
             param.requires_grad = False
 
+        self.use_lstm_averager = use_lstm_averager
+        if self.use_lstm_averager:
+            self.question_averager = CustomLSTM(input_size=emsize,
+                                            hidden_size=emsize,
+                                            num_layers=nlayers,
+                                            dropout=dropout,
+                                            bidirectional=True)
+            self.answer_averager = CustomLSTM(input_size=nhidden,
+                                            hidden_size=nhidden,
+                                            num_layers=nlayers,
+                                            dropout=dropout,
+                                            bidirectional=True)
         self.discriminator = nn.Bilinear(emsize, nhidden, 1)
 
     def postprocess(self, q_ids):
@@ -483,7 +495,7 @@ class QuestionDecoder(nn.Module):
 
         c_outputs = self.context_lstm(c_ids, a_ids)
 
-        c_mask, _ = return_mask_lengths(c_ids)
+        c_mask, c_lengths = return_mask_lengths(c_ids)
         q_mask, q_lengths = return_mask_lengths(q_ids)
 
         # question dec
@@ -516,14 +528,20 @@ class QuestionDecoder(nn.Module):
 
         logits = gen_logits + copy_logits
 
-        # mutual information btw answer and question
+        # mutual information btw answer and question (customized: use bi-lstm to average the question & answer)
         a_emb = c_outputs * a_ids.float().unsqueeze(2)
-        a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
+        if not self.use_lstm_averager:
+            a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
+        else:
+            a_mean_emb = self.answer_averager(a_emb, (c_lengths * a_ids.float().unsqueeze(2)).to("cpu"))
         fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
                                      a_mean_emb[:-1]], dim=0)
 
         q_emb = q_maxouted * q_mask.unsqueeze(2)
-        q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
+        if not self.use_lstm_averager:
+            q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
+        else:
+            q_mean_emb = self.question_averager(q_emb, q_lengths.to("cpu"))
         fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
                                      q_mean_emb[:-1]], dim=0)
 
