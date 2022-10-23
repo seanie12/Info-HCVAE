@@ -467,12 +467,12 @@ class QuestionDecoder(nn.Module):
                                             hidden_size=emsize,
                                             num_layers=nlayers,
                                             dropout=dropout,
-                                            bidirectional=True)
+                                            bidirectional=False)
             self.answer_averager = CustomLSTM(input_size=nhidden,
                                             hidden_size=nhidden,
                                             num_layers=nlayers,
                                             dropout=dropout,
-                                            bidirectional=True)
+                                            bidirectional=False)
         self.discriminator = nn.Bilinear(emsize, nhidden, 1)
 
     def postprocess(self, q_ids):
@@ -530,15 +530,11 @@ class QuestionDecoder(nn.Module):
 
         # mutual information btw answer and question (customized: use bi-lstm to average the question & answer)
         a_emb = c_outputs * a_ids.float().unsqueeze(2)
-        print(a_emb.shape)
-        print(a_ids.shape)
         if not self.use_lstm_averager:
             a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
-            print(a_mean_emb.shape)
         else:
             _, a_lengths = return_mask_lengths(a_ids)
             a_mean_emb, _ = self.answer_averager(a_emb, a_lengths.to("cpu"))
-            print(a_mean_emb.shape)
         fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
                                      a_mean_emb[:-1]], dim=0)
 
