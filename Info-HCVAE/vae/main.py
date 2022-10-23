@@ -93,7 +93,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
     parser.add_argument("--use_custom_embeddings_impl", default=True, type=bool, help="whether to use customized Embedding class")
-    parser.add_argument("--load_saved_dataloader", default=False, type=bool)
+    parser.add_argument("--load_saved_dataloader", default=True, type=bool)
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
