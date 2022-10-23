@@ -17,8 +17,6 @@ def main(args):
     train_loader = None
     eval_data = None
     
-    print(args.load_saved_dataloader)
-    print(args.use_custom_embeddings_impl)
     if args.load_saved_dataloader:
         train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt"), "r"))
         eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt"), "r"))
@@ -94,8 +92,8 @@ if __name__ == "__main__":
     
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
-    parser.add_argument("--use_custom_embeddings_impl", default=True, type=bool, help="whether to use customized Embedding class")
-    parser.add_argument("--load_saved_dataloader", default=False, type=bool)
+    parser.add_argument("--use_custom_embeddings_impl", default="True", type=str, help="whether to use customized Embedding class")
+    parser.add_argument("--load_saved_dataloader", default="False", type=str)
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
@@ -131,6 +129,11 @@ if __name__ == "__main__":
 
     if args.debug:
         args.model_dir = "./dummy"
+
+    # Determine boolean args
+    args.use_custom_embeddings_impl = True if args.use_custom_embeddings_impl == "True" else False
+    args.load_saved_dataloader = True if args.load_saved_dataloader == "True" else False
+
     # set model dir
     model_dir = args.model_dir
     os.makedirs(model_dir, exist_ok=True)
