@@ -14,10 +14,19 @@ from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
 
 def main(args):
     tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
-    train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
+    train_loader = None
+    eval_data = None
+    
+    if not args.load_saved_dataloader:
+        train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
                                          shuffle=True, is_train_set=True, args=args)
-    eval_data = get_squad_data_loader(tokenizer, args.dev_dir,
-                                      shuffle=False, is_train_set=False, args=args)
+        eval_data = get_squad_data_loader(tokenizer, args.dev_dir,
+                                          shuffle=False, is_train_set=False, args=args)
+        torch.save(train_loader, os.path.join(args.dataloader_dir, "train_loader.pt"))
+        torch.save(eval_data, os.path.join(args.dataloader_dir, "eval_loader.pt"))
+    else:
+        train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt", "r")))
+        eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt", "r")))
 
     args.device = torch.cuda.current_device()
 
@@ -86,6 +95,8 @@ if __name__ == "__main__":
     parser.add_argument("--use_custom_embeddings_impl", default=True, type=bool, help="whether to use customized Embedding class")
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
+    parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
+    parser.add_argument("--load_saved_dataloader", default=False, type=bool)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=20, type=int)
     parser.add_argument("--resume_epochs", default=1, type=int)
@@ -127,6 +138,12 @@ if __name__ == "__main__":
     os.makedirs(best_model_dir, exist_ok=True)
     args.save_by_epoch_dir = save_by_epoch_dir
     args.best_model_dir = best_model_dir
+
+    # set dataloader dir
+    if not args.load_saved_dataloader:
+        dataloader_dir = args.dataloader_dir
+        os.makedirs(dataloader_dir, exist_ok=True)
+        args.dataloader_dir = os.path.abspath(dataloader_dir)
 
     random.seed(args.seed)
     np.random.seed(args.seed)

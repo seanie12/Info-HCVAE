@@ -531,6 +531,7 @@ class QuestionDecoder(nn.Module):
         # mutual information btw answer and question (customized: use bi-lstm to average the question & answer)
         a_emb = c_outputs * a_ids.float().unsqueeze(2)
         print(a_emb.shape)
+        print(a_ids.shape)
         if not self.use_lstm_averager:
             a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
         else:
