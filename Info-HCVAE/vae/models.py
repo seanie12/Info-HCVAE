@@ -531,10 +531,10 @@ class QuestionDecoder(nn.Module):
         # mutual information btw answer and question (customized: use bi-lstm to average the question & answer)
         a_emb = c_outputs * a_ids.float().unsqueeze(2)
         if not self.use_lstm_averager:
-            a_mean_emb, _ = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
+            a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
         else:
             _, a_lengths = return_mask_lengths(a_ids)
-            a_mean_emb = self.answer_averager(a_emb, a_lengths.to("cpu"))
+            a_mean_emb, _ = self.answer_averager(a_emb, a_lengths.to("cpu"))
         fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
                                      a_mean_emb[:-1]], dim=0)
 
