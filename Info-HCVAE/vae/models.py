@@ -495,7 +495,7 @@ class QuestionDecoder(nn.Module):
 
         c_outputs = self.context_lstm(c_ids, a_ids)
 
-        c_mask, c_lengths = return_mask_lengths(c_ids)
+        c_mask, _ = return_mask_lengths(c_ids)
         q_mask, q_lengths = return_mask_lengths(q_ids)
 
         # question dec
@@ -530,19 +530,23 @@ class QuestionDecoder(nn.Module):
 
         # mutual information btw answer and question (customized: use bi-lstm to average the question & answer)
         a_emb = c_outputs * a_ids.float().unsqueeze(2)
+        print(a_emb.shape)
         if not self.use_lstm_averager:
             a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
         else:
             _, a_lengths = return_mask_lengths(a_ids)
             a_mean_emb, _ = self.answer_averager(a_emb, a_lengths.to("cpu"))
+            print(a_mean_emb.shape)
         fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
                                      a_mean_emb[:-1]], dim=0)
 
         q_emb = q_maxouted * q_mask.unsqueeze(2)
+        print(q_emb.shape)
         if not self.use_lstm_averager:
             q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
         else:
             q_mean_emb, _ = self.question_averager(q_emb, q_lengths.to("cpu"))
+            print(q_mean_emb.shape)
         fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
                                      q_mean_emb[:-1]], dim=0)
 
