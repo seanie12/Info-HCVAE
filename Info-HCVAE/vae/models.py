@@ -426,7 +426,7 @@ class QuestionDecoder(nn.Module):
                  embedding, contextualized_embedding, emsize,
                  nhidden, ntokens, nlayers,
                  dropout=0.0,
-                 max_q_len=64, use_lstm_averager=True):
+                 max_q_len=64, use_lstm_averager=False):
         super(QuestionDecoder, self).__init__()
 
         self.sos_id = sos_id
@@ -534,6 +534,7 @@ class QuestionDecoder(nn.Module):
         print(a_ids.shape)
         if not self.use_lstm_averager:
             a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
+            print(a_mean_emb.shape)
         else:
             _, a_lengths = return_mask_lengths(a_ids)
             a_mean_emb, _ = self.answer_averager(a_emb, a_lengths.to("cpu"))
@@ -543,8 +544,10 @@ class QuestionDecoder(nn.Module):
 
         q_emb = q_maxouted * q_mask.unsqueeze(2)
         print(q_emb.shape)
+        print(q_maxouted.shape)
         if not self.use_lstm_averager:
             q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
+            print(q_mean_emb.shape)
         else:
             q_mean_emb, _ = self.question_averager(q_emb, q_lengths.to("cpu"))
             print(q_mean_emb.shape)
