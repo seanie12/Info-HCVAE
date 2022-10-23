@@ -17,16 +17,16 @@ def main(args):
     train_loader = None
     eval_data = None
     
-    if not args.load_saved_dataloader:
+    if args.load_saved_dataloader:
+        train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt"), "r"))
+        eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt"), "r"))
+    else:
         train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
                                          shuffle=True, is_train_set=True, args=args)
         eval_data = get_squad_data_loader(tokenizer, args.dev_dir,
                                           shuffle=False, is_train_set=False, args=args)
         torch.save(train_loader, os.path.join(args.dataloader_dir, "train_loader.pt"))
         torch.save(eval_data, os.path.join(args.dataloader_dir, "eval_loader.pt"))
-    else:
-        train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt"), "r"))
-        eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt"), "r"))
 
     args.device = torch.cuda.current_device()
 
