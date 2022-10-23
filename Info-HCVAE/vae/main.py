@@ -18,8 +18,8 @@ def main(args):
     eval_data = None
     
     if args.load_saved_dataloader:
-        train_loader = torch.load(open(os.path.join(args.dataloader_dir, "train_loader.pt"), "r"))
-        eval_data = torch.load(open(os.path.join(args.dataloader_dir, "eval_loader.pt"), "r"))
+        train_loader = torch.load(os.path.join(args.dataloader_dir, "train_loader.pt"))
+        eval_data = torch.load(os.path.join(args.dataloader_dir, "eval_loader.pt"))
     else:
         train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
                                          shuffle=True, is_train_set=True, args=args)
