@@ -426,7 +426,7 @@ class QuestionDecoder(nn.Module):
                  embedding, contextualized_embedding, emsize,
                  nhidden, ntokens, nlayers,
                  dropout=0.0,
-                 max_q_len=64, use_lstm_averager=False):
+                 max_q_len=64, use_lstm_averager=True):
         super(QuestionDecoder, self).__init__()
 
         self.sos_id = sos_id
