@@ -122,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument('--nzqdim', type=int, default=50)
     parser.add_argument('--nza', type=int, default=20)
     parser.add_argument('--nzadim', type=int, default=10)
-    parser.add_argument('--lambda_kl', type=float, default=0.1)
+    parser.add_argument('--lambda_kl', type=float, default=0.75)
     parser.add_argument('--lambda_info', type=float, default=1.0)
 
     args = parser.parse_args()
