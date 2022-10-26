@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch_scatter import scatter_max
 from transformers import AutoModel, AutoTokenizer
+from mine.models.mine import MutualInformationEstimator
 
 
 def return_mask_lengths(ids):
@@ -426,7 +427,7 @@ class QuestionDecoder(nn.Module):
                  embedding, contextualized_embedding, emsize,
                  nhidden, ntokens, nlayers,
                  dropout=0.0,
-                 max_q_len=64, use_lstm_averager=True):
+                 max_q_len=64, use_mine=True):
         super(QuestionDecoder, self).__init__()
 
         self.sos_id = sos_id
@@ -461,19 +462,11 @@ class QuestionDecoder(nn.Module):
         for param in self.logit_linear.parameters():
             param.requires_grad = False
 
-        self.use_lstm_averager = use_lstm_averager
-        if self.use_lstm_averager:
-            self.question_averager = CustomLSTM(input_size=emsize,
-                                            hidden_size=emsize,
-                                            num_layers=nlayers,
-                                            dropout=dropout,
-                                            bidirectional=False)
-            self.answer_averager = CustomLSTM(input_size=nhidden,
-                                            hidden_size=nhidden,
-                                            num_layers=nlayers,
-                                            dropout=dropout,
-                                            bidirectional=False)
-        self.discriminator = nn.Bilinear(emsize, nhidden, 1)
+        self.use_mine = use_mine
+        if not use_mine:
+            self.discriminator = nn.Bilinear(emsize, nhidden, 1)
+        else:
+            self.mi_estimator = MutualInformationEstimator(emsize, nhidden)
 
     def postprocess(self, q_ids):
         eos_mask = q_ids == self.eos_id
@@ -530,36 +523,32 @@ class QuestionDecoder(nn.Module):
 
         # mutual information btw answer and question (customized: use bi-lstm to average the question & answer)
         a_emb = c_outputs * a_ids.float().unsqueeze(2)
-        if not self.use_lstm_averager:
-            a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
-        else:
-            _, a_lengths = return_mask_lengths(a_ids)
-            a_mean_emb, _ = self.answer_averager(a_emb, a_lengths.to("cpu"))
-            a_mean_emb = a_mean_emb[:, -1, ...] # take the last output only
-        fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
-                                     a_mean_emb[:-1]], dim=0)
+        a_mean_emb = torch.sum(a_emb, 1) / a_ids.sum(1).unsqueeze(1).float()
 
         q_emb = q_maxouted * q_mask.unsqueeze(2)
-        if not self.use_lstm_averager:
-            q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
+        q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
+
+
+        if not self.use_mine
+            fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
+                                        a_mean_emb[:-1]], dim=0)
+            fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
+                                        q_mean_emb[:-1]], dim=0)
+
+            bce_loss = nn.BCEWithLogitsLoss()
+            true_logits = self.discriminator(q_mean_emb, a_mean_emb)
+            true_labels = torch.ones_like(true_logits)
+
+            fake_a_logits = self.discriminator(q_mean_emb, fake_a_mean_emb)
+            fake_q_logits = self.discriminator(fake_q_mean_emb, a_mean_emb)
+            fake_logits = torch.cat([fake_a_logits, fake_q_logits], dim=0)
+            fake_labels = torch.zeros_like(fake_logits)
+
+            true_loss = bce_loss(true_logits, true_labels)
+            fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
+            loss_info = 0.5 * (true_loss + fake_loss)
         else:
-            q_mean_emb, _ = self.question_averager(q_emb, q_lengths.to("cpu"))
-            q_mean_emb = q_mean_emb[:, -1, ...] # take the last output only
-        fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
-                                     q_mean_emb[:-1]], dim=0)
-
-        bce_loss = nn.BCEWithLogitsLoss()
-        true_logits = self.discriminator(q_mean_emb, a_mean_emb)
-        true_labels = torch.ones_like(true_logits)
-
-        fake_a_logits = self.discriminator(q_mean_emb, fake_a_mean_emb)
-        fake_q_logits = self.discriminator(fake_q_mean_emb, a_mean_emb)
-        fake_logits = torch.cat([fake_a_logits, fake_q_logits], dim=0)
-        fake_labels = torch.zeros_like(fake_logits)
-
-        true_loss = bce_loss(true_logits, true_labels)
-        fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
-        loss_info = 0.5 * (true_loss + fake_loss)
+            return self.mi_estimator(q_mean_emb, a_mean_emb)
 
         return logits, loss_info
 
