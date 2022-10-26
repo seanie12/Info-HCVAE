@@ -529,7 +529,7 @@ class QuestionDecoder(nn.Module):
         q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
 
 
-        if not self.use_mine
+        if not self.use_mine:
             fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
                                         a_mean_emb[:-1]], dim=0)
             fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
