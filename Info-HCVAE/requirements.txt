@@ -1,0 +1,11 @@
+transformers
+json_lines
+torch_scatter
+pytorch_lightning
+matplotlib
+numpy
+tqdm
+torch
+torchvision
+scikit_learn==0.22.1
+pillow<7
