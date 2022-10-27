@@ -777,8 +777,7 @@ class DiscreteVAE(nn.Module):
         # answer decoding
         start_logits, end_logits = self.answer_decoder(a_init_state, c_ids)
         # question decoding
-        q_logits, loss_info = self.question_decoder(
-            q_init_state, c_ids, q_ids, a_ids)
+        q_logits, loss_info = self.question_decoder(q_init_state, c_ids, q_ids, a_ids)
 
         # q rec loss
         loss_q_rec = self.q_rec_criterion(q_logits[:, :-1, :].transpose(1, 2).contiguous(),
