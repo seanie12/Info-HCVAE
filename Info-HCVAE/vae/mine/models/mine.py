@@ -9,7 +9,6 @@ from torch.autograd import Variable
 from torchvision import datasets
 from torchvision.transforms import transforms
 
-from mine.datasets import FunctionDataset, MultivariateNormalDataset
 from mine.models.layers import ConcatLayer, CustomSequential
 
 import pytorch_lightning as pl
@@ -270,53 +269,53 @@ def function_experiment():
     plt.show()
 
 
-def rho_experiment():
-    dim = 20
-    N = 3000
-    lr = 1e-3
-    epochs = 100
-    batch_size = 128
+# def rho_experiment():
+#     dim = 20
+#     N = 3000
+#     lr = 1e-3
+#     epochs = 100
+#     batch_size = 128
 
-    x_dim = dim
-    z_dim = dim
+#     x_dim = dim
+#     z_dim = dim
 
-    steps = 20
-    rhos = np.linspace(-0.99, 0.99, steps)
-    res = []
+#     steps = 20
+#     rhos = np.linspace(-0.99, 0.99, steps)
+#     res = []
 
-    # Rho Experiment
-    for rho in rhos:
-        train_loader = torch.utils.data.DataLoader(
-            MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
-        test_loader = torch.utils.data.DataLoader(
-            MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
+#     # Rho Experiment
+#     for rho in rhos:
+#         train_loader = torch.utils.data.DataLoader(
+#             MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
+#         test_loader = torch.utils.data.DataLoader(
+#             MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
 
-        true_mi = train_loader.dataset.true_mi
+#         true_mi = train_loader.dataset.true_mi
 
-        kwargs = {
-            'lr': lr,
-            'batch_size': batch_size,
-            'train_loader': train_loader,
-            'test_loader': test_loader,
-            'alpha': 1.0
-        }
+#         kwargs = {
+#             'lr': lr,
+#             'batch_size': batch_size,
+#             'train_loader': train_loader,
+#             'test_loader': test_loader,
+#             'alpha': 1.0
+#         }
 
-        model = MutualInformationEstimator(
-            dim, dim, loss='mine_biased', **kwargs).to(device)
-        trainer = Trainer(max_epochs=epochs, early_stop_callback=False, gpus=1)
-        trainer.fit(model)
-        trainer.test()
+#         model = MutualInformationEstimator(
+#             dim, dim, loss='mine_biased', **kwargs).to(device)
+#         trainer = Trainer(max_epochs=epochs, early_stop_callback=False, gpus=1)
+#         trainer.fit(model)
+#         trainer.test()
 
-        print("True_mi {}".format(true_mi))
-        print("MINE {}".format(model.avg_test_mi))
-        res.append((rho, model.avg_test_mi, true_mi))
+#         print("True_mi {}".format(true_mi))
+#         print("MINE {}".format(model.avg_test_mi))
+#         res.append((rho, model.avg_test_mi, true_mi))
 
-    res = np.array(res)
-    plt.figure()
-    plt.plot(res[:, 0], res[:, 1], label='MINE')
-    plt.plot(res[:, 0], res[:, 2], linestyle='--', label='True MI')
-    plt.legend()
-    plt.show()
+#     res = np.array(res)
+#     plt.figure()
+#     plt.plot(res[:, 0], res[:, 1], label='MINE')
+#     plt.plot(res[:, 0], res[:, 2], linestyle='--', label='True MI')
+#     plt.legend()
+#     plt.show()
 
 
 if __name__ == '__main__':
