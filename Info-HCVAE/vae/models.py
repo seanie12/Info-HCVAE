@@ -427,7 +427,7 @@ class QuestionDecoder(nn.Module):
                  embedding, contextualized_embedding, emsize,
                  nhidden, ntokens, nlayers,
                  dropout=0.0,
-                 max_q_len=64, use_mine=True):
+                 max_q_len=64, use_mine=False):
         super(QuestionDecoder, self).__init__()
 
         self.sos_id = sos_id
@@ -785,7 +785,9 @@ class DiscreteVAE(nn.Module):
 
         # a rec loss
         max_c_len = c_ids.size(1)
-        a_rec_criterion = nn.CrossEntropyLoss(ignore_index=max_c_len)
+        # Emphasize the importance of predicting the correct span
+        class_weight = torch.tensor([1., 2.5]).to("cuda" if torch.cuda.is_available() else "cpu")
+        a_rec_criterion = nn.CrossEntropyLoss(weight=class_weight, ignore_index=max_c_len)
         start_positions.clamp_(0, max_c_len)
         end_positions.clamp_(0, max_c_len)
         loss_start_a_rec = a_rec_criterion(start_logits, start_positions)
