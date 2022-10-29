@@ -143,8 +143,8 @@ class MutualInformationEstimator(pl.LightningModule):
     def __init__(self, x_dim, z_dim, loss='mine', **kwargs):
         super().__init__()
         self.x_dim = x_dim
-        self.T = CustomSequential(ConcatLayer(), nn.Linear(x_dim + z_dim, 100), nn.ReLU(),
-                                  nn.Linear(100, 100), nn.ReLU(), nn.Linear(100, 1))
+        self.T = CustomSequential(ConcatLayer(), nn.Linear(x_dim + z_dim, 512), nn.ReLU(),
+                                  nn.Linear(512, 512), nn.ReLU(), nn.Linear(512, 1))
 
         if not ('alpha' in kwargs):
             kwargs['alpha'] = 0.01

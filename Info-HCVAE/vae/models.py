@@ -528,13 +528,13 @@ class QuestionDecoder(nn.Module):
         q_emb = q_maxouted * q_mask.unsqueeze(2)
         q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
 
+        fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
+                                        a_mean_emb[:-1]], dim=0)
+        fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
+                                    q_mean_emb[:-1]], dim=0)
+
         loss_info = None
         if not self.use_mine:
-            fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
-                                        a_mean_emb[:-1]], dim=0)
-            fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
-                                        q_mean_emb[:-1]], dim=0)
-
             bce_loss = nn.BCEWithLogitsLoss()
             true_logits = self.discriminator(q_mean_emb, a_mean_emb)
             true_labels = torch.ones_like(true_logits)
@@ -548,7 +548,11 @@ class QuestionDecoder(nn.Module):
             fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
             loss_info = 0.5 * (true_loss + fake_loss)
         else:
-            loss_info = self.mi_estimator(q_mean_emb, a_mean_emb)
+            # Maximize mutual info of real pair while minimize of fake pair
+            true_loss = self.mi_estimator(q_mean_emb, a_mean_emb)
+            fake_loss = 0.5 * (self.mi_estimator(q_mean_emb, fake_a_mean_emb) +
+                                self.mi_estimator(fake_q_mean_emb, a_mean_emb))
+            loss_info = 0.5 * (true_loss - fake_loss)
 
         return logits, loss_info
 
@@ -730,7 +734,7 @@ class DiscreteVAE(nn.Module):
                                                 embedding, contextualized_embedding, emsize,
                                                 dec_q_nhidden, ntokens, dec_q_nlayers,
                                                 dec_q_dropout,
-                                                max_q_len)
+                                                max_q_len, args.use_mine)
 
         self.q_h_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
         self.q_c_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)

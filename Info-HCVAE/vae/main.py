@@ -94,6 +94,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
     parser.add_argument("--use_custom_embeddings_impl", default="True", type=str, help="whether to use customized Embedding class")
     parser.add_argument("--load_saved_dataloader", default="False", type=str)
+    parser.add_argument("--use_mine", default="False", type=str)
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
@@ -133,6 +134,7 @@ if __name__ == "__main__":
     # Determine boolean args
     args.use_custom_embeddings_impl = True if args.use_custom_embeddings_impl == "True" else False
     args.load_saved_dataloader = True if args.load_saved_dataloader == "True" else False
+    args.use_mine = True if args.use_mine == "True" else False
 
     # set model dir
     model_dir = args.model_dir
