@@ -99,6 +99,10 @@ class Embedding(nn.Module):
             return self.transformer_embeddings(input_ids=input_ids, token_type_ids=token_type_ids, position_ids=position_ids)
 
 
+    def get_word_embeddings(self):
+        return self.transformer_embeddings.word_embeddings
+
+
 class ContextualizedEmbedding(nn.Module):
     def __init__(self, huggingface_model, use_transformer_forward=False):
         super(ContextualizedEmbedding, self).__init__()
@@ -466,7 +470,7 @@ class QuestionDecoder(nn.Module):
         self.logit_linear = nn.Linear(emsize, ntokens, bias=False)
 
         # fix output word matrix
-        self.logit_linear.weight = embedding.word_embeddings.weight
+        self.logit_linear.weight = embedding.get_word_embeddings().weight
         for param in self.logit_linear.parameters():
             param.requires_grad = False
 
