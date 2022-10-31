@@ -549,10 +549,10 @@ class QuestionDecoder(nn.Module):
             loss_info = 0.5 * (true_loss + fake_loss)
         else:
             # Maximize mutual info of real pair while minimize of fake pair
-            true_loss = self.mi_estimator(q_mean_emb, a_mean_emb)
-            fake_loss = 0.5 * (self.mi_estimator(q_mean_emb, fake_a_mean_emb) +
-                                self.mi_estimator(fake_q_mean_emb, a_mean_emb))
-            loss_info = 0.5 * (true_loss - fake_loss)
+            loss_info = 0.5*self.mi_estimator(q_mean_emb, a_mean_emb)
+            # fake_loss = 0.5 * (self.mi_estimator(q_mean_emb, fake_a_mean_emb) +
+            #                     self.mi_estimator(fake_q_mean_emb, a_mean_emb))
+            # loss_info = 0.5 * (true_loss - fake_loss)
 
         return logits, loss_info
 
