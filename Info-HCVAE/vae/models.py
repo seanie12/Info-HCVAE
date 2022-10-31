@@ -99,35 +99,42 @@ class Embedding(nn.Module):
 
 
 class ContextualizedEmbedding(nn.Module):
-    def __init__(self, huggingface_model):
+    def __init__(self, huggingface_model, use_transformer_forward=False):
         super(ContextualizedEmbedding, self).__init__()
-        bert = AutoModel.from_pretrained(huggingface_model)
-        self.embedding = bert.embeddings
-        self.encoder = bert.encoder
-        self.num_hidden_layers = bert.config.num_hidden_layers
+        self.use_transformer_forward = use_transformer_forward
+        if not use_transformer_forward:
+            bert = AutoModel.from_pretrained(huggingface_model)
+            self.embedding = bert.embeddings
+            self.encoder = bert.encoder
+            self.num_hidden_layers = bert.config.num_hidden_layers
+        else:
+            self.model = AutoModel.from_pretrained(huggingface_model)
 
     def forward(self, input_ids, attention_mask, token_type_ids=None):
-        if token_type_ids is None:
-            token_type_ids = torch.zeros_like(input_ids)
+        if not self.use_transformer_forward:
+            if token_type_ids is None:
+                token_type_ids = torch.zeros_like(input_ids)
 
-        seq_length = input_ids.size(1)
-        position_ids = torch.arange(
-            seq_length, dtype=torch.long, device=input_ids.device)
-        position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
+            seq_length = input_ids.size(1)
+            position_ids = torch.arange(
+                seq_length, dtype=torch.long, device=input_ids.device)
+            position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
 
-        extended_attention_mask = attention_mask.unsqueeze(
-            1).unsqueeze(2).float()
-        extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
-        head_mask = [None] * self.num_hidden_layers
+            extended_attention_mask = attention_mask.unsqueeze(
+                1).unsqueeze(2).float()
+            extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
+            head_mask = [None] * self.num_hidden_layers
 
-        embedding_output = self.embedding(
-            input_ids, position_ids=position_ids, token_type_ids=token_type_ids)
-        encoder_outputs = self.encoder(embedding_output,
-                                       extended_attention_mask,
-                                       head_mask=head_mask)
-        sequence_output = encoder_outputs[0]
+            embedding_output = self.embedding(
+                input_ids, position_ids=position_ids, token_type_ids=token_type_ids)
+            encoder_outputs = self.encoder(embedding_output,
+                                        extended_attention_mask,
+                                        head_mask=head_mask)
+            sequence_output = encoder_outputs[0]
 
-        return sequence_output
+            return sequence_output
+        else:
+            return self.model(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
     
     def reload_model(self, new_model):
         bert = AutoModel.from_pretrained(new_model)
@@ -710,7 +717,7 @@ class DiscreteVAE(nn.Module):
         max_q_len = args.max_q_len
 
         embedding = Embedding(huggingface_model, use_custom_embeddings=use_custom_embeddings)
-        contextualized_embedding = ContextualizedEmbedding(huggingface_model)
+        contextualized_embedding = ContextualizedEmbedding(huggingface_model, use_transformer_forward=args.use_transformer_forward)
         # freeze embedding
         for param in embedding.parameters():
             param.requires_grad = False
