@@ -714,8 +714,9 @@ class DiscreteVAE(nn.Module):
         # freeze embedding
         for param in embedding.parameters():
             param.requires_grad = False
-        for param in contextualized_embedding.parameters():
-            param.requires_grad = False
+        if args.freeze_context_model:
+            for param in contextualized_embedding.parameters():
+                param.requires_grad = False
 
         self.posterior_encoder = PosteriorEncoder(embedding, emsize,
                                                   enc_nhidden, enc_nlayers,
