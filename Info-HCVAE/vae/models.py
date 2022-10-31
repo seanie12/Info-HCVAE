@@ -68,11 +68,12 @@ class Embedding(nn.Module):
     def __init__(self, huggingface_model, use_custom_embeddings=True):
         super(Embedding, self).__init__()
         self.transformer_embeddings = AutoModel.from_pretrained(huggingface_model).embeddings
-        self.word_embeddings = self.transformer_embeddings.word_embeddings
-        self.token_type_embeddings = self.transformer_embeddings.token_type_embeddings
-        self.position_embeddings = self.transformer_embeddings.position_embeddings
-        self.LayerNorm = self.transformer_embeddings.LayerNorm
-        self.dropout = self.transformer_embeddings.dropout
+        if use_custom_embeddings:
+            self.word_embeddings = self.transformer_embeddings.word_embeddings
+            self.token_type_embeddings = self.transformer_embeddings.token_type_embeddings
+            self.position_embeddings = self.transformer_embeddings.position_embeddings
+            self.LayerNorm = self.transformer_embeddings.LayerNorm
+            self.dropout = self.transformer_embeddings.dropout
         self.use_custom_embeddings = use_custom_embeddings
 
     def forward(self, input_ids, token_type_ids=None, position_ids=None):
