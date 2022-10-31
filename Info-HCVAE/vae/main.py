@@ -95,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_custom_embeddings_impl", default="True", type=str, help="whether to use customized Embedding class")
     parser.add_argument("--load_saved_dataloader", default="False", type=str)
     parser.add_argument("--use_mine", default="False", type=str)
-    parser.add_argument("--freeze_context_model", default="False", type=str)
+    parser.add_argument("--freeze_context_model", default="True", type=str)
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
