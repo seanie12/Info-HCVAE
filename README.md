@@ -34,7 +34,7 @@ This code is written in Python. Dependencies include
 
 
 ## Download SQuAD 
-Download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing). It contains SQuAD training file(data/squad/train-v1.1.json) and our own dev/test split(data/squad/my_dev.json, data/squad/my_test.json). We preprocess it and convert to examples.pkl and features.pkl. Those pickle files are in data/pickle-file folder. If you want to download the original data, run the following commands
+Download data from [here](https://drive.google.com/file/d/1FKqjEQ1AEnKI5xfVA8zFTwcLJgQ8pMoq/view?usp=sharing). It contains SQuAD training file(data/squad/train-v1.1.json) and our own dev/test split(data/squad/my_dev.json, data/squad/my_test.json). We preprocess it and convert to examples.pkl and features.pkl. Those pickle files are in data/pickle-file folder. If you want to download the original data, run the following commands
 
 ```bash
 mkdir squad
@@ -72,7 +72,7 @@ python main.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_rat
 ## Synthetic QA pairs
 
 <!---
-Download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and uncompress it under the root directory. The folder data/harv_synthetic_data_qae contains generated QA pairs from Harvesting QA dataset without any filtering. Another folder data/harv_synthetic_data_semi contains the same generated QA pairs but with postprocessing. We replace the generated answer with pretrained BERT QA model if its F1 is lower than the threshold.
+Download data from [here](https://drive.google.com/file/d/1FKqjEQ1AEnKI5xfVA8zFTwcLJgQ8pMoq/view?usp=sharing) and uncompress it under the root directory. The folder data/harv_synthetic_data_qae contains generated QA pairs from Harvesting QA dataset without any filtering. Another folder data/harv_synthetic_data_semi contains the same generated QA pairs but with postprocessing. We replace the generated answer with pretrained BERT QA model if its F1 is lower than the threshold.
 -->
 
 Download data from [here](https://drive.google.com/file/d/1FKqjEQ1AEnKI5xfVA8zFTwcLJgQ8pMoq/view?usp=sharing) and uncompress it under the root directory. The folder data/harv_synthetic_data_qae contains generated QA pairs from Harvesting QA dataset without any filtering. Another folder data/harv_synthetic_data_semi contains the same generated QA pairs but with postprocessing. We replace the generated answer with pretrained BERT QA model if its F1 is lower than the threshold.
