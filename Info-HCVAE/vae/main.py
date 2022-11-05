@@ -5,7 +5,7 @@ import random
 import numpy as np
 import torch
 from tqdm import tqdm, trange
-from transformers import AutoTokenizer
+from transformers import BertTokenizer
 
 from eval import eval_vae
 from trainer import VAETrainer
@@ -13,7 +13,7 @@ from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
 
 
 def main(args):
-    tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
+    tokenizer = BertTokenizer.from_pretrained(args.huggingface_model)
     train_loader = None
     eval_data = None
     

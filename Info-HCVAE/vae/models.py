@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch_scatter import scatter_max
-from transformers import AutoModel, AutoTokenizer
+from transformers import BertModel, BertTokenizer
 from mine.models.mine import MutualInformationEstimator
 
 
@@ -67,7 +67,7 @@ class GaussianKLLoss(nn.Module):
 class Embedding(nn.Module):
     def __init__(self, huggingface_model, use_custom_embeddings=True):
         super(Embedding, self).__init__()
-        self.transformer_embeddings = AutoModel.from_pretrained(huggingface_model).embeddings
+        self.transformer_embeddings = BertModel.from_pretrained(huggingface_model).embeddings
         if use_custom_embeddings:
             self.word_embeddings = self.transformer_embeddings.word_embeddings
             self.token_type_embeddings = self.transformer_embeddings.token_type_embeddings
@@ -108,12 +108,12 @@ class ContextualizedEmbedding(nn.Module):
         super(ContextualizedEmbedding, self).__init__()
         self.use_transformer_forward = use_transformer_forward
         if not use_transformer_forward:
-            bert = AutoModel.from_pretrained(huggingface_model)
+            bert = BertModel.from_pretrained(huggingface_model)
             self.embedding = bert.embeddings
             self.encoder = bert.encoder
             self.num_hidden_layers = bert.config.num_hidden_layers
         else:
-            self.model = AutoModel.from_pretrained(huggingface_model)
+            self.model = BertModel.from_pretrained(huggingface_model)
 
     def forward(self, input_ids, attention_mask, token_type_ids=None):
         if not self.use_transformer_forward:
@@ -142,7 +142,7 @@ class ContextualizedEmbedding(nn.Module):
             return self.model(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
     
     def reload_model(self, new_model):
-        bert = AutoModel.from_pretrained(new_model)
+        bert = BertModel.from_pretrained(new_model)
         self.embedding = bert.embeddings
         self.encoder = bert.encoder
         self.num_hidden_layers = bert.config.num_hidden_layers
@@ -680,13 +680,13 @@ class QuestionDecoder(nn.Module):
 class DiscreteVAE(nn.Module):
     def __init__(self, args, state_dict=None, vietnamese_mode=False, vietnamese_model='vinai/phobert-base', use_custom_embeddings=False):
         super(DiscreteVAE, self).__init__()
-        tokenizer = AutoTokenizer.from_pretrained(args.huggingface_model)
+        tokenizer = BertTokenizer.from_pretrained(args.huggingface_model)
         padding_idx = -1
         sos_id = -1
         eos_id = -1
         ntokens = -1
         if vietnamese_mode:
-            tokenizer = AutoTokenizer.from_pretrained(vietnamese_model)
+            tokenizer = BertTokenizer.from_pretrained(vietnamese_model)
             padding_idx = tokenizer.encoder['<pad>']
             sos_id = tokenizer.encoder['<s>']
             eos_id = tokenizer.encoder['</s>']
