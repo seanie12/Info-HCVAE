@@ -41,21 +41,31 @@ def main(args):
 
     print("MODEL DIR: " + args.model_dir)
 
+    num_samples_limit = 1000000000
+    if args.is_test_run:
+        num_samples_limit = 2000
+
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         if epoch+1 < args.resume_epochs:
             continue
+        cnt_samples = 0
         for batch in tqdm(train_loader, desc="Train iter (epoch {:02d})".format(epoch + 1), leave=False, position=1):
             c_ids, q_ids, a_ids, start_positions, end_positions \
                 = batch_to_device(batch, args.device)
             trainer.train(c_ids, q_ids, a_ids, start_positions, end_positions)
-            
+
             str1 = 'Q REC : {:06.4f} A REC : {:06.4f}'
             str2 = 'ZQ KL : {:06.4f} ZA KL : {:06.4f} INFO : {:06.4f}'
             str1 = str1.format(float(trainer.loss_q_rec), float(trainer.loss_a_rec))
             str2 = str2.format(float(trainer.loss_zq_kl), float(trainer.loss_za_kl), float(trainer.loss_info))
             loss_log1.set_description_str(str1)
             loss_log2.set_description_str(str2)
+
+            cnt_samples += c_ids.shape[0] # add batch dimension to get number of samples
+            if cnt_samples >= num_samples_limit:
+                # stop training if over the num of training samples limit
+                break
 
         if (epoch + 1) % args.eval_freq == 0:
             metric_dict, bleu, _ = eval_vae(epoch, args, trainer, eval_data)
@@ -96,12 +106,14 @@ if __name__ == "__main__":
     parser.add_argument("--load_saved_dataloader", default="False", type=str)
     parser.add_argument("--use_mine", default="False", type=str)
     parser.add_argument("--use_transformer_forward", default="False", type=str)
+    parser.add_argument("--use_mmd", default="False", type=str)
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=20, type=int)
     parser.add_argument("--resume_epochs", default=1, type=int)
+    parser.add_argument("--is_test_run", default="False", type=str)
     parser.add_argument("--prev_best_bleu", default=0.0, type=float)
     parser.add_argument("--prev_best_f1", default=0.0, type=float)
     parser.add_argument("--save_freq", default=2, type=int, help="Model saving should be executed after how many epochs?")
@@ -124,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument('--nzqdim', type=int, default=50)
     parser.add_argument('--nza', type=int, default=20)
     parser.add_argument('--nzadim', type=int, default=10)
-    parser.add_argument('--lambda_kl', type=float, default=0.75)
+    parser.add_argument('--lambda_kl', type=float, default=0.8)
     parser.add_argument('--lambda_info', type=float, default=1.0)
 
     args = parser.parse_args()
@@ -136,6 +148,8 @@ if __name__ == "__main__":
     args.use_custom_embeddings_impl = True if args.use_custom_embeddings_impl == "True" else False
     args.load_saved_dataloader = True if args.load_saved_dataloader == "True" else False
     args.use_mine = True if args.use_mine == "True" else False
+    args.use_mmd = True if args.use_mmd == "True" else False
+    args.is_test_run = True if args.is_test_run == "True" else False
     args.use_transformer_forward = True if args.use_transformer_forward == "True" else False
 
     # set model dir

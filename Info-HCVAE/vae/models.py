@@ -8,6 +8,26 @@ from transformers import BertModel, BertTokenizer
 from mine.models.mine import MutualInformationEstimator
 
 
+# Define MMD loss
+def compute_kernel(x, y):
+    x_size = x.size(0)
+    y_size = y.size(0)
+    dim = x.size(1)
+    x = x.unsqueeze(1) # (x_size, 1, dim)
+    y = y.unsqueeze(0) # (1, y_size, dim)
+    tiled_x = x.expand(x_size, y_size, dim)
+    tiled_y = y.expand(x_size, y_size, dim)
+    kernel_input = (tiled_x - tiled_y).pow(2).mean(2)/float(dim)
+    return torch.exp(-kernel_input) # (x_size, y_size)
+
+def compute_mmd(x, y):
+    x_kernel = compute_kernel(x, x)
+    y_kernel = compute_kernel(y, y)
+    xy_kernel = compute_kernel(x, y)
+    mmd = x_kernel.mean() + y_kernel.mean() - 2*xy_kernel.mean()
+    return mmd
+
+
 def return_mask_lengths(ids):
     mask = torch.sign(ids).float()
     lengths = torch.sum(mask, 1)
@@ -715,6 +735,7 @@ class DiscreteVAE(nn.Module):
         self.nzqdim = nzqdim = args.nzqdim
         self.nza = nza = args.nza
         self.nzadim = nzadim = args.nzadim
+        self.use_mmd = args.use_mmd
 
         self.lambda_kl = args.lambda_kl
         self.lambda_info = args.lambda_info
@@ -783,8 +804,8 @@ class DiscreteVAE(nn.Module):
             posterior_za_prob, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, _, \
-            prior_za_prob, _ \
+        prior_zq_mu, prior_zq_logvar, prior_zq, \
+            prior_za_prob, prior_za \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -810,22 +831,27 @@ class DiscreteVAE(nn.Module):
         loss_a_rec = 0.5 * (loss_start_a_rec + loss_end_a_rec)
 
         # kl loss
-        loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu,
+        loss_zq, loss_za = 0, 0
+        if not self.use_mmd:
+            loss_zq = self.gaussian_kl_criterion(posterior_zq_mu,
                                                 posterior_zq_logvar,
                                                 prior_zq_mu,
                                                 prior_zq_logvar)
 
-        loss_za_kl = self.categorical_kl_criterion(posterior_za_prob,
-                                                   prior_za_prob)
+            loss_za = self.categorical_kl_criterion(posterior_za_prob,
+                                                    prior_za_prob)
+        else:
+            loss_zq = compute_mmd(posterior_zq, prior_zq)
+            loss_za = compute_mmd(posterior_za, prior_za)
 
-        loss_kl = self.lambda_kl * (loss_zq_kl + loss_za_kl)
+        loss_kl = self.lambda_kl * (loss_zq + loss_za)
         loss_info = self.lambda_info * loss_info
 
         loss = loss_q_rec + loss_a_rec + loss_kl + loss_info
 
         return loss, \
             loss_q_rec, loss_a_rec, \
-            loss_zq_kl, loss_za_kl, \
+            loss_zq, loss_za, \
             loss_info
 
     def generate(self, zq, za, c_ids):
