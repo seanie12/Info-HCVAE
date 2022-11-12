@@ -70,29 +70,34 @@ def main(args):
     vae.load_state_dict(checkpoint["state_dict"])
     vae.eval()
     vae = vae.to(device)
-    
-    # Add shuffling functionality if wanting to use a small percentage of data correctly
-    if args.squad:
-        examples = read_squad_examples(args.data_file, is_training=True, debug=args.debug)
-        features = convert_examples_to_harv_features(examples,
-                                                     tokenizer=tokenizer,
-                                                     max_seq_length=args.max_c_len,
-                                                     max_query_length=args.max_q_len,
-                                                     doc_stride=128,
-                                                     is_training=True)
-    else:
-        examples = read_examples(args.data_file, is_training=True, debug=args.debug)
-        features = convert_examples_to_harv_features(examples,
-                                                     tokenizer=tokenizer,
-                                                     max_seq_length=args.max_c_len,
-                                                     max_query_length=args.max_q_len,
-                                                     doc_stride=128,
-                                                     is_training=True)
 
-    features = features[:int(len(features) * args.ratio)]
-    all_c_ids = torch.tensor([f.c_ids for f in features][:int(args.data_ratio*len(features))], dtype=torch.long)
-    data = TensorDataset(all_c_ids)
-    data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
+    data_loader = None
+    if not args.load_saved_dataloader:
+        # Add shuffling functionality if wanting to use a small percentage of data correctly
+        if args.squad:
+            examples = read_squad_examples(args.data_file, is_training=True, debug=args.debug)
+            features = convert_examples_to_harv_features(examples,
+                                                        tokenizer=tokenizer,
+                                                        max_seq_length=args.max_c_len,
+                                                        max_query_length=args.max_q_len,
+                                                        doc_stride=128,
+                                                        is_training=True)
+        else:
+            examples = read_examples(args.data_file, is_training=True, debug=args.debug)
+            features = convert_examples_to_harv_features(examples,
+                                                        tokenizer=tokenizer,
+                                                        max_seq_length=args.max_c_len,
+                                                        max_query_length=args.max_q_len,
+                                                        doc_stride=128,
+                                                        is_training=True)
+
+        features = features[:int(len(features) * args.ratio)]
+        all_c_ids = torch.tensor([f.c_ids for f in features][:int(args.data_ratio*len(features))], dtype=torch.long)
+        data = TensorDataset(all_c_ids)
+        data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
+        torch.save(data_loader, os.path.join(args.dataloader_dir, "gen_loader.pt"))
+    else:
+        data_loader = torch.load(os.path.join(args.dataloader_dir, "gen_loader.pt"))
 
     
     
@@ -168,6 +173,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument('--squad', dest='squad', action='store_true', help="whether to generate QA from SQuAD context")
+    parser.add_argument("--load_saved_dataloader", default="False", type=str)
 
     parser.add_argument("--seed", default=1004, type=int)
     parser.add_argument("--huggingface_model", default='bert-base-uncased', type=str)
@@ -180,10 +186,20 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", default="../save/vae-checkpoint/best_f1_model.pt", type=str, help="checkpoint for vae model")
     parser.add_argument("--output_file", default="../data/synthetic_data/1.0_squad_10x_features.pkl", type=str)
     parser.add_argument("--out_qa_json", default="../data/generated_qas.json", type=str)
+    parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
 
     parser.add_argument("--data_ratio", default=1.0, type=float, help="how many percentage of the number of paragraphs are considered for generation")
     parser.add_argument("--ratio", default=1.0, type=float)
     parser.add_argument("--k", default=10, type=int, help="the number of QA pairs for each paragraph")
 
     args = parser.parse_args()
+
+    args.load_saved_dataloader = True if args.load_saved_dataloader == "True" else False
+
+    # set dataloader dir
+    if not args.load_saved_dataloader:
+        dataloader_dir = args.dataloader_dir
+        os.makedirs(dataloader_dir, exist_ok=True)
+        args.dataloader_dir = os.path.abspath(dataloader_dir)
+
     main(args)
