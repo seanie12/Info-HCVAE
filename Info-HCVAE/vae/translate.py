@@ -17,7 +17,7 @@ def return_mask_lengths(ids):
     return mask, lengths
 
 
-def post_process(q_ids, start_positions, end_positions, c_ids, total_max_len=384):
+def post_process(q_ids, start_positions, end_positions, c_ids, total_max_len=512):
     """
        concatenate question and context for BERT QA model:
        [CLS] Question [SEP] Context [SEP]
