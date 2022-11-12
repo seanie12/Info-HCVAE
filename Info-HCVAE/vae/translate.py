@@ -66,9 +66,8 @@ def main(args):
 
     device = torch.cuda.current_device()
     checkpoint = torch.load(args.checkpoint, map_location="cpu")
-    vae = DiscreteVAE(checkpoint["args"], state_dict=checkpoint["state_dict"], vietnamese_mode=args.vietnamese,
-                    vietnamese_model=args.huggingface_model, use_custom_embeddings=False)
-    # vae.load_state_dict(checkpoint["state_dict"])
+    vae = DiscreteVAE(checkpoint["args"], use_custom_embeddings=checkpoint["args"].use_custom_embeddings_impl)
+    vae.load_state_dict(checkpoint["state_dict"])
     vae.eval()
     vae = vae.to(device)
     
