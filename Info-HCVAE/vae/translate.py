@@ -1,5 +1,6 @@
 import argparse
 import pickle
+import math
 
 import torch
 from transformers import AutoTokenizer
@@ -106,7 +107,19 @@ def main(args):
     if args.out_qa_json is not None:
         qa_text = dict({"data": []})
 
+    num_steps_to_run = math.ceil(args.percent_of_runs * len(data_loader))
+    print("Num steps to run: {:d}".format(num_steps_to_run))
+    step = 0
     for batch in tqdm(data_loader, total=len(data_loader)):
+        step += 1
+        if step < args.resume_steps:
+            continue
+
+        if num_steps_to_run == 0:
+            break
+
+        num_steps_to_run = num_steps_to_run - 1
+
         c_ids = batch[0]
         _, c_len = return_mask_lengths(c_ids)
         max_c_len = torch.max(c_len)
@@ -161,12 +174,13 @@ def main(args):
         pickle.dump(new_features, f)
 
     ## For outputting text
-    import json
-    dir_name = os.path.dirname(args.out_qa_json)
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    with open(args.out_qa_json, "wt") as f:
-        json.dump(qa_text, f, indent=4)
+    if args.output_text:
+        import json
+        dir_name = os.path.dirname(args.out_qa_json)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        with open(args.out_qa_json, "wt") as f:
+            json.dump(qa_text, f, indent=4)
 
 
 if __name__ == "__main__":
@@ -174,11 +188,14 @@ if __name__ == "__main__":
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument('--squad', dest='squad', action='store_true', help="whether to generate QA from SQuAD context")
     parser.add_argument("--load_saved_dataloader", default="False", type=str)
+    parser.add_argument("--output_text", default="False", type=str)
 
     parser.add_argument("--seed", default=1004, type=int)
     parser.add_argument("--huggingface_model", default='bert-base-uncased', type=str)
+    parser.add_argument("--resume_steps", default=1, type=int, help="step to resume")
+    parser.add_argument("--percent_of_runs", default=1.0, type=float, help="how many percent of steps to run at one execution")
     parser.add_argument("--vietnamese", default=False, type=bool)
-    parser.add_argument("--max_c_len", default=384 - 64, type=int, help="max context length")
+    parser.add_argument("--max_c_len", default=512 - 64, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=0, type=int, help="max query length")
 
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
@@ -195,6 +212,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.load_saved_dataloader = True if args.load_saved_dataloader == "True" else False
+    args.output_text = True if args.output_text == "True" else False
 
     # set dataloader dir
     if not args.load_saved_dataloader:
