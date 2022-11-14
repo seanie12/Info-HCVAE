@@ -195,7 +195,7 @@ class Trainer(object):
                                 float(loss.item()))
                     print(msg, end="\r")
 
-                if (step + 1) % 5000 == 0:
+                if (step + 1) % 10000 == 0:
                     torch.save(self.model.state_dict(), os.path.join(self.args.model_save_path, "bert-qa-step-{:07d}-epoch-{:02d}.pt".format(step, epoch)))
 
                 if self.args.debug:
