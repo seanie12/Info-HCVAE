@@ -92,6 +92,7 @@ class CategoricalMMDLoss(nn.Module):
 
     def forward(self, posterior_za_logits, prior_za_logits):
         # input shape = (batch, dim1, dim2)
+        print(posterior_za_logits.shape)
         batch_size = posterior_za_logits.size(0)
         num_samples = 50
         # after .unsqueeze(1): (batch, dim1, dim2) -> (batch, 1, dim1, dim2)
@@ -112,7 +113,7 @@ class GaussianKernelMMDLoss(nn.Module):
         # (batch, dim) -> (batch, 1, dim) after .unsqueeze(1)
         posterior_zqs = posterior_mu.unsqueeze(1) + torch.randn_like(posterior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*posterior_logvar.unsqueeze(1))
         prior_zqs = prior_mu.unsqueeze(1) + torch.randn_like(prior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*prior_logvar.unsqueeze(1))
-        # result tensor shape = (batch, 200, dim)
+        # result tensor shape = (batch, num_samples, dim)
         return compute_mmd(prior_zqs.view(batch_size*num_samples, -1), posterior_zqs.view(batch_size*num_samples, -1))
 
 
