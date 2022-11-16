@@ -95,7 +95,7 @@ class CategoricalMMDLoss(nn.Module):
         batch_size = posterior_za_logits.size(0)
         dim1 = posterior_za_logits.size(1)
         dim2 = posterior_za_logits.size(2)
-        num_samples = 50
+        num_samples = 25
         # after .unsqueeze(1): (batch, dim1, dim2) -> (batch, 1, dim1, dim2)
         posterior_zas = gumbel_softmax(posterior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, dim1, dim2), hard=True)
         prior_zas = gumbel_softmax(prior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, dim1, dim2), hard=True)
@@ -110,7 +110,7 @@ class GaussianKernelMMDLoss(nn.Module):
     def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar):
         # input shape = (batch, dim)
         batch_size = posterior_mu.size(0)
-        num_samples = 50
+        num_samples = 25
         # (batch, dim) -> (batch, 1, dim) after .unsqueeze(1)
         posterior_zqs = posterior_mu.unsqueeze(1) + torch.randn_like(posterior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*posterior_logvar.unsqueeze(1))
         prior_zqs = prior_mu.unsqueeze(1) + torch.randn_like(prior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*prior_logvar.unsqueeze(1))
