@@ -617,7 +617,7 @@ class QuestionDecoder(nn.Module):
 
             true_loss = bce_loss(true_logits, true_labels)
             fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
-            loss_info = 0.5 * (true_loss + fake_loss)
+            loss_info = true_loss + fake_loss
         else:
             # Maximize mutual info of real pair while minimize of fake pair
             loss_info = 0.5*self.mi_estimator(q_mean_emb, a_mean_emb)
@@ -886,7 +886,7 @@ class DiscreteVAE(nn.Module):
                                                     prior_za_logits)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
-        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
+        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + 100*loss_za_mmd) # ZA MMD is low
         loss_info = self.lambda_info * loss_info
 
         loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_info
