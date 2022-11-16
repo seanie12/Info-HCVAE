@@ -136,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument('--nza', type=int, default=20)
     parser.add_argument('--nzadim', type=int, default=10)
     parser.add_argument('--alpha_kl', type=float, default=0.0)
-    parser.add_argument('--lambda_mmd', type=float, default=500.0)
+    parser.add_argument('--lambda_mmd', type=float, default=2.0)
     parser.add_argument('--lambda_info', type=float, default=1.0)
 
     args = parser.parse_args()
