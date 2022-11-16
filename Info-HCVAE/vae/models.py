@@ -90,7 +90,7 @@ class CategoricalMMDLoss(nn.Module):
     def __init__(self):
         super(CategoricalMMDLoss, self).__init__()
 
-    def forward(self, posterior_za_logits, prior_za_logits, num_samples=10, num_runs=10):
+    def forward(self, posterior_za_logits, prior_za_logits, num_samples=10, num_runs=5):
         # input shape = (batch, dim1, dim2)
         batch_size = posterior_za_logits.size(0)
         dim1 = posterior_za_logits.size(1)
