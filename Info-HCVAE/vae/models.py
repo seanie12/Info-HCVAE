@@ -66,7 +66,9 @@ class CategoricalKLLoss(nn.Module):
     def __init__(self):
         super(CategoricalKLLoss, self).__init__()
 
-    def forward(self, P, Q):
+    def forward(self, P_logits, Q_logits):
+        P = F.softmax(P_logits, dim=-1)
+        Q = F.softmax(Q_logits, dim=-1)
         log_P = P.log()
         log_Q = Q.log()
         kl = (P * (log_P - log_Q)).sum(dim=-1).sum(dim=-1)
@@ -82,6 +84,34 @@ class GaussianKLLoss(nn.Module):
         fraction = torch.div(numerator, (logvar2.exp()))
         kl = 0.5 * torch.sum(logvar2 - logvar1 + fraction - 1, dim=1)
         return kl.mean(dim=0)
+
+
+class CategoricalMMDLoss(nn.Module):
+    def __init__(self):
+        super(CategoricalMMDLoss, self).__init__()
+
+    def forward(self, posterior_za_logits, prior_za_logits):
+        # input shape = (batch, dim1, dim2)
+        batch_size = posterior_za_logits.size(0)
+        # after .unsqueeze(1): (batch, dim1, dim2) -> (batch, 1, dim1, dim2)
+        posterior_zas = gumbel_softmax(posterior_za_logits.unsqueeze(1).repeat(1, 200, 1, 1).view(batch_size*200, -1), hard=True)
+        prior_zas = gumbel_softmax(prior_za_logits.unsqueeze(1).repeat(1, 200, 1, 1).view(batch_size*200, -1), hard=True)
+        return compute_mmd(prior_zas.view(-1, prior_zas.shape[1]*prior_zas.shape[2]),
+                            posterior_zas.view(-1, posterior_zas.shape[1]*posterior_zas.shape[2]))
+
+
+class GaussianKernelMMDLoss(nn.Module):
+    def __init__(self):
+        super(GaussianKernelMMDLoss, self).__init__()
+
+    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar):
+        # input shape = (batch, dim)
+        batch_size = posterior_mu.size(0)
+        # (batch, dim) -> (batch, 1, dim) after .unsqueeze(1)
+        posterior_zqs = posterior_mu.unsqueeze(1) + torch.randn_like(posterior_mu.unsqueeze(1).repeat(1, 200, 1))*torch.exp(0.5*posterior_logvar.unsqueeze(1))
+        prior_zqs = prior_mu.unsqueeze(1) + torch.randn_like(prior_mu.unsqueeze(1).repeat(1, 200, 1))*torch.exp(0.5*prior_logvar.unsqueeze(1))
+        # result tensor shape = (batch, 200, dim)
+        return compute_mmd(prior_zqs.view(batch_size*200, -1), posterior_zqs.view(batch_size*200, -1))
 
 
 class Embedding(nn.Module):
@@ -774,8 +804,12 @@ class DiscreteVAE(nn.Module):
         self.a_linear = nn.Linear(nza * nzadim, emsize, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
-        self.gaussian_kl_criterion = GaussianKLLoss()
-        self.categorical_kl_criterion = CategoricalKLLoss()
+        if not self.use_mmd:
+            self.question_distribution_criterion = GaussianKLLoss()
+            self.answer_distribution_criterion = CategoricalKLLoss()
+        else:
+            self.question_distribution_criterion = GaussianKernelMMDLoss()
+            self.answer_distribution_criterion = CategoricalMMDLoss()
 
         if state_dict is not None:
             self.load_state_dict(state_dict)
@@ -801,11 +835,11 @@ class DiscreteVAE(nn.Module):
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
 
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
-            posterior_za_prob, posterior_za \
+            posterior_za_logits, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_prob, prior_za \
+        prior_zq_mu, prior_zq_logvar, _, \
+            prior_za_logits, _ \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -832,18 +866,23 @@ class DiscreteVAE(nn.Module):
 
         # kl loss
         loss_zq, loss_za = 0, 0
-        if not self.use_mmd:
-            loss_zq = self.gaussian_kl_criterion(posterior_zq_mu,
-                                                posterior_zq_logvar,
-                                                prior_zq_mu,
-                                                prior_zq_logvar)
+        loss_zq = self.question_distribution_criterion(posterior_zq_mu, posterior_zq_logvar,
+                                                prior_zq_mu, prior_zq_logvar)
 
-            loss_za = self.categorical_kl_criterion(posterior_za_prob,
-                                                    prior_za_prob)
-        else:
-            loss_zq = compute_mmd(prior_zq, posterior_zq)
-            loss_za = compute_mmd(prior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]),
-                                    posterior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]))
+        loss_za = self.answer_distribution_criterion(posterior_za_logits,
+                                                    prior_za_logits)
+        # if not self.use_mmd:
+        #     loss_zq = self.question_distribution_criterion(posterior_zq_mu,
+        #                                         posterior_zq_logvar,
+        #                                         prior_zq_mu,
+        #                                         prior_zq_logvar)
+
+        #     loss_za = self.answer_distribution_criterion(posterior_za_prob,
+        #                                             prior_za_prob)
+        # else:
+        #     loss_zq = compute_mmd(prior_zq, posterior_zq)
+        #     loss_za = compute_mmd(prior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]),
+        #                             posterior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]))
 
         loss_kl = self.lambda_kl * (loss_zq + loss_za)
         loss_info = self.lambda_info * loss_info
