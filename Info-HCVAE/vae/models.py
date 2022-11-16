@@ -90,32 +90,36 @@ class CategoricalMMDLoss(nn.Module):
     def __init__(self):
         super(CategoricalMMDLoss, self).__init__()
 
-    def forward(self, posterior_za_logits, prior_za_logits):
+    def forward(self, posterior_za_logits, prior_za_logits, num_samples=10, num_runs=10):
         # input shape = (batch, dim1, dim2)
         batch_size = posterior_za_logits.size(0)
         dim1 = posterior_za_logits.size(1)
         dim2 = posterior_za_logits.size(2)
-        num_samples = 10
-        # after .unsqueeze(1): (batch, dim1, dim2) -> (batch, 1, dim1, dim2)
-        posterior_zas = gumbel_softmax(posterior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, dim1, dim2), hard=True)
-        prior_zas = gumbel_softmax(prior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, dim1, dim2), hard=True)
-        return compute_mmd(prior_zas.view(-1, prior_zas.shape[1]*prior_zas.shape[2]),
-                            posterior_zas.view(-1, posterior_zas.shape[1]*posterior_zas.shape[2]))
+        total_mmd = 0
+        for _ in range(num_runs):
+            # after .unsqueeze(1): (batch, dim1, dim2) -> (batch, 1, dim1, dim2)
+            posterior_zas = gumbel_softmax(posterior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, dim1, dim2), hard=True)
+            prior_zas = gumbel_softmax(prior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, dim1, dim2), hard=True)
+            total_mmd += compute_mmd(prior_zas.view(-1, prior_zas.shape[1]*prior_zas.shape[2]),
+                                posterior_zas.view(-1, posterior_zas.shape[1]*posterior_zas.shape[2]))
+        return total_mmd / num_runs
 
 
 class GaussianKernelMMDLoss(nn.Module):
     def __init__(self):
         super(GaussianKernelMMDLoss, self).__init__()
 
-    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar):
+    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar, num_samples=25, num_runs=10):
         # input shape = (batch, dim)
         batch_size = posterior_mu.size(0)
-        num_samples = 25
-        # (batch, dim) -> (batch, 1, dim) after .unsqueeze(1)
-        posterior_zqs = posterior_mu.unsqueeze(1) + torch.randn_like(posterior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*posterior_logvar.unsqueeze(1))
-        prior_zqs = prior_mu.unsqueeze(1) + torch.randn_like(prior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*prior_logvar.unsqueeze(1))
-        # result tensor shape = (batch, num_samples, dim)
-        return compute_mmd(prior_zqs.view(batch_size*num_samples, -1), posterior_zqs.view(batch_size*num_samples, -1))
+        total_mmd = 0
+        for _ in range(num_runs):
+            # (batch, dim) -> (batch, 1, dim) after .unsqueeze(1)
+            posterior_zqs = posterior_mu.unsqueeze(1) + torch.randn_like(posterior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*posterior_logvar.unsqueeze(1))
+            prior_zqs = prior_mu.unsqueeze(1) + torch.randn_like(prior_mu.unsqueeze(1).repeat(1, num_samples, 1))*torch.exp(0.5*prior_logvar.unsqueeze(1))
+            # result tensor shape = (batch, num_samples, dim)
+            total_mmd += compute_mmd(prior_zqs.view(batch_size*num_samples, -1), posterior_zqs.view(batch_size*num_samples, -1))
+        return total_mmd / num_runs
 
 
 class Embedding(nn.Module):
