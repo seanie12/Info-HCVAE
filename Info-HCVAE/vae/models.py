@@ -92,12 +92,12 @@ class CategoricalMMDLoss(nn.Module):
 
     def forward(self, posterior_za_logits, prior_za_logits):
         # input shape = (batch, dim1, dim2)
-        print(posterior_za_logits.shape)
         batch_size = posterior_za_logits.size(0)
         num_samples = 50
         # after .unsqueeze(1): (batch, dim1, dim2) -> (batch, 1, dim1, dim2)
         posterior_zas = gumbel_softmax(posterior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, -1), hard=True)
         prior_zas = gumbel_softmax(prior_za_logits.unsqueeze(1).repeat(1, num_samples, 1, 1).view(batch_size*num_samples, -1), hard=True)
+        print(prior_zas.shape)
         return compute_mmd(prior_zas.view(-1, prior_zas.shape[1]*prior_zas.shape[2]),
                             posterior_zas.view(-1, posterior_zas.shape[1]*posterior_zas.shape[2]))
 
