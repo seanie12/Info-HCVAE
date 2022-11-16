@@ -118,7 +118,7 @@ class GaussianKernelMMDLoss(nn.Module):
                 torch.randn_like(posterior_mu[idx].unsqueeze(0).repeat(num_samples, 1))*torch.exp(0.5*posterior_logvar[idx].unsqueeze(0))
             prior_zq = prior_mu[idx].unsqueeze(0) + \
                 torch.randn_like(prior_mu[idx].unsqueeze(0).repeat(num_samples, 1))*torch.exp(0.5*prior_logvar[idx].unsqueeze(0))
-            # result tensor shape = (batch, num_samples, dim)
+            # result tensor shape = (num_samples, dim)
             total_mmd += compute_mmd(prior_zq, posterior_zq)
         return total_mmd / batch_size
 
@@ -776,7 +776,8 @@ class DiscreteVAE(nn.Module):
         self.nzadim = nzadim = args.nzadim
         self.use_mmd = args.use_mmd
 
-        self.lambda_kl = args.lambda_kl
+        self.alpha_kl = args.alpha_kl
+        self.lambda_mmd = args.lambda_mmd
         self.lambda_info = args.lambda_info
 
         max_q_len = args.max_q_len
@@ -813,12 +814,11 @@ class DiscreteVAE(nn.Module):
         self.a_linear = nn.Linear(nza * nzadim, emsize, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
-        if not self.use_mmd:
-            self.question_distribution_criterion = GaussianKLLoss()
-            self.answer_distribution_criterion = CategoricalKLLoss()
-        else:
-            self.question_distribution_criterion = GaussianKernelMMDLoss()
-            self.answer_distribution_criterion = CategoricalMMDLoss()
+        self.question_kl_criterion = GaussianKLLoss()
+        self.answer_kl_criterion = CategoricalKLLoss()
+
+        self.question_mmd_criterion = GaussianKernelMMDLoss()
+        self.answer_mmd_criterion = CategoricalMMDLoss()
 
         if state_dict is not None:
             self.load_state_dict(state_dict)
@@ -874,33 +874,28 @@ class DiscreteVAE(nn.Module):
         loss_a_rec = 0.5 * (loss_start_a_rec + loss_end_a_rec)
 
         # kl loss
-        loss_zq, loss_za = 0, 0
-        loss_zq = self.question_distribution_criterion(posterior_zq_mu, posterior_zq_logvar,
+        loss_zq_kl = self.question_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
                                                 prior_zq_mu, prior_zq_logvar)
 
-        loss_za = self.answer_distribution_criterion(posterior_za_logits,
+        loss_za_kl = self.answer_kl_criterion(posterior_za_logits,
                                                     prior_za_logits)
-        # if not self.use_mmd:
-        #     loss_zq = self.question_distribution_criterion(posterior_zq_mu,
-        #                                         posterior_zq_logvar,
-        #                                         prior_zq_mu,
-        #                                         prior_zq_logvar)
 
-        #     loss_za = self.answer_distribution_criterion(posterior_za_prob,
-        #                                             prior_za_prob)
-        # else:
-        #     loss_zq = compute_mmd(prior_zq, posterior_zq)
-        #     loss_za = compute_mmd(prior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]),
-        #                             posterior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]))
+        loss_zq_mmd = self.question_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
+                                                prior_zq_mu, prior_zq_logvar)
 
-        loss_kl = self.lambda_kl * (loss_zq + loss_za)
+        loss_za_mmd = self.answer_mmd_criterion(posterior_za_logits,
+                                                    prior_za_logits)
+
+        loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
+        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
         loss_info = self.lambda_info * loss_info
 
-        loss = loss_q_rec + loss_a_rec + loss_kl + loss_info
+        loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_info
 
         return loss, \
             loss_q_rec, loss_a_rec, \
-            loss_zq, loss_za, \
+            loss_zq_kl, loss_za_kl, \
+            loss_zq_mmd, loss_za_mmd, \
             loss_info
 
     def generate(self, zq, za, c_ids):

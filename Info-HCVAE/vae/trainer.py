@@ -27,6 +27,7 @@ class VAETrainer(object):
         loss, \
         loss_q_rec, loss_a_rec, \
         loss_zq_kl, loss_za_kl, \
+        loss_zq_mmd, loss_za_mmd, \
         loss_info \
         = self.vae(c_ids, q_ids, a_ids, start_positions, end_positions)
 
@@ -41,6 +42,8 @@ class VAETrainer(object):
         self.loss_a_rec = loss_a_rec.item()
         self.loss_zq_kl = loss_zq_kl.item()
         self.loss_za_kl = loss_za_kl.item()
+        self.loss_zq_mmd = loss_zq_mmd.item()
+        self.loss_za_mmd = loss_za_mmd.item()
         self.loss_info = loss_info.item()
 
     def generate_posterior(self, c_ids, q_ids, a_ids):
