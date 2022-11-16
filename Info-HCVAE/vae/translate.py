@@ -141,7 +141,7 @@ def main(args):
                         qa_text["data"].append({"context": c_texts[idx], "question": q_text, "answer": ans_text})
 
                 all_input_ids, all_seg_ids, \
-                all_input_mask, all_start, all_end = post_process(batch_q_ids, batch_start, batch_end, c_ids)
+                all_input_mask, all_start, all_end = post_process(batch_q_ids, batch_start, batch_end, c_ids, total_max_len=args.max_c_len+64)
 
             for i in range(c_ids.size(0)):
                 new_features.append(
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume_steps", default=1, type=int, help="step to resume")
     parser.add_argument("--percent_of_runs", default=1.0, type=float, help="how many percent of steps to run at one execution")
     parser.add_argument("--vietnamese", default=False, type=bool)
-    parser.add_argument("--max_c_len", default=512 - 64, type=int, help="max context length")
+    parser.add_argument("--max_c_len", default=384 - 64, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=0, type=int, help="max query length")
 
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
