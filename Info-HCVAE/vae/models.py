@@ -90,7 +90,7 @@ class CategoricalMMDLoss(nn.Module):
     def __init__(self):
         super(CategoricalMMDLoss, self).__init__()
 
-    def forward(self, posterior_za_logits, prior_za_logits, num_samples=10, num_runs=10):
+    def forward(self, posterior_za_logits, prior_za_logits, num_samples=10, num_runs=2):
         # input shape = (batch, dim1, dim2)
         batch_size = posterior_za_logits.size(0)
         dim1 = posterior_za_logits.size(1)
@@ -109,7 +109,7 @@ class GaussianKernelMMDLoss(nn.Module):
     def __init__(self):
         super(GaussianKernelMMDLoss, self).__init__()
 
-    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar, num_samples=25, num_runs=10):
+    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar, num_samples=25, num_runs=2):
         # input shape = (batch, dim)
         batch_size = posterior_mu.size(0)
         total_mmd = 0
