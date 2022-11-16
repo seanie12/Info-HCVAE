@@ -774,7 +774,6 @@ class DiscreteVAE(nn.Module):
         self.nzqdim = nzqdim = args.nzqdim
         self.nza = nza = args.nza
         self.nzadim = nzadim = args.nzadim
-        self.use_mmd = args.use_mmd
 
         self.alpha_kl = args.alpha_kl
         self.lambda_mmd = args.lambda_mmd
