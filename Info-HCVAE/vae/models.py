@@ -841,9 +841,9 @@ class DiscreteVAE(nn.Module):
             loss_za = self.categorical_kl_criterion(posterior_za_prob,
                                                     prior_za_prob)
         else:
-            loss_zq = compute_mmd(posterior_zq, prior_zq)
-            loss_za = compute_mmd(posterior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]),
-                                prior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]))
+            loss_zq = compute_mmd(prior_zq, posterior_zq)
+            loss_za = compute_mmd(prior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]),
+                                    posterior_za.view(-1, posterior_za.shape[1]*posterior_za.shape[2]))
 
         loss_kl = self.lambda_kl * (loss_zq + loss_za)
         loss_info = self.lambda_info * loss_info
