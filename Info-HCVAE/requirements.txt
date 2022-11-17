@@ -9,3 +9,4 @@ torchvision
 scikit_learn==0.22.1
 pillow<7
 torch_scatter
+h5py

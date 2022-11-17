@@ -1,6 +1,7 @@
 import argparse
 import pickle
 import math
+import h5py
 
 import torch
 from transformers import AutoTokenizer
@@ -100,78 +101,93 @@ def main(args):
     else:
         data_loader = torch.load(os.path.join(args.dataloader_dir, "gen_loader.pt"))
 
-    
-    
-    new_features = []
-    qa_text = None
-    if args.out_qa_json is not None:
-        qa_text = dict({"data": []})
+    with h5py.File(args.output_file, "a") as fdata:
+        input_ids_set = fdata.create_dataset("qas/input_ids", (len(data_loader.dataset)*10, args.total_max_len),
+                                                            chunks=(100, args.total_max_len))
+        input_masks_set = fdata.create_dataset("qas/input_masks", (len(data_loader.dataset)*10, args.total_max_len),
+                                                            chunks=(100, args.total_max_len))
+        segment_ids_set = fdata.create_dataset("qas/segment_ids", (len(data_loader.dataset)*10, args.total_max_len),
+                                                            chunks=(100, args.total_max_len))
+        start_positions_set = fdata.create_dataset("qas/start_positions", (len(data_loader.dataset)*10,), chunks=(100000,))
+        end_positions_set = fdata.create_dataset("qas/end_positions", (len(data_loader.dataset)*10,), chunks=(100000,))
 
-    num_steps_to_run = math.ceil(args.percent_of_runs * len(data_loader))
-    print("Num steps to run: {:d}".format(num_steps_to_run))
-    step = 0
-    for batch in tqdm(data_loader, total=len(data_loader)):
-        step += 1
-        if step < args.resume_steps:
-            continue
+        # new_features = []
+        qa_text = None
+        if args.out_qa_json is not None:
+            qa_text = dict({"data": []})
 
-        if num_steps_to_run == 0:
-            break
+        num_steps_to_run = math.ceil(args.percent_of_runs * len(data_loader))
+        print("Num steps to run: {:d}".format(num_steps_to_run))
+        step = 0
+        qa_idx = 0
+        for batch in tqdm(data_loader, total=len(data_loader)):
+            step += 1
+            if step < args.resume_steps:
+                continue
 
-        num_steps_to_run = num_steps_to_run - 1
+            if num_steps_to_run == 0:
+                break
 
-        c_ids = batch[0]
-        _, c_len = return_mask_lengths(c_ids)
-        max_c_len = torch.max(c_len)
-        c_ids = c_ids[:, :max_c_len].to(device)
+            num_steps_to_run = num_steps_to_run - 1
 
-        c_texts = [args.tokenizer.decode(c_ids[idx]) for idx in range(c_ids.size(0))]
-        
-        # sample latent variable K times
-        for _ in range(args.k):
-            with torch.no_grad():
-                _, _, zq, _, za = vae.prior_encoder(c_ids)
-                batch_q_ids, batch_start, batch_end = vae.generate(zq, za, c_ids)
+            c_ids = batch[0]
+            _, c_len = return_mask_lengths(c_ids)
+            max_c_len = torch.max(c_len)
+            c_ids = c_ids[:, :max_c_len].to(device)
 
-                if args.out_qa_json is not None: # out QA text to json
-                    for idx in range(batch_q_ids.size(0)):
-                        q_ids, start_pos, end_pos = batch_q_ids[idx], batch_start[idx], batch_end[idx]
-                        q_text = args.tokenizer.decode(q_ids)
-                        ans_text = args.tokenizer.decode(c_ids[idx, start_pos:end_pos])
-                        qa_text["data"].append({"context": c_texts[idx], "question": q_text, "answer": ans_text})
+            c_texts = [args.tokenizer.decode(c_ids[idx]) for idx in range(c_ids.size(0))]
+            
+            # sample latent variable K times
+            for _ in range(args.k):
+                with torch.no_grad():
+                    _, _, zq, _, za = vae.prior_encoder(c_ids)
+                    batch_q_ids, batch_start, batch_end = vae.generate(zq, za, c_ids)
 
-                all_input_ids, all_seg_ids, \
-                all_input_mask, all_start, all_end = post_process(batch_q_ids, batch_start, batch_end, c_ids, total_max_len=args.max_c_len+64)
+                    if args.out_qa_json is not None: # out QA text to json
+                        for idx in range(batch_q_ids.size(0)):
+                            q_ids, start_pos, end_pos = batch_q_ids[idx], batch_start[idx], batch_end[idx]
+                            q_text = args.tokenizer.decode(q_ids)
+                            ans_text = args.tokenizer.decode(c_ids[idx, start_pos:end_pos])
+                            qa_text["data"].append({"context": c_texts[idx], "question": q_text, "answer": ans_text})
 
-            for i in range(c_ids.size(0)):
-                new_features.append(
-                    InputFeatures(
-                        unique_id=None,
-                        example_index=None,
-                        doc_span_index=None,
-                        tokens=None,
-                        token_to_orig_map=None,
-                        token_is_max_context=None,
-                        input_ids=all_input_ids[i].cpu().tolist(),
-                        input_mask=all_input_mask[i].cpu().tolist(),
-                        c_ids=None,
-                        context_tokens=None,
-                        q_ids=None,
-                        q_tokens=None,
-                        answer_text=None,
-                        tag_ids=None,
-                        segment_ids=all_seg_ids[i].cpu().tolist(),
-                        noq_start_position=None,
-                        noq_end_position=None,
-                        start_position=all_start[i].cpu().tolist(),
-                        end_position=all_end[i].cpu().tolist(),
-                        is_impossible=None))
+                    all_input_ids, all_seg_ids, \
+                    all_input_mask, all_start, all_end = post_process(batch_q_ids, batch_start, batch_end, c_ids, total_max_len=args.total_max_len)
 
-    dir_name = os.path.dirname(args.output_file)
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    with open(args.output_file, "wb") as f:
-        pickle.dump(new_features, f)
+                for i in range(c_ids.size(0)):
+                    input_ids_set[qa_idx, :] = all_input_ids[i]
+                    input_masks_set[qa_idx, :] = all_input_mask[i]
+                    segment_ids_set[qa_idx, :] = all_seg_ids[i]
+                    start_positions_set[qa_idx] = all_start[i]
+                    end_positions_set[qa_idx] = all_end[i]
+                    qa_idx += 1
+                    # new_features.append(
+                    #     InputFeatures(
+                    #         unique_id=None,
+                    #         example_index=None,
+                    #         doc_span_index=None,
+                    #         tokens=None,
+                    #         token_to_orig_map=None,
+                    #         token_is_max_context=None,
+                    #         input_ids=all_input_ids[i].cpu().tolist(),
+                    #         input_mask=all_input_mask[i].cpu().tolist(),
+                    #         c_ids=None,
+                    #         context_tokens=None,
+                    #         q_ids=None,
+                    #         q_tokens=None,
+                    #         answer_text=None,
+                    #         tag_ids=None,
+                    #         segment_ids=all_seg_ids[i].cpu().tolist(),
+                    #         noq_start_position=None,
+                    #         noq_end_position=None,
+                    #         start_position=all_start[i].cpu().tolist(),
+                    #         end_position=all_end[i].cpu().tolist(),
+                    #         is_impossible=None))
+
+    # dir_name = os.path.dirname(args.output_file)
+    # if not os.path.exists(dir_name):
+    #     os.makedirs(dir_name)
+    # with open(args.output_file, "wb") as f:
+    #     pickle.dump(new_features, f)
 
     ## For outputting text
     if args.output_text:
@@ -196,12 +212,13 @@ if __name__ == "__main__":
     parser.add_argument("--percent_of_runs", default=1.0, type=float, help="how many percent of steps to run at one execution")
     parser.add_argument("--vietnamese", default=False, type=bool)
     parser.add_argument("--max_c_len", default=384 - 64, type=int, help="max context length")
+    parser.add_argument("--total_max_len", default=384, type=int, help="total max length")
     parser.add_argument("--max_q_len", default=0, type=int, help="max query length")
 
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--data_file", default="../data/squad/train-v1.1.json", type=str)
     parser.add_argument("--checkpoint", default="../save/vae-checkpoint/best_f1_model.pt", type=str, help="checkpoint for vae model")
-    parser.add_argument("--output_file", default="../data/synthetic_data/1.0_squad_10x_features.pkl", type=str)
+    parser.add_argument("--output_file", default="../data/synthetic_data/1.0_squad_10x_features.h5", type=str)
     parser.add_argument("--out_qa_json", default="../data/generated_qas.json", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
 
