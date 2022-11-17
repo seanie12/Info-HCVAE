@@ -88,6 +88,10 @@ def main(args):
             _str = _str.format(best_bleu, best_em, best_f1)
             best_eval_log.set_description_str(_str)
 
+            with open(os.path.join(args.model_dir, "metrics.json"), "wt") as f:
+                import json
+                json.dump({"best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1}, f, indent=4)
+
         if (epoch + 1) % args.save_freq == 0:
             trainer.save(os.path.join(args.save_by_epoch_dir, "model-epoch-{:02d}.pt".format(epoch + 1)))
 
