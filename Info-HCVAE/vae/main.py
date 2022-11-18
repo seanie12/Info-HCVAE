@@ -55,8 +55,8 @@ def main(args):
                 = batch_to_device(batch, args.device)
             trainer.train(c_ids, q_ids, a_ids, start_positions, end_positions)
 
-            str1 = 'Q REC : {:06.4f} A REC : {:06.4f}'
-            str2 = 'ZQ KL : {:06.4f} ZA KL : {:06.4f} ZQ MMD : {:06.4f} ZA MMD : {:06.4f} INFO : {:06.4f}'
+            str1 = 'Q REC : {:.6f} A REC : {:.6f}'
+            str2 = 'ZQ KL : {:.6f} ZA KL : {:.6f} ZQ MMD : {:.6f} ZA MMD : {:.6f} INFO : {:.6f}'
             str1 = str1.format(float(trainer.loss_q_rec), float(trainer.loss_a_rec))
             str2 = str2.format(float(trainer.loss_zq_kl), float(trainer.loss_za_kl), float(trainer.loss_zq_mmd), float(trainer.loss_za_mmd), float(trainer.loss_info))
             loss_log1.set_description_str(str1)
@@ -139,8 +139,9 @@ if __name__ == "__main__":
     parser.add_argument('--nzqdim', type=int, default=50)
     parser.add_argument('--nza', type=int, default=20)
     parser.add_argument('--nzadim', type=int, default=10)
-    parser.add_argument('--alpha_kl', type=float, default=0.9)
-    parser.add_argument('--lambda_mmd', type=float, default=2.0)
+    parser.add_argument('--w_ans', type=float, default=2.0)
+    parser.add_argument('--alpha_kl', type=float, default=0.0)
+    parser.add_argument('--lambda_mmd', type=float, default=3.0)
     parser.add_argument('--lambda_info', type=float, default=2.0)
 
     args = parser.parse_args()

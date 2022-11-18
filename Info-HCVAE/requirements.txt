@@ -6,7 +6,7 @@ numpy
 tqdm
 torch
 torchvision
-scikit_learn==0.22.1
-pillow<7
+scikit_learn
+pillow
 torch_scatter
 h5py

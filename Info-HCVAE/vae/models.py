@@ -775,6 +775,7 @@ class DiscreteVAE(nn.Module):
         self.nza = nza = args.nza
         self.nzadim = nzadim = args.nzadim
 
+        self.w_ans = args.w_ans
         self.alpha_kl = args.alpha_kl
         self.lambda_mmd = args.lambda_mmd
         self.lambda_info = args.lambda_info
@@ -876,17 +877,17 @@ class DiscreteVAE(nn.Module):
         loss_zq_kl = self.question_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
                                                 prior_zq_mu, prior_zq_logvar)
 
-        loss_za_kl = self.answer_kl_criterion(posterior_za_logits,
+        loss_za_kl = self.w_ans * self.answer_kl_criterion(posterior_za_logits,
                                                     prior_za_logits)
 
         loss_zq_mmd = self.question_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
                                                 prior_zq_mu, prior_zq_logvar)
 
-        loss_za_mmd = self.answer_mmd_criterion(posterior_za_logits,
+        loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits,
                                                     prior_za_logits)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
-        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd*10 + 100*loss_za_mmd) # ZA MMD is low
+        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
         loss_info = self.lambda_info * loss_info
 
         loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_info
@@ -894,7 +895,7 @@ class DiscreteVAE(nn.Module):
         return loss, \
             loss_q_rec, loss_a_rec, \
             loss_zq_kl, loss_za_kl, \
-            loss_zq_mmd*10, loss_za_mmd*100, \
+            loss_zq_mmd, loss_za_mmd, \
             loss_info
 
     def generate(self, zq, za, c_ids):
