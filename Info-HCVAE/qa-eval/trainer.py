@@ -157,6 +157,7 @@ class Trainer(object):
             # self.pretrain_sampler.set_epoch(epoch)
             start = time.time()
 
+            running_loss, epoch_loss = 0, 0
             # pretrain with unsupervised dataset
             for step, batch in enumerate(self.pretrain_loader, start=1):
                 if step <= self.args.resume_steps:
@@ -183,17 +184,21 @@ class Trainer(object):
                 loss = self.model(**inputs)[0]
                 loss.backward()
 
+                running_loss += loss.item()
+                epoch_loss += loss.item()
+
                 clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
                 self.optimizer.step()
                 self.scheduler.step()
                 self.model.zero_grad()
 
-                if self.args.rank == 0:
+                if step % 500 == 0: # self.args.rank == 0:
                     msg = "PRETRAIN {}/{} {} - ETA : {} - LOSS : {:.4f}".format(step,
                                 num_batches, progress_bar(step, num_batches),
                                 eta(start, step, num_batches),
-                                float(loss.item()))
+                                float(running_loss / 500))
                     print(msg, end="\r")
+                    running_loss = 0
 
                 if (step + 1) % 10000 == 0:
                     torch.save(self.model.state_dict(), os.path.join(self.args.model_save_path, "bert-qa-step-{:07d}-epoch-{:02d}.pt".format(step, epoch)))
@@ -201,13 +206,13 @@ class Trainer(object):
                 if self.args.debug:
                     break
 
-            # save model
-            if self.args.rank == 0:
-                result_dict = self.evaluate_model(msg)
-                em = result_dict["exact_match"]
-                f1 = result_dict["f1"]
-                print("\nPRETRAIN took {} DEV - F1: {:.4f}, EM: {:.4f}\n"
-                      .format(user_friendly_time(time_since(start)), f1, em))
+            # print log & save model
+            # if self.args.rank == 0:
+            result_dict = self.evaluate_model(msg)
+            em = result_dict["exact_match"]
+            f1 = result_dict["f1"]
+            print("\nPRETRAIN took {} LOSS = {:.4f} / DEV - F1: {:.4f}, EM: {:.4f}\n"
+                    .format(user_friendly_time(time_since(start)), epoch_loss / len(self.pretrain_loader), f1, em))
 
             torch.save(self.model.state_dict(), os.path.join(self.args.model_save_path, "bert-qa-epoch-{:02d}.pt".format(epoch)))
 

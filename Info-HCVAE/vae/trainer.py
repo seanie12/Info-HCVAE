@@ -14,11 +14,15 @@ class VAETrainer(object):
         params = filter(lambda p: p.requires_grad, self.vae.parameters())
         self.optimizer = torch.optim.Adam(params, lr=args.lr)
 
+        self.total_loss = 0
         self.loss_q_rec = 0
         self.loss_a_rec = 0
         self.loss_zq_kl = 0
         self.loss_za_kl = 0
+        self.loss_zq_mmd = 0
+        self.loss_za_mmd = 0
         self.loss_info = 0
+        self.cnt_steps = 0
 
     def train(self, c_ids, q_ids, a_ids, start_positions, end_positions):
         self.vae = self.vae.train()
@@ -38,13 +42,37 @@ class VAETrainer(object):
         # Step
         self.optimizer.step()
 
-        self.loss_q_rec = loss_q_rec.item()
-        self.loss_a_rec = loss_a_rec.item()
-        self.loss_zq_kl = loss_zq_kl.item()
-        self.loss_za_kl = loss_za_kl.item()
-        self.loss_zq_mmd = loss_zq_mmd.item()
-        self.loss_za_mmd = loss_za_mmd.item()
-        self.loss_info = loss_info.item()
+        self.total_loss += loss.item()
+        self.loss_q_rec += loss_q_rec.item()
+        self.loss_a_rec += loss_a_rec.item()
+        self.loss_zq_kl += loss_zq_kl.item()
+        self.loss_za_kl += loss_za_kl.item()
+        self.loss_zq_mmd += loss_zq_mmd.item()
+        self.loss_za_mmd += loss_za_mmd.item()
+        self.loss_info += loss_info.item()
+
+        self.cnt_steps += 1
+        if self.cnt_steps % 100 == 0:
+            log_str = "Step={:d} - AVG LOSS={:.6f} (q_rec={:.6f}, a_rec={:.6f}, zq_kl={:.6f}, za_kl={:.6f}, zq_mmd={:.6f}, \
+                za_mmd={:.6f}, info={:.6f})"
+            log_str = log_str.format(self.cnt_steps, float(self.total_loss / 100), float(self.loss_q_rec / 100),
+                        float(self.loss_a_rec / 100), float(self.loss_zq_kl / 100), float(self.loss_za_kl / 100),
+                        float(self.loss_zq_mmd / 100), float(self.loss_za_mmd / 100), float(self.loss_info / 100))
+            print(log_str)
+            self._reset_loss_values()
+
+    def _reset_loss_values(self):
+        self.total_loss = 0
+        self.loss_q_rec = 0
+        self.loss_a_rec = 0
+        self.loss_zq_kl = 0
+        self.loss_za_kl = 0
+        self.loss_zq_mmd = 0
+        self.loss_za_mmd = 0
+        self.loss_info = 0
+
+    def reset_cnt_steps(self):
+        self.cnt_steps = 0
 
     def generate_posterior(self, c_ids, q_ids, a_ids):
         self.vae = self.vae.eval()

@@ -34,10 +34,10 @@ def main(args):
     if args.checkpoint_file is not None:
         trainer.load_model_state_dict(args.checkpoint_file)
 
-    loss_log1 = tqdm(total=0, bar_format='{desc}', position=2)
-    loss_log2 = tqdm(total=0, bar_format='{desc}', position=3)
-    eval_log = tqdm(total=0, bar_format='{desc}', position=5)
-    best_eval_log = tqdm(total=0, bar_format='{desc}', position=6)
+    # loss_log1 = tqdm(total=0, bar_format='{desc}', position=2)
+    # loss_log2 = tqdm(total=0, bar_format='{desc}', position=3)
+    # eval_log = tqdm(total=0, bar_format='{desc}', position=5)
+    # best_eval_log = tqdm(total=0, bar_format='{desc}', position=6)
 
     print("MODEL DIR: " + args.model_dir)
 
@@ -49,18 +49,20 @@ def main(args):
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         if epoch+1 < args.resume_epochs:
             continue
+
+        trainer.reset_cnt_steps()
         cnt_samples = 0
         for batch in tqdm(train_loader, desc="Train iter (epoch {:02d})".format(epoch + 1), leave=False, position=1):
             c_ids, q_ids, a_ids, start_positions, end_positions \
                 = batch_to_device(batch, args.device)
             trainer.train(c_ids, q_ids, a_ids, start_positions, end_positions)
 
-            str1 = 'Q REC : {:.6f} A REC : {:.6f}'
-            str2 = 'ZQ KL : {:.6f} ZA KL : {:.6f} ZQ MMD : {:.6f} ZA MMD : {:.6f} INFO : {:.6f}'
-            str1 = str1.format(float(trainer.loss_q_rec), float(trainer.loss_a_rec))
-            str2 = str2.format(float(trainer.loss_zq_kl), float(trainer.loss_za_kl), float(trainer.loss_zq_mmd), float(trainer.loss_za_mmd), float(trainer.loss_info))
-            loss_log1.set_description_str(str1)
-            loss_log2.set_description_str(str2)
+            # str1 = 'Q REC : {:.6f} A REC : {:.6f}'
+            # str2 = 'ZQ KL : {:.6f} ZA KL : {:.6f} ZQ MMD : {:.6f} ZA MMD : {:.6f} INFO : {:.6f}'
+            # str1 = str1.format(float(trainer.loss_q_rec), float(trainer.loss_a_rec))
+            # str2 = str2.format(float(trainer.loss_zq_kl), float(trainer.loss_za_kl), float(trainer.loss_zq_mmd), float(trainer.loss_za_mmd), float(trainer.loss_info))
+            # loss_log1.set_description_str(str1)
+            # loss_log2.set_description_str(str2)
 
             cnt_samples += c_ids.shape[0] # add batch dimension to get number of samples
             if cnt_samples >= num_samples_limit:
@@ -72,9 +74,9 @@ def main(args):
             f1 = metric_dict["f1"]
             em = metric_dict["exact_match"]
             bleu = bleu * 100
-            _str = '{}-th Epochs BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
-            _str = _str.format(epoch, bleu, em, f1)
-            eval_log.set_description_str(_str)
+            log_str = '{}-th Epochs BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
+            log_str = log_str.format(epoch, bleu, em, f1)
+            print(log_str)
             if em > best_em:
                 best_em = em
             if f1 > best_f1:
@@ -84,9 +86,9 @@ def main(args):
                 best_bleu = bleu
                 trainer.save(os.path.join(args.best_model_dir, "best_bleu_model.pt"))
 
-            _str = 'BEST BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
-            _str = _str.format(best_bleu, best_em, best_f1)
-            best_eval_log.set_description_str(_str)
+            log_str = 'BEST BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
+            log_str = log_str.format(best_bleu, best_em, best_f1)
+            print(log_str)
 
             with open(os.path.join(args.model_dir, "metrics.json"), "wt") as f:
                 import json
