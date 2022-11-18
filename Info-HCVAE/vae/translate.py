@@ -154,11 +154,11 @@ def main(args):
                     all_input_mask, all_start, all_end = post_process(batch_q_ids, batch_start, batch_end, c_ids, total_max_len=args.total_max_len)
 
                 for i in range(c_ids.size(0)):
-                    input_ids_set[qa_idx, :] = all_input_ids[i]
-                    input_masks_set[qa_idx, :] = all_input_mask[i]
-                    segment_ids_set[qa_idx, :] = all_seg_ids[i]
-                    start_positions_set[qa_idx] = all_start[i]
-                    end_positions_set[qa_idx] = all_end[i]
+                    input_ids_set[qa_idx, :] = all_input_ids[i].cpu()
+                    input_masks_set[qa_idx, :] = all_input_mask[i].cpu()
+                    segment_ids_set[qa_idx, :] = all_seg_ids[i].cpu()
+                    start_positions_set[qa_idx] = all_start[i].cpu()
+                    end_positions_set[qa_idx] = all_end[i].cpu()
                     qa_idx += 1
                     # new_features.append(
                     #     InputFeatures(
