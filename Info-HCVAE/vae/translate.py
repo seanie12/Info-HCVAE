@@ -42,6 +42,7 @@ def post_process(q_ids, start_positions, end_positions, c_ids, total_max_len=512
         c = c_ids[i, :c_length]  # exclude pad tokens
 
         # input ids
+        print("{:d} {:d} {:d}".format(total_max_len, q_length, c_length))
         pads = torch.zeros((total_max_len - q_length - c_length), device=q_ids.device, dtype=torch.long)
         input_ids = torch.cat([q, c, pads], dim=0)
         all_input_ids.append(input_ids)
