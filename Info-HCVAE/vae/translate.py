@@ -108,8 +108,8 @@ def main(args):
                                                             chunks=(100, args.total_max_len))
         segment_ids_set = fdata.create_dataset("qas/segment_ids", (len(data_loader.dataset)*10, args.total_max_len),
                                                             chunks=(100, args.total_max_len))
-        start_positions_set = fdata.create_dataset("qas/start_positions", (len(data_loader.dataset)*10,), chunks=(100000,))
-        end_positions_set = fdata.create_dataset("qas/end_positions", (len(data_loader.dataset)*10,), chunks=(100000,))
+        start_positions_set = fdata.create_dataset("qas/start_positions", (len(data_loader.dataset)*10,), chunks=(1000,))
+        end_positions_set = fdata.create_dataset("qas/end_positions", (len(data_loader.dataset)*10,), chunks=(1000,))
 
         # new_features = []
         qa_text = None
