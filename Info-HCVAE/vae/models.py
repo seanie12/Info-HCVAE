@@ -886,7 +886,7 @@ class DiscreteVAE(nn.Module):
                                                     prior_za_logits)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
-        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + 100*loss_za_mmd) # ZA MMD is low
+        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd*10 + 100*loss_za_mmd) # ZA MMD is low
         loss_info = self.lambda_info * loss_info
 
         loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_info
@@ -894,7 +894,7 @@ class DiscreteVAE(nn.Module):
         return loss, \
             loss_q_rec, loss_a_rec, \
             loss_zq_kl, loss_za_kl, \
-            loss_zq_mmd, loss_za_mmd, \
+            loss_zq_mmd*10, loss_za_mmd*100, \
             loss_info
 
     def generate(self, zq, za, c_ids):
