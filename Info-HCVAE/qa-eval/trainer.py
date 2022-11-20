@@ -216,13 +216,13 @@ class Trainer(object):
 
             torch.save(self.model.state_dict(), os.path.join(self.args.model_save_path, "bert-qa-epoch-{:02d}.pt".format(epoch)))
 
-        if self.args.rank == 0:
+        # if self.args.rank == 0:
 
-            result_dict = self.evaluate_model("TEST", False)
-            em = result_dict["exact_match"]
-            f1 = result_dict["f1"]
-            print("\nFINAL TEST - F1: {:.4f}, EM: {:.4f}\n"
-                  .format(f1, em))
+        result_dict = self.evaluate_model("TEST", False)
+        em = result_dict["exact_match"]
+        f1 = result_dict["f1"]
+        print("\nFINAL TEST - F1: {:.4f}, EM: {:.4f}\n"
+                .format(f1, em))
 
     def evaluate_model(self, msg, dev=True):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
