@@ -157,6 +157,7 @@ class Trainer(object):
             # self.pretrain_sampler.set_epoch(epoch)
             start = time.time()
 
+            msg = ""
             running_loss, epoch_loss = 0, 0
             # pretrain with unsupervised dataset
             for step, batch in enumerate(self.pretrain_loader, start=1):
