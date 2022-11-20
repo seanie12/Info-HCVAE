@@ -97,6 +97,7 @@ def main(args):
         all_c_ids = torch.tensor([f.c_ids for f in features][:int(args.data_ratio*len(features))], dtype=torch.long)
         data = TensorDataset(all_c_ids)
         data_loader = DataLoader(data, shuffle=False, batch_size=args.batch_size)
+        print("Dataset length = " + str(len(data_loader.dataset)))
         torch.save(data_loader, os.path.join(args.dataloader_dir, "gen_loader.pt"))
     else:
         data_loader = torch.load(os.path.join(args.dataloader_dir, "gen_loader.pt"))
