@@ -101,6 +101,7 @@ def main(args):
         torch.save(data_loader, os.path.join(args.dataloader_dir, "gen_loader.pt"))
     else:
         data_loader = torch.load(os.path.join(args.dataloader_dir, "gen_loader.pt"))
+        print("Dataset length = " + str(len(data_loader.dataset)))
 
     with h5py.File(args.output_file, "a") as fdata:
         input_ids_set = fdata.create_dataset("qas/input_ids", (len(data_loader.dataset)*10, args.total_max_len),
