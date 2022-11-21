@@ -9,21 +9,32 @@ from mine.models.mine import MutualInformationEstimator
 
 
 # Define MMD loss
-def compute_kernel(x, y):
-    x_size = x.size(0)
-    y_size = y.size(0)
-    dim = x.size(1)
-    x = x.unsqueeze(1) # (x_size, 1, dim)
-    y = y.unsqueeze(0) # (1, y_size, dim)
-    tiled_x = x.expand(x_size, y_size, dim)
-    tiled_y = y.expand(x_size, y_size, dim)
-    kernel_input = (tiled_x - tiled_y).pow(2).mean(2)/float(dim)
-    return torch.exp(-kernel_input) # (x_size, y_size)
+def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="imq"):
+    if kernel == "gauss":
+        x_size = x.size(0)
+        y_size = y.size(0)
+        dim = x.size(1)
+        x = x.unsqueeze(1) # (x_size, 1, dim)
+        y = y.unsqueeze(0) # (1, y_size, dim)
+        tiled_x = x.expand(x_size, y_size, dim)
+        tiled_y = y.expand(x_size, y_size, dim)
+        kernel_input = (tiled_x - tiled_y).pow(2).mean(2)/float(dim)
+        return torch.exp(-kernel_input) # (x_size, y_size)
+    elif kernel == "imq":
+        Cbase = 2.0 * latent_dim * kernel_bandwidth ** 2
+        k = 0
+        for scale in imq_scales:
+            C = scale * Cbase
+            k += C / (C + torch.norm(x.unsqueeze(1) - y.unsqueeze(0), dim=-1) ** 2)
+        return k
+    elif kernel == "rbf":
+        C = 2.0 * latent_dim * kernel_bandwidth ** 2
+        return torch.exp(-torch.norm(x.unsqueeze(1) - y.unsqueeze(0), dim=-1) ** 2 / C)
 
-def compute_mmd(x, y):
-    x_kernel = compute_kernel(x, x)
-    y_kernel = compute_kernel(y, y)
-    xy_kernel = compute_kernel(x, y)
+def compute_mmd(x, y, latent_dim, kernel_bandwidth=1):
+    x_kernel = compute_kernel(x, x, latent_dim, kernel_bandwidth)
+    y_kernel = compute_kernel(y, y, latent_dim, kernel_bandwidth)
+    xy_kernel = compute_kernel(x, y, latent_dim, kernel_bandwidth)
     mmd = x_kernel.mean() + y_kernel.mean() - 2*xy_kernel.mean()
     return mmd
 
@@ -90,7 +101,7 @@ class CategoricalMMDLoss(nn.Module):
     def __init__(self):
         super(CategoricalMMDLoss, self).__init__()
 
-    def forward(self, posterior_za_logits, prior_za_logits, num_samples=64):
+    def forward(self, posterior_za_logits, prior_za_logits, num_samples=5):
         # input shape = (batch, dim1, dim2)
         batch_size = posterior_za_logits.size(0)
         dim1 = posterior_za_logits.size(1)
@@ -100,7 +111,7 @@ class CategoricalMMDLoss(nn.Module):
             # after .unsqueeze(0): (dim1, dim2) -> (1, dim1, dim2)
             posterior_za = gumbel_softmax(posterior_za_logits[idx].unsqueeze(0).repeat(num_samples, 1, 1), hard=True)
             prior_za = gumbel_softmax(prior_za_logits[idx].unsqueeze(0).repeat(num_samples, 1, 1), hard=True)
-            total_mmd += compute_mmd(prior_za.view(-1, dim1*dim2), posterior_za.view(-1, dim1*dim2))
+            total_mmd += compute_mmd(prior_za.view(batch_size*dim1, -1), posterior_za.view(batch_size*dim1, -1), dim2)
         return total_mmd / batch_size
 
 
@@ -111,6 +122,7 @@ class GaussianKernelMMDLoss(nn.Module):
     def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar, num_samples=64):
         # input shape = (batch, dim)
         batch_size = posterior_mu.size(0)
+        latent_dim = posterior_mu.size(1)
         total_mmd = 0
         for idx in range(batch_size):
             # (dim) -> (1, dim) after .unsqueeze(0)
@@ -119,7 +131,7 @@ class GaussianKernelMMDLoss(nn.Module):
             prior_zq = prior_mu[idx].unsqueeze(0) + \
                 torch.randn_like(prior_mu[idx].unsqueeze(0).repeat(num_samples, 1))*torch.exp(0.5*prior_logvar[idx].unsqueeze(0))
             # result tensor shape = (num_samples, dim)
-            total_mmd += compute_mmd(prior_zq, posterior_zq)
+            total_mmd += compute_mmd(prior_zq, posterior_zq, latent_dim)
         return total_mmd / batch_size
 
 
