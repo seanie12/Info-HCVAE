@@ -318,7 +318,7 @@ def function_experiment():
 #     plt.show()
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # rho_experiment()
     # function_experiment()
     # gan_experiment()
