@@ -894,7 +894,7 @@ class DiscreteVAE(nn.Module):
         loss_za_kl = self.w_ans * self.answer_kl_criterion(posterior_za_logits,
                                                     prior_za_logits)
 
-        loss_zq_mmd, loss_za_mmd = 0, 0
+        loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
         if self.alpha_kl + self.lambda_mmd - 1 > 0:
             loss_zq_mmd = self.question_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
                                                     prior_zq_mu, prior_zq_logvar)
@@ -902,7 +902,7 @@ class DiscreteVAE(nn.Module):
             loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits,
                                                         prior_za_logits)
 
-        loss_prior_zq_info, loss_prior_za_info = 0, 0
+        loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
         if self.use_mine:
             loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_zq)
             loss_prior_za_info = self.prior_za_info_model(a_embs, prior_za.view(-1, prior_za.size(1)*prior_za.size(2)))
