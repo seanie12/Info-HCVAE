@@ -21,6 +21,7 @@ class VAETrainer(object):
         self.loss_za_kl = 0
         self.loss_zq_mmd = 0
         self.loss_za_mmd = 0
+        self.loss_prior_info = 0
         self.loss_info = 0
         self.cnt_steps = 0
 
@@ -32,7 +33,7 @@ class VAETrainer(object):
         loss_q_rec, loss_a_rec, \
         loss_zq_kl, loss_za_kl, \
         loss_zq_mmd, loss_za_mmd, \
-        loss_info \
+        loss_prior_info, loss_info \
         = self.vae(c_ids, q_ids, a_ids, start_positions, end_positions)
 
         # Backward
@@ -49,17 +50,18 @@ class VAETrainer(object):
         self.loss_za_kl += loss_za_kl.item()
         self.loss_zq_mmd += loss_zq_mmd.item()
         self.loss_za_mmd += loss_za_mmd.item()
+        self.loss_prior_info += loss_prior_info.item()
         self.loss_info += loss_info.item()
 
         self.cnt_steps += 1
         if self.cnt_steps % 100 == 0:
-            log_str = "Step={:d} - AVG LOSS={:.6f} (q_rec={:.6f}, a_rec={:.6f}, zq_kl={:.6f}, za_kl={:.6f}, zq_mmd={:.6f}, \
-                za_mmd={:.6f}, info={:.6f})"
-            log_str = log_str.format(self.cnt_steps, float(self.total_loss / 100), float(self.loss_q_rec / 100),
-                        float(self.loss_a_rec / 100), float(self.loss_zq_kl / 100), float(self.loss_za_kl / 100),
-                        float(self.loss_zq_mmd / 100), float(self.loss_za_mmd / 100), float(self.loss_info / 100))
+            log_str = "\nStep={:d} - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_mmd={:.4f}, \
+                za_mmd={:.4f}, prior_info={:4f}, info={:.4f})"
+            log_str = log_str.format(self.cnt_steps, float(self.total_loss / self.cnt_steps), float(self.loss_q_rec / self.cnt_steps),
+                        float(self.loss_a_rec / self.cnt_steps), float(self.loss_zq_kl / self.cnt_steps), float(self.loss_za_kl / self.cnt_steps),
+                        float(self.loss_zq_mmd / self.cnt_steps), float(self.loss_za_mmd / self.cnt_steps), float(self.loss_prior_info / self.cnt_steps),
+                        float(self.loss_info / self.cnt_steps))
             print(log_str)
-            self._reset_loss_values()
 
     def _reset_loss_values(self):
         self.total_loss = 0
@@ -73,6 +75,7 @@ class VAETrainer(object):
 
     def reset_cnt_steps(self):
         self.cnt_steps = 0
+        self._reset_loss_values()
 
     def generate_posterior(self, c_ids, q_ids, a_ids):
         self.vae = self.vae.eval()

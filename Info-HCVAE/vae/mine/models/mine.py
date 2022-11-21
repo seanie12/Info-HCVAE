@@ -13,7 +13,7 @@ from mine.models.layers import ConcatLayer, CustomSequential
 
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
-import mine.utils
+import mine.utils as utils
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -58,7 +58,7 @@ def ema_loss(x, running_mean, alpha):
 
 
 class Mine(nn.Module):
-    def __init__(self, T, loss='mine', alpha=0.01, method=None):
+    def __init__(self, T, loss='mine', alpha=0.1, method=None):
         super().__init__()
         self.running_mean = 0
         self.loss = loss
@@ -140,14 +140,14 @@ class T(nn.Module):
 
 
 class MutualInformationEstimator(pl.LightningModule):
-    def __init__(self, x_dim, z_dim, loss='mine', **kwargs):
+    def __init__(self, x_dim, z_dim, T_hidden_size=400, loss='mine', **kwargs):
         super().__init__()
         self.x_dim = x_dim
-        self.T = CustomSequential(ConcatLayer(), nn.Linear(x_dim + z_dim, 512), nn.ReLU(),
-                                  nn.Linear(512, 512), nn.ReLU(), nn.Linear(512, 1))
+        self.T = CustomSequential(ConcatLayer(), nn.Linear(x_dim + z_dim, T_hidden_size), nn.ReLU(),
+                                  nn.Linear(T_hidden_size, T_hidden_size), nn.ReLU(), nn.Linear(T_hidden_size, 1))
 
         if not ('alpha' in kwargs):
-            kwargs['alpha'] = 0.01
+            kwargs['alpha'] = 0.1
         self.energy_loss = Mine(self.T, loss=loss, alpha=kwargs['alpha'])
 
         self.kwargs = kwargs
@@ -319,6 +319,6 @@ def function_experiment():
 
 
 if __name__ == '__main__':
-    rho_experiment()
+    # rho_experiment()
     # function_experiment()
     # gan_experiment()

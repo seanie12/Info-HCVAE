@@ -272,7 +272,7 @@ class PosteriorEncoder(nn.Module):
         self.zq_linear = nn.Linear(4 * 2 * nhidden, 2 * nzqdim)
         self.za_linear = nn.Linear(nzqdim + 2 * 2 * nhidden, nza * nzadim)
 
-    def forward(self, c_ids, q_ids, a_ids):
+    def forward(self, c_ids, q_ids, a_ids, return_input_embeds=False):
         c_mask, c_lengths = return_mask_lengths(c_ids)
         q_mask, q_lengths = return_mask_lengths(q_ids)
 
@@ -326,7 +326,10 @@ class PosteriorEncoder(nn.Module):
         za_prob = F.softmax(za_logits, dim=-1)
         za = gumbel_softmax(za_logits, hard=True)
 
-        return zq_mu, zq_logvar, zq, za_prob, za
+        if not return_input_embeds:
+            return zq_mu, zq_logvar, zq, za_prob, za
+        else:
+            return zq_mu, zq_logvar, zq, za_prob, za, q_h, c_a_h
 
 
 class PriorEncoder(nn.Module):
@@ -826,6 +829,11 @@ class DiscreteVAE(nn.Module):
         self.question_mmd_criterion = GaussianKernelMMDLoss()
         self.answer_mmd_criterion = CategoricalMMDLoss()
 
+        self.use_mine = args.use_mine
+        if self.use_mine:
+            self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
+            self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
+
         if state_dict is not None:
             self.load_state_dict(state_dict)
         if vietnamese_mode:
@@ -850,11 +858,11 @@ class DiscreteVAE(nn.Module):
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
 
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
-            posterior_za_logits, posterior_za \
-            = self.posterior_encoder(c_ids, q_ids, a_ids)
+            posterior_za_logits, posterior_za, q_embs, a_embs \
+            = self.posterior_encoder(c_ids, q_ids, a_ids, return_input_embeds=True)
 
-        prior_zq_mu, prior_zq_logvar, _, \
-            prior_za_logits, _ \
+        prior_zq_mu, prior_zq_logvar, prior_zq, \
+            prior_za_logits, prior_za \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -886,23 +894,31 @@ class DiscreteVAE(nn.Module):
         loss_za_kl = self.w_ans * self.answer_kl_criterion(posterior_za_logits,
                                                     prior_za_logits)
 
-        loss_zq_mmd = self.question_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
-                                                prior_zq_mu, prior_zq_logvar)
+        loss_zq_mmd, loss_za_mmd = 0, 0
+        if self.alpha + self.lambda_mmd - 1 > 0:
+            loss_zq_mmd = self.question_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
+                                                    prior_zq_mu, prior_zq_logvar)
 
-        loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits,
-                                                    prior_za_logits)
+            loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits,
+                                                        prior_za_logits)
+
+        loss_prior_zq_info, loss_prior_za_info = 0, 0
+        if self.use_mine:
+            loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_za)
+            loss_prior_za_info = self.prior_za_info_model(a_embs, prior_za.view(-1, prior_za.size(1)*prior_za.size(2)))
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
+        loss_prior_info = self.lambda_info * (loss_prior_zq_info + loss_prior_za_info)
         loss_info = self.lambda_info * loss_info
 
-        loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_info
+        loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_prior_info + loss_info
 
         return loss, \
             loss_q_rec, loss_a_rec, \
             loss_zq_kl, loss_za_kl, \
             loss_zq_mmd, loss_za_mmd, \
-            loss_info
+            loss_prior_info, loss_info
 
     def generate(self, zq, za, c_ids):
         q_init_state, a_init_state = self.return_init_state(zq, za)
