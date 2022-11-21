@@ -119,7 +119,7 @@ class GaussianKernelMMDLoss(nn.Module):
     def __init__(self):
         super(GaussianKernelMMDLoss, self).__init__()
 
-    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar, num_samples=64):
+    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar, num_samples=16):
         # input shape = (batch, dim)
         batch_size = posterior_mu.size(0)
         latent_dim = posterior_mu.size(1)
