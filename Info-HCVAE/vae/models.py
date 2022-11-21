@@ -10,32 +10,26 @@ from mine.models.mine import MutualInformationEstimator
 
 # Define MMD loss
 def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="imq"):
-    if kernel == "gauss":
-        x_size = x.size(0)
-        y_size = y.size(0)
-        dim = x.size(1)
-        x = x.unsqueeze(1) # (x_size, 1, dim)
-        y = y.unsqueeze(0) # (1, y_size, dim)
-        tiled_x = x.expand(x_size, y_size, dim)
-        tiled_y = y.expand(x_size, y_size, dim)
-        kernel_input = (tiled_x - tiled_y).pow(2).mean(2)/float(dim)
-        return torch.exp(-kernel_input) # (x_size, y_size)
-    elif kernel == "imq":
+    """ Return a kernel of size (batch_x, batch_y) """
+    if kernel == "imq":
         Cbase = 2.0 * latent_dim * kernel_bandwidth ** 2
-        k = 0
-        for scale in imq_scales:
-            C = scale * Cbase
-            k += C / (C + torch.norm(x.unsqueeze(1) - y.unsqueeze(0), dim=-1) ** 2)
+        imq_scales_cuda = torch.tensor(imq_scales, dtype=torch.float).cuda() # shape = (num_scales,)
+        Cs = (imq_scales_cuda * Cbase).unsqueeze(1).unsqueeze(2) # shape = (num_scales, 1, 1)
+        k = (Cs / (Cs + torch.norm(x.unsqueeze(1) - y.unsqueeze(0), dim=-1).pow(2).unsqueeze(0))).sum(dim=0) # shape = (batch_x, batch_y)
         return k
     elif kernel == "rbf":
         C = 2.0 * latent_dim * kernel_bandwidth ** 2
-        return torch.exp(-torch.norm(x.unsqueeze(1) - y.unsqueeze(0), dim=-1) ** 2 / C)
+        return torch.exp(-torch.norm(x.unsqueeze(1) - y.unsqueeze(0), dim=-1).pow(2) / C)
 
 def compute_mmd(x, y, latent_dim, kernel_bandwidth=1):
+    batch_size = x.size(0)
     x_kernel = compute_kernel(x, x, latent_dim, kernel_bandwidth)
     y_kernel = compute_kernel(y, y, latent_dim, kernel_bandwidth)
     xy_kernel = compute_kernel(x, y, latent_dim, kernel_bandwidth)
-    mmd = x_kernel.mean() + y_kernel.mean() - 2*xy_kernel.mean()
+    mmd_z = (x_kernel - x_kernel.diag().diag()).sum() / ((batch_size - 1) * batch_size)
+    mmd_z_prior = (y_kernel - y_kernel.diag().diag()).sum() / ((batch_size - 1) * batch_size)
+    mmd_cross = xy_kernel.sum() / (batch_size ** 2)
+    mmd = mmd_z + mmd_z_prior - 2 * mmd_cross
     return mmd
 
 
@@ -111,7 +105,7 @@ class CategoricalMMDLoss(nn.Module):
             # after .unsqueeze(0): (dim1, dim2) -> (1, dim1, dim2)
             posterior_za = gumbel_softmax(posterior_za_logits[idx].unsqueeze(0).repeat(num_samples, 1, 1), hard=True)
             prior_za = gumbel_softmax(prior_za_logits[idx].unsqueeze(0).repeat(num_samples, 1, 1), hard=True)
-            total_mmd += compute_mmd(prior_za.view(num_samples*dim1, -1), posterior_za.view(num_samples*dim1, -1), dim2)
+            total_mmd += compute_mmd(posterior_za.view(num_samples*dim1, -1), prior_za.view(num_samples*dim1, -1), dim2)
         return total_mmd / batch_size
 
 
@@ -131,7 +125,7 @@ class GaussianKernelMMDLoss(nn.Module):
             prior_zq = prior_mu[idx].unsqueeze(0) + \
                 torch.randn_like(prior_mu[idx].unsqueeze(0).repeat(num_samples, 1))*torch.exp(0.5*prior_logvar[idx].unsqueeze(0))
             # result tensor shape = (num_samples, dim)
-            total_mmd += compute_mmd(prior_zq, posterior_zq, latent_dim)
+            total_mmd += compute_mmd(posterior_zq, prior_zq, latent_dim)
         return total_mmd / batch_size
 
 
