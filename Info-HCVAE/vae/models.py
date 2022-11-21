@@ -51,15 +51,14 @@ def cal_attn(query, memories, mask):
 def gumbel_softmax(logits, tau=1, hard=False, eps=1e-20, dim=-1):
     # type: (Tensor, float, bool, float, int) -> Tensor
 
-    gumbels = -(torch.empty_like(logits).exponential_() +
-                eps).log()  # ~Gumbel(0,1)
-    gumbels = (logits + gumbels) / tau  # ~Gumbel(logits,tau)
-    y_soft = gumbels.softmax(dim)
+    gumbels = -(torch.empty_like(logits).exponential_() + eps).log()  # ~Gumbel(0,1), shape=(batch, nza, nzadim)
+    gumbels = (logits + gumbels) / tau  # ~Gumbel(logits,tau), shape=(batch, nza, nzadim)
+    y_soft = gumbels.softmax(dim) # shape=(batch, nza, nzadim)
 
     if hard:
         # Straight through.
-        index = y_soft.max(dim, keepdim=True)[1]
-        y_hard = torch.zeros_like(logits).scatter_(dim, index, 1.0)
+        index = y_soft.max(dim, keepdim=True)[1] # shape = (batch, nza, 1)
+        y_hard = torch.zeros_like(logits).scatter_(dim, index, 1.0) # sampling one-hot categorical variables
         ret = y_hard - y_soft.detach() + y_soft
     else:
         # Re-parametrization trick.
@@ -95,7 +94,7 @@ class CategoricalMMDLoss(nn.Module):
     def __init__(self):
         super(CategoricalMMDLoss, self).__init__()
 
-    def forward(self, posterior_za_logits, prior_za_logits, num_samples=5):
+    def forward(self, posterior_za_logits, prior_za_logits):
         # input shape = (batch, dim1, dim2)
         batch_size = posterior_za_logits.size(0)
         dim1 = posterior_za_logits.size(1)
@@ -103,9 +102,9 @@ class CategoricalMMDLoss(nn.Module):
         total_mmd = 0
         for idx in range(batch_size):
             # after .unsqueeze(0): (dim1, dim2) -> (1, dim1, dim2)
-            posterior_za = gumbel_softmax(posterior_za_logits[idx].unsqueeze(0).repeat(num_samples, 1, 1), hard=True)
-            prior_za = gumbel_softmax(prior_za_logits[idx].unsqueeze(0).repeat(num_samples, 1, 1), hard=True)
-            total_mmd += compute_mmd(posterior_za.view(num_samples*dim1, -1), prior_za.view(num_samples*dim1, -1), dim2)
+            posterior_za = gumbel_softmax(posterior_za_logits[idx].unsqueeze(0), hard=True)
+            prior_za = gumbel_softmax(prior_za_logits[idx].unsqueeze(0), hard=True)
+            total_mmd += compute_mmd(posterior_za.view(dim1, -1), prior_za.view(dim1, -1), dim2)
         return total_mmd / batch_size
 
 
