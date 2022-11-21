@@ -816,7 +816,7 @@ class DiscreteVAE(nn.Module):
                                                 embedding, contextualized_embedding, emsize,
                                                 dec_q_nhidden, ntokens, dec_q_nlayers,
                                                 dec_q_dropout,
-                                                max_q_len, args.use_mine)
+                                                max_q_len)
 
         self.q_h_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
         self.q_c_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
