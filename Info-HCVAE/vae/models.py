@@ -23,7 +23,7 @@ def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5
 
 def compute_mmd(x, y, latent_dim, kernel_bandwidth=1):
     x_size = x.size(0)
-    y_size = y.size()
+    y_size = y.size(0)
     x_kernel = compute_kernel(x, x, latent_dim, kernel_bandwidth)
     y_kernel = compute_kernel(y, y, latent_dim, kernel_bandwidth)
     xy_kernel = compute_kernel(x, y, latent_dim, kernel_bandwidth)
