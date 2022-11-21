@@ -22,13 +22,14 @@ def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5
         return torch.exp(-torch.norm(x.unsqueeze(1) - y.unsqueeze(0), dim=-1).pow(2) / C)
 
 def compute_mmd(x, y, latent_dim, kernel_bandwidth=1):
-    batch_size = x.size(0)
+    x_size = x.size(0)
+    y_size = y.size()
     x_kernel = compute_kernel(x, x, latent_dim, kernel_bandwidth)
     y_kernel = compute_kernel(y, y, latent_dim, kernel_bandwidth)
     xy_kernel = compute_kernel(x, y, latent_dim, kernel_bandwidth)
-    mmd_z = (x_kernel - x_kernel.diag().diag()).sum() / ((batch_size - 1) * batch_size)
-    mmd_z_prior = (y_kernel - y_kernel.diag().diag()).sum() / ((batch_size - 1) * batch_size)
-    mmd_cross = xy_kernel.sum() / (batch_size ** 2)
+    mmd_z = (x_kernel - x_kernel.diag().diag()).sum() / ((x_size - 1) * x_size)
+    mmd_z_prior = (y_kernel - y_kernel.diag().diag()).sum() / ((y_size - 1) * y_size)
+    mmd_cross = xy_kernel.sum() / (x_size*y_size)
     mmd = mmd_z + mmd_z_prior - 2 * mmd_cross
     return mmd
 
