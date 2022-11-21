@@ -895,7 +895,7 @@ class DiscreteVAE(nn.Module):
                                                     prior_za_logits)
 
         loss_zq_mmd, loss_za_mmd = 0, 0
-        if self.alpha + self.lambda_mmd - 1 > 0:
+        if self.alpha_kl + self.lambda_mmd - 1 > 0:
             loss_zq_mmd = self.question_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
                                                     prior_zq_mu, prior_zq_logvar)
 
