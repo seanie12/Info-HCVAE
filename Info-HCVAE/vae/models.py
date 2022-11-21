@@ -904,7 +904,7 @@ class DiscreteVAE(nn.Module):
 
         loss_prior_zq_info, loss_prior_za_info = 0, 0
         if self.use_mine:
-            loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_za)
+            loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_zq)
             loss_prior_za_info = self.prior_za_info_model(a_embs, prior_za.view(-1, prior_za.size(1)*prior_za.size(2)))
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
