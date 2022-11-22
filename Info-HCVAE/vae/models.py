@@ -798,8 +798,8 @@ class DiscreteVAE(nn.Module):
             self.answer_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_prior_info > 0:
-            self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, 2 * dec_q_nlayers * dec_q_nhidden, T_hidden_size=512)
-            self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, emsize, T_hidden_size=512)
+            self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, 2 * dec_q_nlayers * dec_q_nhidden, T_hidden_size=400)
+            self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, emsize, T_hidden_size=400)
 
     def return_init_state(self, zq, za):
 
