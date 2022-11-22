@@ -10,7 +10,7 @@ class VAETrainer(object):
         self.clip = args.clip
         self.device = args.device
 
-        self.vae = DiscreteVAE(args, use_custom_embeddings=args.use_custom_embeddings_impl).to(self.device)
+        self.vae = DiscreteVAE(args).to(self.device)
         params = filter(lambda p: p.requires_grad, self.vae.parameters())
         self.optimizer = torch.optim.Adam(params, lr=args.lr)
 

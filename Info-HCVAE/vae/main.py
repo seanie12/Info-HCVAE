@@ -108,10 +108,8 @@ if __name__ == "__main__":
     
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
-    parser.add_argument("--use_custom_embeddings_impl", default="True", type=str, help="whether to use customized Embedding class")
     parser.add_argument("--load_saved_dataloader", default="False", type=str)
     parser.add_argument("--use_mine", default="False", type=str)
-    parser.add_argument("--use_transformer_forward", default="False", type=str)
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
@@ -142,9 +140,10 @@ if __name__ == "__main__":
     parser.add_argument('--nza', type=int, default=20)
     parser.add_argument('--nzadim', type=int, default=10)
     parser.add_argument('--w_ans', type=float, default=2.0)
-    parser.add_argument('--alpha_kl', type=float, default=0.0)
-    parser.add_argument('--lambda_mmd', type=float, default=3.0)
-    parser.add_argument('--lambda_info', type=float, default=2.0)
+    parser.add_argument('--alpha_kl', type=float, default=0.9)
+    parser.add_argument('--lambda_mmd', type=float, default=0.1)
+    parser.add_argument('--lambda_prior_info', type=float, default=0.0)
+    parser.add_argument('--lambda_info', type=float, default=1.0)
 
     args = parser.parse_args()
 
@@ -152,11 +151,9 @@ if __name__ == "__main__":
         args.model_dir = "./dummy"
 
     # Determine boolean args
-    args.use_custom_embeddings_impl = True if args.use_custom_embeddings_impl == "True" else False
     args.load_saved_dataloader = True if args.load_saved_dataloader == "True" else False
     args.use_mine = True if args.use_mine == "True" else False
     args.is_test_run = True if args.is_test_run == "True" else False
-    args.use_transformer_forward = True if args.use_transformer_forward == "True" else False
 
     # set model dir
     model_dir = args.model_dir

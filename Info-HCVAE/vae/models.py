@@ -130,87 +130,65 @@ class GaussianKernelMMDLoss(nn.Module):
 
 
 class Embedding(nn.Module):
-    def __init__(self, huggingface_model, use_custom_embeddings=True):
+    def __init__(self, huggingface_model):
         super(Embedding, self).__init__()
         self.transformer_embeddings = BertModel.from_pretrained(huggingface_model).embeddings
-        if use_custom_embeddings:
-            self.word_embeddings = self.transformer_embeddings.word_embeddings
-            self.token_type_embeddings = self.transformer_embeddings.token_type_embeddings
-            self.position_embeddings = self.transformer_embeddings.position_embeddings
-            self.LayerNorm = self.transformer_embeddings.LayerNorm
-            self.dropout = self.transformer_embeddings.dropout
-        self.use_custom_embeddings = use_custom_embeddings
+        self.word_embeddings = self.transformer_embeddings.word_embeddings
+        self.token_type_embeddings = self.transformer_embeddings.token_type_embeddings
+        self.position_embeddings = self.transformer_embeddings.position_embeddings
+        self.LayerNorm = self.transformer_embeddings.LayerNorm
+        self.dropout = self.transformer_embeddings.dropout
 
     def forward(self, input_ids, token_type_ids=None, position_ids=None):
-        if self.use_custom_embeddings:
-            if token_type_ids is None:
-                token_type_ids = torch.zeros_like(input_ids)
-            if position_ids is None:
-                seq_length = input_ids.size(1)
-                position_ids = torch.arange(
-                    seq_length, dtype=torch.long, device=input_ids.device)
-                position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
-
-            words_embeddings = self.word_embeddings(input_ids)
-            token_type_embeddings = self.token_type_embeddings(token_type_ids)
-            position_embeddings = self.position_embeddings(position_ids)
-
-            embeddings = words_embeddings + token_type_embeddings + position_embeddings
-            embeddings = self.LayerNorm(embeddings)
-            embeddings = self.dropout(embeddings)
-
-            return embeddings
-        else:
-            return self.transformer_embeddings(input_ids=input_ids, token_type_ids=token_type_ids, position_ids=position_ids)
-
-
-    def get_word_embeddings(self):
-        return self.transformer_embeddings.word_embeddings
-
-
-class ContextualizedEmbedding(nn.Module):
-    def __init__(self, huggingface_model, use_transformer_forward=False):
-        super(ContextualizedEmbedding, self).__init__()
-        self.use_transformer_forward = use_transformer_forward
-        if not use_transformer_forward:
-            bert = BertModel.from_pretrained(huggingface_model)
-            self.embedding = bert.embeddings
-            self.encoder = bert.encoder
-            self.num_hidden_layers = bert.config.num_hidden_layers
-        else:
-            self.model = BertModel.from_pretrained(huggingface_model)
-
-    def forward(self, input_ids, attention_mask, token_type_ids=None):
-        if not self.use_transformer_forward:
-            if token_type_ids is None:
-                token_type_ids = torch.zeros_like(input_ids)
-
+        if token_type_ids is None:
+            token_type_ids = torch.zeros_like(input_ids)
+        if position_ids is None:
             seq_length = input_ids.size(1)
             position_ids = torch.arange(
                 seq_length, dtype=torch.long, device=input_ids.device)
             position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
 
-            extended_attention_mask = attention_mask.unsqueeze(
-                1).unsqueeze(2).float()
-            extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
-            head_mask = [None] * self.num_hidden_layers
+        words_embeddings = self.word_embeddings(input_ids)
+        token_type_embeddings = self.token_type_embeddings(token_type_ids)
+        position_embeddings = self.position_embeddings(position_ids)
 
-            embedding_output = self.embedding(
-                input_ids, position_ids=position_ids, token_type_ids=token_type_ids)
-            encoder_outputs = self.encoder(embedding_output,
-                                        extended_attention_mask,
-                                        head_mask=head_mask)
-            sequence_output = encoder_outputs[0]
+        embeddings = words_embeddings + token_type_embeddings + position_embeddings
+        embeddings = self.LayerNorm(embeddings)
+        embeddings = self.dropout(embeddings)
 
-            return sequence_output
-        else:
-            return self.model(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
-    
-    def reload_model(self, new_model):
-        bert = BertModel.from_pretrained(new_model)
+        return embeddings
+
+
+class ContextualizedEmbedding(nn.Module):
+    def __init__(self, huggingface_model):
+        super(ContextualizedEmbedding, self).__init__()
+        bert = BertModel.from_pretrained(huggingface_model)
         self.embedding = bert.embeddings
         self.encoder = bert.encoder
         self.num_hidden_layers = bert.config.num_hidden_layers
+
+    def forward(self, input_ids, attention_mask, token_type_ids=None):
+        if token_type_ids is None:
+            token_type_ids = torch.zeros_like(input_ids)
+
+        seq_length = input_ids.size(1)
+        position_ids = torch.arange(
+            seq_length, dtype=torch.long, device=input_ids.device)
+        position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
+
+        extended_attention_mask = attention_mask.unsqueeze(
+            1).unsqueeze(2).float()
+        extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
+        head_mask = [None] * self.num_hidden_layers
+
+        embedding_output = self.embedding(
+            input_ids, position_ids=position_ids, token_type_ids=token_type_ids)
+        encoder_outputs = self.encoder(embedding_output,
+                                    extended_attention_mask,
+                                    head_mask=head_mask)
+        sequence_output = encoder_outputs[0]
+
+        return sequence_output
 
 
 class CustomLSTM(nn.Module):
@@ -538,7 +516,7 @@ class QuestionDecoder(nn.Module):
         self.logit_linear = nn.Linear(emsize, ntokens, bias=False)
 
         # fix output word matrix
-        self.logit_linear.weight = embedding.get_word_embeddings().weight
+        self.logit_linear.weight = embedding.word_embeddings.weight
         for param in self.logit_linear.parameters():
             param.requires_grad = False
 
@@ -746,24 +724,13 @@ class QuestionDecoder(nn.Module):
 
 
 class DiscreteVAE(nn.Module):
-    def __init__(self, args, state_dict=None, vietnamese_mode=False, vietnamese_model='vinai/phobert-base', use_custom_embeddings=False):
+    def __init__(self, args):
         super(DiscreteVAE, self).__init__()
         tokenizer = BertTokenizer.from_pretrained(args.huggingface_model)
-        padding_idx = -1
-        sos_id = -1
-        eos_id = -1
-        ntokens = -1
-        if vietnamese_mode:
-            tokenizer = BertTokenizer.from_pretrained(vietnamese_model)
-            padding_idx = tokenizer.encoder['<pad>']
-            sos_id = tokenizer.encoder['<s>']
-            eos_id = tokenizer.encoder['</s>']
-            ntokens = tokenizer.vocab_size
-        else:
-            padding_idx = tokenizer.vocab['[PAD]'] if '[PAD]' in tokenizer.vocab else tokenizer.vocab['<pad>']
-            sos_id = tokenizer.vocab['[CLS]'] if '[CLS]' in tokenizer.vocab else tokenizer.vocab['<s>']
-            eos_id = tokenizer.vocab['[SEP]'] if '[SEP]' in tokenizer.vocab else tokenizer.vocab['</s>']
-            ntokens = len(tokenizer.vocab)
+        padding_idx = tokenizer.vocab['[PAD]']
+        sos_id = tokenizer.vocab['[CLS]']
+        eos_id = tokenizer.vocab['[SEP]']
+        ntokens = len(tokenizer.vocab)
 
         huggingface_model = args.huggingface_model
         if "large" in huggingface_model:
@@ -787,12 +754,13 @@ class DiscreteVAE(nn.Module):
         self.w_ans = args.w_ans
         self.alpha_kl = args.alpha_kl
         self.lambda_mmd = args.lambda_mmd
+        self.lambda_prior_info = args.lambda_prior_info
         self.lambda_info = args.lambda_info
 
         max_q_len = args.max_q_len
 
-        embedding = Embedding(huggingface_model, use_custom_embeddings=use_custom_embeddings)
-        contextualized_embedding = ContextualizedEmbedding(huggingface_model, use_transformer_forward=args.use_transformer_forward)
+        embedding = Embedding(huggingface_model)
+        contextualized_embedding = ContextualizedEmbedding(huggingface_model)
         # freeze embedding
         for param in embedding.parameters():
             param.requires_grad = False
@@ -825,18 +793,13 @@ class DiscreteVAE(nn.Module):
         self.question_kl_criterion = GaussianKLLoss()
         self.answer_kl_criterion = CategoricalKLLoss()
 
-        self.question_mmd_criterion = GaussianKernelMMDLoss()
-        self.answer_mmd_criterion = CategoricalMMDLoss()
+        if self.alpha_kl + self.lambda_mmd - 1 > 0:
+            self.question_mmd_criterion = GaussianKernelMMDLoss()
+            self.answer_mmd_criterion = CategoricalMMDLoss()
 
-        self.use_mine = args.use_mine
-        if self.use_mine:
+        if self.self.lambda_prior_info > 0:
             self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
             self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
-
-        if state_dict is not None:
-            self.load_state_dict(state_dict)
-        if vietnamese_mode:
-            contextualized_embedding.reload_model(vietnamese_model)
 
     def return_init_state(self, zq, za):
 
@@ -902,13 +865,13 @@ class DiscreteVAE(nn.Module):
                                                         prior_za_logits)
 
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
-        if self.use_mine:
+        if self.lambda_prior_info > 0:
             loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_zq)
             loss_prior_za_info = self.prior_za_info_model(a_embs, prior_za.view(-1, prior_za.size(1)*prior_za.size(2)))
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
-        loss_prior_info = self.lambda_info * (loss_prior_zq_info + loss_prior_za_info)
+        loss_prior_info = self.lambda_prior_info * (loss_prior_zq_info + loss_prior_za_info)
         loss_info = self.lambda_info * loss_info
 
         loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_prior_info + loss_info
