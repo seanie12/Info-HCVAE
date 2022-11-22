@@ -867,7 +867,10 @@ class DiscreteVAE(nn.Module):
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_prior_info > 0:
             prior_q_init_state, prior_a_init_state = self.return_init_state(prior_zq, prior_za)
-            loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_q_init_state)
+            prior_q_init_h, prior_q_init_c = prior_q_init_state
+            prior_q_init_h = prior_q_init_h.transpose(0, 1).contiguous().view(-1, self.dec_q_nlayers*self.dec_q_nhidden)
+            prior_q_init_c = prior_q_init_c.transpose(0, 1).contiguous().view(-1, self.dec_q_nlayers*self.dec_q_nhidden)
+            loss_prior_zq_info = self.prior_zq_info_model(q_embs, torch.cat((prior_q_init_h, prior_q_init_c), dim=-1))
             loss_prior_za_info = self.prior_za_info_model(a_embs, prior_a_init_state)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
