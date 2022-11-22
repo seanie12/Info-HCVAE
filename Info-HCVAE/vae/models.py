@@ -797,7 +797,7 @@ class DiscreteVAE(nn.Module):
             self.question_mmd_criterion = GaussianKernelMMDLoss()
             self.answer_mmd_criterion = CategoricalMMDLoss()
 
-        if self.self.lambda_prior_info > 0:
+        if self.lambda_prior_info > 0:
             self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
             self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
 
