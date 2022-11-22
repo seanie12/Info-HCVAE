@@ -161,7 +161,7 @@ def main(args):
             # sample latent variable K times
             for idx in range(args.k):
                 if idx == 0:
-                    zq_mu, zq_logvar, zq, za_prob, za = vae.prior_encoder(c_ids)
+                    zq_mu, zq_logvar, zq, za_logits, za = vae.prior_encoder(c_ids)
                 else:
                     zq = zq_mu + torch.randn_like(zq_mu)*torch.exp(0.5*zq_logvar)
                     za = gumbel_softmax(za_logits, hard=True)
