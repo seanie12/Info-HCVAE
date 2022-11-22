@@ -798,8 +798,8 @@ class DiscreteVAE(nn.Module):
             self.answer_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_prior_info > 0:
-            self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
-            self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
+            self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, 2 * dec_q_nlayers * dec_q_nhidden, T_hidden_size=512)
+            self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, emsize, T_hidden_size=512)
 
     def return_init_state(self, zq, za):
 
@@ -866,8 +866,9 @@ class DiscreteVAE(nn.Module):
 
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_prior_info > 0:
-            loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_zq)
-            loss_prior_za_info = self.prior_za_info_model(a_embs, prior_za.view(-1, prior_za.size(1)*prior_za.size(2)))
+            prior_q_init_state, prior_a_init_state = self.return_init_state(prior_zq, prior_za)
+            loss_prior_zq_info = self.prior_zq_info_model(q_embs, prior_q_init_state)
+            loss_prior_za_info = self.prior_za_info_model(a_embs, prior_a_init_state)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
