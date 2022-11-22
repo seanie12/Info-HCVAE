@@ -105,7 +105,6 @@ class VAETrainer(object):
         }
         torch.save(params, filename)
 
-
     def load_model_state_dict(self, filename):
         params = torch.load(filename)
         self.vae.load_state_dict(params["state_dict"])

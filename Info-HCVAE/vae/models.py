@@ -323,13 +323,13 @@ class PosteriorEncoder(nn.Module):
         h = torch.cat([zq, c_a_attned_by_zq, c_a_h], dim=-1)
 
         za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
-        za_prob = F.softmax(za_logits, dim=-1)
+        # za_prob = F.softmax(za_logits, dim=-1)
         za = gumbel_softmax(za_logits, hard=True)
 
         if not return_input_embeds:
-            return zq_mu, zq_logvar, zq, za_prob, za
+            return zq_mu, zq_logvar, zq, za_logits, za
         else:
-            return zq_mu, zq_logvar, zq, za_prob, za, q_h, c_a_h
+            return zq_mu, zq_logvar, zq, za_logits, za, q_h, c_a_h
 
 
 class PriorEncoder(nn.Module):
@@ -377,10 +377,10 @@ class PriorEncoder(nn.Module):
         h = torch.cat([zq, c_attned_by_zq, c_h], dim=-1)
 
         za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
-        za_prob = F.softmax(za_logits, dim=-1)
+        # za_prob = F.softmax(za_logits, dim=-1)
         za = gumbel_softmax(za_logits, hard=True)
 
-        return zq_mu, zq_logvar, zq, za_prob, za
+        return zq_mu, zq_logvar, zq, za_logits, za
 
     def interpolation(self, c_ids, zq):
         c_mask, c_lengths = return_mask_lengths(c_ids)

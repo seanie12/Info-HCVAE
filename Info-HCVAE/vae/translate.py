@@ -19,6 +19,24 @@ def return_mask_lengths(ids):
     return mask, lengths
 
 
+def gumbel_softmax(logits, tau=1, hard=False, eps=1e-20, dim=-1):
+    # type: (Tensor, float, bool, float, int) -> Tensor
+
+    gumbels = -(torch.empty_like(logits).exponential_() + eps).log()  # ~Gumbel(0,1), shape=(batch, nza, nzadim)
+    gumbels = (logits + gumbels) / tau  # ~Gumbel(logits,tau), shape=(batch, nza, nzadim)
+    y_soft = gumbels.softmax(dim) # shape=(batch, nza, nzadim)
+
+    if hard:
+        # Straight through.
+        index = y_soft.max(dim, keepdim=True)[1] # shape = (batch, nza, 1)
+        y_hard = torch.zeros_like(logits).scatter_(dim, index, 1.0) # sampling one-hot categorical variables
+        ret = y_hard - y_soft.detach() + y_soft
+    else:
+        # Re-parametrization trick.
+        ret = y_soft
+    return ret
+
+
 def post_process(q_ids, start_positions, end_positions, c_ids, total_max_len=512):
     """
        concatenate question and context for BERT QA model:
@@ -138,11 +156,17 @@ def main(args):
             c_ids = c_ids[:, :max_c_len].to(device)
 
             c_texts = [args.tokenizer.decode(c_ids[idx]) for idx in range(c_ids.size(0))]
-            
+
+            zq_mu, zq_logvar, zq, za_logits, za = None, None, None, None, None
             # sample latent variable K times
-            for _ in range(args.k):
+            for idx in range(args.k):
+                if idx == 0:
+                    zq_mu, zq_logvar, zq, za_prob, za = vae.prior_encoder(c_ids)
+                else:
+                    zq = zq_mu + torch.randn_like(zq_mu)*torch.exp(0.5*zq_logvar)
+                    za = gumbel_softmax(za_logits, hard=True)
+
                 with torch.no_grad():
-                    _, _, zq, _, za = vae.prior_encoder(c_ids)
                     batch_q_ids, batch_start, batch_end = vae.generate(zq, za, c_ids)
 
                     if args.out_qa_json is not None: # out QA text to json
@@ -162,34 +186,6 @@ def main(args):
                     start_positions_set[qa_idx] = all_start[i].cpu()
                     end_positions_set[qa_idx] = all_end[i].cpu()
                     qa_idx += 1
-                    # new_features.append(
-                    #     InputFeatures(
-                    #         unique_id=None,
-                    #         example_index=None,
-                    #         doc_span_index=None,
-                    #         tokens=None,
-                    #         token_to_orig_map=None,
-                    #         token_is_max_context=None,
-                    #         input_ids=all_input_ids[i].cpu().tolist(),
-                    #         input_mask=all_input_mask[i].cpu().tolist(),
-                    #         c_ids=None,
-                    #         context_tokens=None,
-                    #         q_ids=None,
-                    #         q_tokens=None,
-                    #         answer_text=None,
-                    #         tag_ids=None,
-                    #         segment_ids=all_seg_ids[i].cpu().tolist(),
-                    #         noq_start_position=None,
-                    #         noq_end_position=None,
-                    #         start_position=all_start[i].cpu().tolist(),
-                    #         end_position=all_end[i].cpu().tolist(),
-                    #         is_impossible=None))
-
-    # dir_name = os.path.dirname(args.output_file)
-    # if not os.path.exists(dir_name):
-    #     os.makedirs(dir_name)
-    # with open(args.output_file, "wb") as f:
-    #     pickle.dump(new_features, f)
 
     ## For outputting text
     if args.output_text:
