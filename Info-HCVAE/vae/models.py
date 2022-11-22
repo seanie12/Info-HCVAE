@@ -6,6 +6,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch_scatter import scatter_max
 from transformers import BertModel, BertTokenizer
 from mine.models.mine import MutualInformationEstimator
+from mine.models.adaptive_gradient_clipping import adaptive_gradient_clipping_
 
 
 # Define MMD loss
@@ -870,8 +871,8 @@ class DiscreteVAE(nn.Module):
             prior_q_init_h, prior_q_init_c = prior_q_init_state
             prior_q_init_h = prior_q_init_h.transpose(0, 1).contiguous().view(-1, self.dec_q_nlayers*self.dec_q_nhidden)
             prior_q_init_c = prior_q_init_c.transpose(0, 1).contiguous().view(-1, self.dec_q_nlayers*self.dec_q_nhidden)
-            loss_prior_zq_info = self.prior_zq_info_model(q_embs, torch.cat((prior_q_init_h, prior_q_init_c), dim=-1))
-            loss_prior_za_info = self.prior_za_info_model(a_embs, prior_a_init_state)
+            loss_prior_zq_info = self.prior_zq_info_model(q_embs.detach(), torch.cat((prior_q_init_h, prior_q_init_c).detach(), dim=-1))
+            loss_prior_za_info = self.prior_za_info_model(a_embs.detach(), prior_a_init_state.detach())
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
@@ -879,6 +880,10 @@ class DiscreteVAE(nn.Module):
         loss_info = self.lambda_info * loss_info
 
         loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_prior_info + loss_info
+
+        if self.lambda_prior_info > 0:
+            adaptive_gradient_clipping_(self.prior_encoder, self.prior_za_info_model)
+            adaptive_gradient_clipping_(self.prior_encoder, self.prior_zq_info_model)
 
         return loss, \
             loss_q_rec, loss_a_rec, \
