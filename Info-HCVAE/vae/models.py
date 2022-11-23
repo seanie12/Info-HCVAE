@@ -799,8 +799,14 @@ class DiscreteVAE(nn.Module):
             self.answer_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_prior_info > 0:
-            self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
-            self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
+            self.use_mine = True
+            if self.use_mine:
+                self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
+                self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
+            else:
+                self.prior_zq_discriminator = nn.Bilinear(2*enc_nhidden, self.nzqdim, 1)
+                self.prior_za_discriminator = nn.Bilinear(2*enc_nhidden, self.nza*self.nzadim, 1)
+                self.bce_prior_info_loss = nn.BCEWithLogitsLoss()
 
     def return_init_state(self, zq, za):
 
@@ -867,8 +873,30 @@ class DiscreteVAE(nn.Module):
 
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_prior_info > 0:
-            loss_prior_zq_info = self.prior_zq_info_model(q_embs.clone().detach(), prior_zq)
-            loss_prior_za_info = self.prior_za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
+            if self.use_mine:
+                loss_prior_zq_info = self.prior_zq_info_model(q_embs.clone().detach(), prior_zq)
+                loss_prior_za_info = self.prior_za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
+            else:
+                def mi_estinmate(x, y, g, loss_fn):
+                    fake_x = torch.cat([x[-1].unsqueeze(0), x[:-1]], dim=0)
+                    fake_y = torch.cat([y[-1].unsqueeze(0), y[:-1]], dim=0)
+                    true_logits = g(x, y)
+                    true_labels = torch.ones_like(true_logits)
+
+                    fake_y_logits = g(x, fake_y)
+                    fake_x_logits = g(fake_x, y)
+                    fake_logits = torch.cat([fake_y_logits, fake_x_logits], dim=0)
+                    fake_labels = torch.zeros_like(fake_logits)
+
+                    true_loss = loss_fn(true_logits, true_labels)
+                    fake_loss = 0.5 * loss_fn(fake_logits, fake_labels)
+                    return true_loss + fake_loss
+
+                new_q_embs = q_embs.clone().detach()
+                new_a_embs = a_embs.clone().detach()
+                loss_prior_zq_info = mi_estinmate(new_q_embs, prior_zq, self.prior_zq_discriminator, self.bce_prior_info_loss)
+                loss_prior_za_info = mi_estinmate(new_a_embs, prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)),
+                                            self.prior_zq_discriminator, self.bce_prior_info_loss)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
@@ -877,7 +905,7 @@ class DiscreteVAE(nn.Module):
 
         loss = loss_q_rec + loss_a_rec + loss_kl + loss_mmd + loss_prior_info + loss_info
 
-        if self.lambda_prior_info > 0:
+        if self.lambda_prior_info > 0 and self.use_mine:
             adaptive_gradient_clipping_(self.prior_encoder, self.prior_za_info_model)
             adaptive_gradient_clipping_(self.prior_encoder, self.prior_zq_info_model)
 
