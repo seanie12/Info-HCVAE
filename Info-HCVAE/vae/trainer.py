@@ -56,15 +56,19 @@ class VAETrainer(object):
         loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_z_info > 0:
             q_embeddings = self.embedding(q_ids).mean(dim=1)
+            c_embeddings = self.embedding(c_ids).mean(dim=1)
             c_a_embeddings = self.embedding(c_ids, a_ids, None).mean(dim=1)
             posterior_zq, prior_zq, posterior_za_logits, prior_za_logits = latent_vars
 
-            loss_zq_info = 0.5*(self.q_infomax_net(q_embeddings, posterior_zq) + self.q_infomax_net(q_embeddings, prior_zq))
+            loss_zq_info = 0.5*(self.q_infomax_net(q_embeddings, posterior_zq) + self.q_infomax_net(c_embeddings, posterior_zq) \
+                + self.q_infomax_net(q_embeddings, prior_zq) + self.q_infomax_net(c_embeddings, prior_zq))
             loss += self.lambda_z_info * loss_zq_info
 
             nza, nzadim = posterior_za_logits.size(1), posterior_za_logits.size(2)
             loss_za_info = 0.5*(self.a_infomax_net(c_a_embeddings, posterior_za_logits.view(-1, nza*nzadim)) \
-                           + self.a_infomax_net(c_a_embeddings, prior_za_logits.view(-1, nza*nzadim)))
+                                + self.a_infomax_net(c_embeddings, posterior_za_logits.view(-1, nza*nzadim)) \
+                           + self.a_infomax_net(c_a_embeddings, prior_za_logits.view(-1, nza*nzadim)) \
+                             + self.a_infomax_net(c_embeddings, prior_za_logits.view(-1, nza*nzadim)))
             loss += self.lambda_z_info * loss_za_info
 
         # Backward
