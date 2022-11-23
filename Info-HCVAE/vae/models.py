@@ -240,7 +240,6 @@ class PosteriorEncoder(nn.Module):
 
         # question enc
         q_embeddings = self.embedding(q_ids)
-        print(q_embeddings.size())
         q_hs, q_state = self.encoder(q_embeddings, q_lengths.to("cpu"))
         q_h = q_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         q_h = q_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
@@ -253,7 +252,6 @@ class PosteriorEncoder(nn.Module):
 
         # context and answer enc
         c_a_embeddings = self.embedding(c_ids, a_ids, None)
-        print(c_a_embeddings.size())
         c_a_hs, c_a_state = self.encoder(c_a_embeddings, c_lengths.to("cpu"))
         c_a_h = c_a_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_a_h = c_a_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
@@ -293,7 +291,7 @@ class PosteriorEncoder(nn.Module):
         if not return_input_embeds:
             return zq_mu, zq_logvar, zq, za_logits, za
         else:
-            return zq_mu, zq_logvar, zq, za_logits, za, q_h, c_a_h
+            return zq_mu, zq_logvar, zq, za_logits, za, q_embeddings.mean(dim=1), c_a_embeddings.mean(dim=1)
 
 
 class PriorEncoder(nn.Module):
