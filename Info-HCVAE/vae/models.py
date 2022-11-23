@@ -891,14 +891,15 @@ class DiscreteVAE(nn.Module):
             loss_zq_mmd = self.question_mmd_criterion(posterior_zq, prior_zq)
             loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits, prior_za_logits)
 
-        loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
+        loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_z_info > 0:
-            loss_prior_zq_info = self.zq_info_model(q_embs.clone().detach(), prior_zq)
-            loss_prior_za_info = self.za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
+            loss_zq_info = self.zq_info_model(q_embs.clone().detach(), posterior_zq)
+            loss_za_info = self.za_info_model(a_embs.clone().detach(),
+                                        posterior_za_logits.view(-1, posterior_za_logits.size(1)*posterior_za_logits.size(2)))
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
-        loss_prior_info = self.lambda_z_info * (loss_prior_zq_info + loss_prior_za_info)
+        loss_prior_info = self.lambda_z_info * (loss_zq_info + loss_za_info)
         loss_info = self.lambda_qa_info * loss_info
 
         loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_mmd + loss_prior_info + loss_info
