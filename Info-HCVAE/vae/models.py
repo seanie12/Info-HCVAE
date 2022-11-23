@@ -10,7 +10,7 @@ from mine.models.adaptive_gradient_clipping import adaptive_gradient_clipping_
 
 
 # Define MMD loss
-def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="imq"):
+def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="rbf"):
     """ Return a kernel of size (batch_x, batch_y) """
     if kernel == "imq":
         Cbase = 2.0 * latent_dim * kernel_bandwidth ** 2
