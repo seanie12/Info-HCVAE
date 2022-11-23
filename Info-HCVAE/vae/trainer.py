@@ -56,7 +56,6 @@ class VAETrainer(object):
         loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_z_info > 0:
             q_embeddings = self.embedding(q_ids).mean(dim=1)
-            c_embeddings = self.embedding(c_ids).mean(dim=1)
             c_a_embeddings = self.embedding(c_ids, a_ids, None).mean(dim=1)
             posterior_zq, prior_zq, posterior_za_logits, prior_za_logits = latent_vars
 
