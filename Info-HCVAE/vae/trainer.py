@@ -24,11 +24,11 @@ class VAETrainer(object):
         if self.lambda_z_info > 0:
             self.embedding = self.vae.posterior_encoder.embedding
 
-            self.q_infomax_net = InfoMaxModel(args.nzqdim, emsize)
+            self.q_infomax_net = InfoMaxModel(args.nzqdim, emsize).to(self.device)
             # q_info_params = filter(lambda p: p.requires_grad, self.q_infomax_net.parameters())
             self.optimizer_q_infomax = torch.optim.Adam(self.q_infomax_net.parameters(), lr=args.lr_infomax)
 
-            self.a_infomax_net = InfoMaxModel(args.nza*args.nzadim, emsize)
+            self.a_infomax_net = InfoMaxModel(args.nza*args.nzadim, emsize).to(self.device)
             # a_info_params = filter(lambda p: p.requires_grad, self.a_infomax_net.parameters())
             self.optimizer_a_infomax = torch.optim.Adam(self.a_infomax_net.parameters(), lr=args.lr_infomax)
 
