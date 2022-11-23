@@ -69,6 +69,8 @@ def main(args):
                 # stop training if over the num of training samples limit
                 break
 
+        trainer.print_log(log_type="epoch")
+
         if (epoch + 1) % args.eval_freq == 0:
             metric_dict, bleu, _ = eval_vae(epoch, args, trainer, eval_data)
             f1 = metric_dict["f1"]
