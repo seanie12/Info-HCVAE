@@ -17,20 +17,20 @@ class VAETrainer(object):
             emsize = 768
 
         self.vae = DiscreteVAE(args).to(self.device)
-        params = filter(lambda p: p.requires_grad, self.vae.parameters())
-        self.optimizer_vae = torch.optim.Adam(params, lr=args.lr)
+        # params = filter(lambda p: p.requires_grad, self.vae.parameters())
+        self.optimizer_vae = torch.optim.Adam(self.vae.parameters(), lr=args.lr)
 
         self.lambda_z_info = args.lambda_z_info
         if self.lambda_z_info > 0:
             self.embedding = self.vae.posterior_encoder.embedding
 
-            self.q_infomax_net = InfoMaxModel(args.nzq, emsize)
-            q_info_params = filter(lambda p: p.requires_grad, self.q_infomax_net.parameters())
-            self.optimizer_q_infomax = torch.optim.Adam(q_info_params, lr=args.lr_infomax)
+            self.q_infomax_net = InfoMaxModel(args.nzqdim, emsize)
+            # q_info_params = filter(lambda p: p.requires_grad, self.q_infomax_net.parameters())
+            self.optimizer_q_infomax = torch.optim.Adam(self.q_infomax_net.parameters(), lr=args.lr_infomax)
 
             self.a_infomax_net = InfoMaxModel(args.nza*args.nzadim, emsize)
-            a_info_params = filter(lambda p: p.requires_grad, self.a_infomax_net.parameters())
-            self.optimizer_a_infomax = torch.optim.Adam(a_info_params, lr=args.lr_infomax)
+            # a_info_params = filter(lambda p: p.requires_grad, self.a_infomax_net.parameters())
+            self.optimizer_a_infomax = torch.optim.Adam(self.a_infomax_net.parameters(), lr=args.lr_infomax)
 
         self.total_loss = 0
         self.loss_q_rec = 0
