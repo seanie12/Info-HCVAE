@@ -150,12 +150,20 @@ class VAETrainer(object):
         return q_ids, start_positions, end_positions, zq    
 
     def save(self, filename):
-        params = {
-            'state_dict': self.vae.state_dict(),
-            'args': self.args
-        }
+        if self.lambda_z_info > 0:
+            params = {
+                'vae_state_dict': self.vae.state_dict(),
+                'q_info_state_dict': self.q_infomax_net.state_dict(),
+                'a_info_state_dict': self.a_infomax_net.state_dict(),
+                'args': self.args
+            }
+        else:
+            params = {
+                'vae_state_dict': self.vae.state_dict(),
+                'args': self.args
+            }
         torch.save(params, filename)
 
     def load_model_state_dict(self, filename):
         params = torch.load(filename)
-        self.vae.load_state_dict(params["state_dict"])
+        self.vae.load_state_dict(params["vae_state_dict"])
