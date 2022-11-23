@@ -892,6 +892,9 @@ class DiscreteVAE(nn.Module):
                     fake_loss = 0.5 * loss_fn(fake_logits, fake_labels)
                     return true_loss + fake_loss
 
+                # We dont want the posterior encoder to be influenced
+                # since we only want to optimize the mutual info between
+                # the prior and the question & answer
                 new_q_embs = q_embs.clone().detach()
                 new_a_embs = a_embs.clone().detach()
                 loss_prior_zq_info = mi_estimate(new_q_embs, prior_zq, self.prior_zq_discriminator, self.bce_prior_info_loss)
