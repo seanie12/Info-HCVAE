@@ -9,6 +9,49 @@ from mine.models.mine import MutualInformationEstimator
 from mine.models.adaptive_gradient_clipping import adaptive_gradient_clipping_
 
 
+class InfoMaxModel(nn.Module):
+    """discriminator network.
+    Args:
+        z_dim (int): dimension of latent code (typically a number in [10 - 256])
+        x_dim (int): for example m x n x c for [m, n, c]
+    """
+    def __init__(self, z_dim=2, x_dim=784):
+        super(InfoMaxModel, self).__init__()
+        self.z_dim = z_dim
+        self.x_dim = x_dim
+        self.discriminator = nn.Sequential(
+            nn.Linear(self.x_dim + self.z_dim, 1000),
+            nn.ReLU(True),
+            nn.Linear(1000, 400),
+            nn.ReLU(True),
+            nn.Linear(400, 100),
+            nn.ReLU(True),
+            nn.Linear(100, 1),
+        )
+
+    def forward(self, x, z):
+        """
+        Inputs:
+            x : input from train_loader (batch_size x input_size )
+            z : latent codes associated with x (batch_size x z_dim)
+        """
+        x_z_real = torch.cat((x, z), dim=1)
+        x_z_fake = torch.cat((x, self._permute_dims(z)), dim=1)
+        d_x_z_real = self.discriminator(x_z_real).squeeze()
+        d_x_z_fake = self.discriminator(x_z_fake).squeeze()
+        loss_info_xz = -(d_x_z_real.mean() - (torch.exp(d_x_z_fake - 1).mean()))
+        return loss_info_xz
+
+    def _permute_dims(self, z):
+        """
+        function to permute z based on indicies
+        """
+        B, _ = z.size()
+        perm = torch.randperm(B)
+        perm_z = z[perm]
+        return perm_z
+
+
 # Define MMD loss
 def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="rbf"):
     """ Return a kernel of size (batch_x, batch_y) """
@@ -739,8 +782,8 @@ class DiscreteVAE(nn.Module):
         self.w_bce = args.w_bce
         self.alpha_kl = args.alpha_kl
         self.lambda_mmd = args.lambda_mmd
-        self.lambda_prior_info = args.lambda_prior_info
-        self.lambda_info = args.lambda_info
+        self.lambda_z_info = args.lambda_z_info
+        self.lambda_qa_info = args.lambda_qa_info
 
         max_q_len = args.max_q_len
 
@@ -783,8 +826,10 @@ class DiscreteVAE(nn.Module):
             self.answer_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_prior_info > 0:
-            self.prior_zq_info_model = MutualInformationEstimator(emsize, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
-            self.prior_za_info_model = MutualInformationEstimator(emsize, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
+            self.zq_info_model = InfoMaxModel(nzqdim, emsize)
+            self.za_info_model = InfoMaxModel(nza*nzadim, emsize)
+            # self.zq_info_model = MutualInformationEstimator(emsize, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
+            # self.za_info_model = MutualInformationEstimator(emsize, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
 
     def return_init_state(self, zq, za):
 
@@ -847,20 +892,20 @@ class DiscreteVAE(nn.Module):
             loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits, prior_za_logits)
 
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
-        if self.lambda_prior_info > 0:
-            loss_prior_zq_info = self.prior_zq_info_model(q_embs.clone().detach(), prior_zq)
-            loss_prior_za_info = self.prior_za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
+        if self.lambda_z_info > 0:
+            loss_prior_zq_info = self.zq_info_model(q_embs.clone().detach(), prior_zq)
+            loss_prior_za_info = self.za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
-        loss_prior_info = self.lambda_prior_info * (loss_prior_zq_info + loss_prior_za_info)
-        loss_info = self.lambda_info * loss_info
+        loss_prior_info = self.lambda_z_info * (loss_prior_zq_info + loss_prior_za_info)
+        loss_info = self.lambda_qa_info * loss_info
 
         loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_mmd + loss_prior_info + loss_info
 
         if self.lambda_prior_info > 0:
-            adaptive_gradient_clipping_(self.prior_encoder, self.prior_za_info_model)
-            adaptive_gradient_clipping_(self.prior_encoder, self.prior_zq_info_model)
+            adaptive_gradient_clipping_(self.prior_encoder, self.za_info_model)
+            adaptive_gradient_clipping_(self.prior_encoder, self.zq_info_model)
 
         return loss, \
             loss_q_rec, loss_a_rec, \
