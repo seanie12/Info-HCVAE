@@ -17,8 +17,8 @@ class VAETrainer(object):
             emsize = 768
 
         self.vae = DiscreteVAE(args).to(self.device)
-        # params = filter(lambda p: p.requires_grad, self.vae.parameters())
-        self.optimizer_vae = torch.optim.Adam(self.vae.parameters(), lr=args.lr)
+        params = filter(lambda p: p.requires_grad, self.vae.parameters())
+        self.optimizer_vae = torch.optim.Adam(params, lr=args.lr)
 
         self.lambda_z_info = args.lambda_z_info
         if self.lambda_z_info > 0:
@@ -60,15 +60,12 @@ class VAETrainer(object):
             c_a_embeddings = self.embedding(c_ids, a_ids, None).mean(dim=1)
             posterior_zq, prior_zq, posterior_za_logits, prior_za_logits = latent_vars
 
-            loss_zq_info = 0.5*(self.q_infomax_net(q_embeddings, posterior_zq) + self.q_infomax_net(c_embeddings, posterior_zq) \
-                + self.q_infomax_net(q_embeddings, prior_zq) + self.q_infomax_net(c_embeddings, prior_zq))
+            loss_zq_info = 0.5*(self.q_infomax_net(q_embeddings, posterior_zq) + self.q_infomax_net(q_embeddings, prior_zq))
             loss += self.lambda_z_info * loss_zq_info
 
             nza, nzadim = posterior_za_logits.size(1), posterior_za_logits.size(2)
             loss_za_info = 0.5*(self.a_infomax_net(c_a_embeddings, posterior_za_logits.view(-1, nza*nzadim)) \
-                                + self.a_infomax_net(c_embeddings, posterior_za_logits.view(-1, nza*nzadim)) \
-                           + self.a_infomax_net(c_a_embeddings, prior_za_logits.view(-1, nza*nzadim)) \
-                             + self.a_infomax_net(c_embeddings, prior_za_logits.view(-1, nza*nzadim)))
+                           + self.a_infomax_net(c_a_embeddings, prior_za_logits.view(-1, nza*nzadim)))
             loss += self.lambda_z_info * loss_za_info
 
         # Backward
