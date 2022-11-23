@@ -293,7 +293,7 @@ class PosteriorEncoder(nn.Module):
         if not return_input_embeds:
             return zq_mu, zq_logvar, zq, za_logits, za
         else:
-            return zq_mu, zq_logvar, zq, za_logits, za, q_embeddings., c_a_h
+            return zq_mu, zq_logvar, zq, za_logits, za, q_h, c_a_h
 
 
 class PriorEncoder(nn.Module):
