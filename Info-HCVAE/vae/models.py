@@ -904,9 +904,9 @@ class DiscreteVAE(nn.Module):
 
         loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_mmd + loss_prior_info + loss_info
 
-        if self.lambda_prior_info > 0:
-            adaptive_gradient_clipping_(self.prior_encoder, self.za_info_model)
-            adaptive_gradient_clipping_(self.prior_encoder, self.zq_info_model)
+        # if self.lambda_z_info > 0:
+        #     adaptive_gradient_clipping_(self.prior_encoder, self.za_info_model)
+        #     adaptive_gradient_clipping_(self.prior_encoder, self.zq_info_model)
 
         return loss, \
             loss_q_rec, loss_a_rec, \
