@@ -98,7 +98,7 @@ class VAETrainer(object):
                 za_info={:.4f}, qa_info={:.4f})"
             log_str = log_str.format(self.cnt_steps, float(self.total_loss / self.cnt_steps), float(self.loss_q_rec / self.cnt_steps),
                         float(self.loss_a_rec / self.cnt_steps), float(self.loss_zq_kl / self.cnt_steps), float(self.loss_za_kl / self.cnt_steps),
-                        float(self.loss_zq_info / self.cnt_steps), float(self.loss_za_info / self.cnt_steps), float(self.loss_info / self.cnt_steps))
+                        float(self.loss_zq_info / self.cnt_steps), float(self.loss_za_info / self.cnt_steps), float(self.loss_qa_info / self.cnt_steps))
             print(log_str)
 
     def _reset_loss_values(self):
