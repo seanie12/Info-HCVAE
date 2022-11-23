@@ -98,13 +98,9 @@ class CategoricalMMDLoss(nn.Module):
 
     def forward(self, posterior_za, prior_za):
         # input shape = (batch, dim1, dim2)
-        batch_size = posterior_za.size(0)
+        nlatent = posterior_za.size(1)
         latent_dim = posterior_za.size(2)
-        total_mmd = 0
-        for idx in range(batch_size):
-            # after .unsqueeze(0): (dim1, dim2) -> (1, dim1, dim2)
-            total_mmd += compute_mmd(posterior_za[idx], prior_za[idx], latent_dim)
-        return total_mmd / batch_size
+        return compute_mmd(posterior_za.view(-1, nlatent*latent_dim), prior_za.view(-1, nlatent*latent_dim), nlatent*latent_dim)
 
 
 class GaussianKernelMMDLoss(nn.Module):
@@ -113,12 +109,8 @@ class GaussianKernelMMDLoss(nn.Module):
 
     def forward(self, posterior_zq, prior_zq):
         # input shape = (batch, dim)
-        batch_size = posterior_zq.size(0)
         latent_dim = posterior_zq.size(1)
-        for idx in range(batch_size):
-            # result tensor shape = (1, dim)
-            total_mmd += compute_mmd(posterior_zq[idx].unsqueeze(0), prior_zq[idx].unsqueeze(0), latent_dim)
-        return total_mmd / batch_size
+        return compute_mmd(posterior_zq, prior_zq, latent_dim)
 
 
 class Embedding(nn.Module):
@@ -790,7 +782,7 @@ class DiscreteVAE(nn.Module):
             self.answer_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_prior_info > 0:
-            self.use_mine = True
+            self.use_mine = False
             if self.use_mine:
                 self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
                 self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
