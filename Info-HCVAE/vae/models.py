@@ -895,7 +895,7 @@ class DiscreteVAE(nn.Module):
                 new_q_embs = q_embs.clone().detach()
                 new_a_embs = a_embs.clone().detach()
                 loss_prior_zq_info = mi_estinmate(new_q_embs, prior_zq, self.prior_zq_discriminator, self.bce_prior_info_loss)
-                loss_prior_za_info = mi_estinmate(new_a_embs, prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)),
+                loss_prior_za_info = self.w_ans * mi_estinmate(new_a_embs, prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)),
                                             self.prior_zq_discriminator, self.bce_prior_info_loss)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
