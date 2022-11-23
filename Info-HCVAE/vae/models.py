@@ -877,7 +877,7 @@ class DiscreteVAE(nn.Module):
                 loss_prior_zq_info = self.prior_zq_info_model(q_embs.clone().detach(), prior_zq)
                 loss_prior_za_info = self.prior_za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
             else:
-                def mi_estinmate(x, y, g, loss_fn):
+                def mi_estimate(x, y, g, loss_fn):
                     fake_x = torch.cat([x[-1].unsqueeze(0), x[:-1]], dim=0)
                     fake_y = torch.cat([y[-1].unsqueeze(0), y[:-1]], dim=0)
                     true_logits = g(x, y)
@@ -894,8 +894,8 @@ class DiscreteVAE(nn.Module):
 
                 new_q_embs = q_embs.clone().detach()
                 new_a_embs = a_embs.clone().detach()
-                loss_prior_zq_info = mi_estinmate(new_q_embs, prior_zq, self.prior_zq_discriminator, self.bce_prior_info_loss)
-                loss_prior_za_info = self.w_ans * mi_estinmate(new_a_embs, prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)),
+                loss_prior_zq_info = mi_estimate(new_q_embs, prior_zq, self.prior_zq_discriminator, self.bce_prior_info_loss)
+                loss_prior_za_info = self.w_ans * mi_estimate(new_a_embs, prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)),
                                             self.prior_za_discriminator, self.bce_prior_info_loss)
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
