@@ -240,6 +240,7 @@ class PosteriorEncoder(nn.Module):
 
         # question enc
         q_embeddings = self.embedding(q_ids)
+        print(q_embeddings.size())
         q_hs, q_state = self.encoder(q_embeddings, q_lengths.to("cpu"))
         q_h = q_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         q_h = q_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
@@ -252,6 +253,7 @@ class PosteriorEncoder(nn.Module):
 
         # context and answer enc
         c_a_embeddings = self.embedding(c_ids, a_ids, None)
+        print(c_a_embeddings.size())
         c_a_hs, c_a_state = self.encoder(c_a_embeddings, c_lengths.to("cpu"))
         c_a_h = c_a_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_a_h = c_a_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
@@ -291,7 +293,7 @@ class PosteriorEncoder(nn.Module):
         if not return_input_embeds:
             return zq_mu, zq_logvar, zq, za_logits, za
         else:
-            return zq_mu, zq_logvar, zq, za_logits, za, q_h, c_a_h
+            return zq_mu, zq_logvar, zq, za_logits, za, q_embeddings., c_a_h
 
 
 class PriorEncoder(nn.Module):
@@ -783,14 +785,8 @@ class DiscreteVAE(nn.Module):
             self.answer_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_prior_info > 0:
-            self.use_mine = False
-            if self.use_mine:
-                self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
-                self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
-            else:
-                self.prior_zq_discriminator = nn.Bilinear(2*enc_nhidden, self.nzqdim, 1)
-                self.prior_za_discriminator = nn.Bilinear(2*enc_nhidden, self.nza*self.nzadim, 1)
-                self.bce_prior_info_loss = nn.BCEWithLogitsLoss()
+            self.prior_zq_info_model = MutualInformationEstimator(2*enc_nhidden, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
+            self.prior_za_info_model = MutualInformationEstimator(2*enc_nhidden, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
 
     def return_init_state(self, zq, za):
 
@@ -854,33 +850,8 @@ class DiscreteVAE(nn.Module):
 
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_prior_info > 0:
-            if self.use_mine:
-                loss_prior_zq_info = self.prior_zq_info_model(q_embs.clone().detach(), prior_zq)
-                loss_prior_za_info = self.prior_za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
-            else:
-                def mi_estimate(x, y, g, loss_fn):
-                    fake_x = torch.cat([x[-1].unsqueeze(0), x[:-1]], dim=0)
-                    fake_y = torch.cat([y[-1].unsqueeze(0), y[:-1]], dim=0)
-                    true_logits = g(x, y)
-                    true_labels = torch.ones_like(true_logits)
-
-                    fake_y_logits = g(x, fake_y)
-                    fake_x_logits = g(fake_x, y)
-                    fake_logits = torch.cat([fake_y_logits, fake_x_logits], dim=0)
-                    fake_labels = torch.zeros_like(fake_logits)
-
-                    true_loss = loss_fn(true_logits, true_labels)
-                    fake_loss = 0.5 * loss_fn(fake_logits, fake_labels)
-                    return true_loss + fake_loss
-
-                # We dont want the posterior encoder to be influenced
-                # since we only want to optimize the mutual info between
-                # the prior and the question & answer
-                new_q_embs = q_embs.clone().detach()
-                new_a_embs = a_embs.clone().detach()
-                loss_prior_zq_info = mi_estimate(new_q_embs, prior_zq, self.prior_zq_discriminator, self.bce_prior_info_loss)
-                loss_prior_za_info = self.w_ans * mi_estimate(new_a_embs, prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)),
-                                            self.prior_za_discriminator, self.bce_prior_info_loss)
+            loss_prior_zq_info = self.prior_zq_info_model(q_embs.clone().detach(), prior_zq)
+            loss_prior_za_info = self.prior_za_info_model(a_embs.clone().detach(), prior_za_logits.view(-1, prior_za_logits.size(1)*prior_za_logits.size(2)))
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
