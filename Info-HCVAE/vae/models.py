@@ -96,17 +96,14 @@ class CategoricalMMDLoss(nn.Module):
     def __init__(self):
         super(CategoricalMMDLoss, self).__init__()
 
-    def forward(self, posterior_za_logits, prior_za_logits):
+    def forward(self, posterior_za, prior_za):
         # input shape = (batch, dim1, dim2)
-        batch_size = posterior_za_logits.size(0)
-        dim1 = posterior_za_logits.size(1)
-        dim2 = posterior_za_logits.size(2)
+        batch_size = posterior_za.size(0)
+        latent_dim = posterior_za.size(2)
         total_mmd = 0
         for idx in range(batch_size):
             # after .unsqueeze(0): (dim1, dim2) -> (1, dim1, dim2)
-            posterior_za = gumbel_softmax(posterior_za_logits[idx].unsqueeze(0), hard=True)
-            prior_za = gumbel_softmax(prior_za_logits[idx].unsqueeze(0), hard=True)
-            total_mmd += compute_mmd(posterior_za.view(dim1, -1), prior_za.view(dim1, -1), dim2)
+            total_mmd += compute_mmd(posterior_za[idx], prior_za[idx], latent_dim)
         return total_mmd / batch_size
 
 
@@ -114,19 +111,13 @@ class GaussianKernelMMDLoss(nn.Module):
     def __init__(self):
         super(GaussianKernelMMDLoss, self).__init__()
 
-    def forward(self, posterior_mu, posterior_logvar, prior_mu, prior_logvar, num_samples=16):
+    def forward(self, posterior_zq, prior_zq):
         # input shape = (batch, dim)
-        batch_size = posterior_mu.size(0)
-        latent_dim = posterior_mu.size(1)
-        total_mmd = 0
+        batch_size = posterior_zq.size(0)
+        latent_dim = posterior_zq.size(1)
         for idx in range(batch_size):
-            # (dim) -> (1, dim) after .unsqueeze(0)
-            posterior_zq = posterior_mu[idx].unsqueeze(0) + \
-                torch.randn_like(posterior_mu[idx].unsqueeze(0).repeat(num_samples, 1))*torch.exp(0.5*posterior_logvar[idx].unsqueeze(0))
-            prior_zq = prior_mu[idx].unsqueeze(0) + \
-                torch.randn_like(prior_mu[idx].unsqueeze(0).repeat(num_samples, 1))*torch.exp(0.5*prior_logvar[idx].unsqueeze(0))
-            # result tensor shape = (num_samples, dim)
-            total_mmd += compute_mmd(posterior_zq, prior_zq, latent_dim)
+            # result tensor shape = (1, dim)
+            total_mmd += compute_mmd(posterior_zq[idx].unsqueeze(0), prior_zq[idx].unsqueeze(0), latent_dim)
         return total_mmd / batch_size
 
 
@@ -865,11 +856,9 @@ class DiscreteVAE(nn.Module):
 
         loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
         if self.alpha_kl + self.lambda_mmd - 1 > 0:
-            loss_zq_mmd = self.question_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
-                                                    prior_zq_mu, prior_zq_logvar)
+            loss_zq_mmd = self.question_mmd_criterion(posterior_zq, prior_zq)
 
-            loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits,
-                                                        prior_za_logits)
+            loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za, prior_za)
 
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_prior_info > 0:
