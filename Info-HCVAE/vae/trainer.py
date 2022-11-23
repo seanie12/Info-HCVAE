@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from models import DiscreteVAE, return_mask_lengths
+from models import DiscreteVAE, InfoMaxModel
 
 
 class VAETrainer(object):
@@ -10,19 +10,37 @@ class VAETrainer(object):
         self.clip = args.clip
         self.device = args.device
 
+        huggingface_model = args.huggingface_model
+        if "large" in huggingface_model:
+            emsize = 1024
+        else:
+            emsize = 768
+
         self.vae = DiscreteVAE(args).to(self.device)
         params = filter(lambda p: p.requires_grad, self.vae.parameters())
-        self.optimizer = torch.optim.Adam(params, lr=args.lr)
+        self.optimizer_vae = torch.optim.Adam(params, lr=args.lr)
+
+        self.lambda_z_info = args.lambda_z_info
+        if self.lambda_z_info > 0:
+            self.embedding = self.vae.posterior_encoder.embedding
+
+            self.q_infomax_net = InfoMaxModel(args.nzq, emsize)
+            q_info_params = filter(lambda p: p.requires_grad, self.q_infomax_net.parameters())
+            self.optimizer_q_infomax = torch.optim.Adam(q_info_params, lr=args.lr_infomax)
+
+            self.a_infomax_net = InfoMaxModel(args.nza*args.nzadim, emsize)
+            a_info_params = filter(lambda p: p.requires_grad, self.a_infomax_net.parameters())
+            self.optimizer_a_infomax = torch.optim.Adam(a_info_params, lr=args.lr_infomax)
 
         self.total_loss = 0
         self.loss_q_rec = 0
         self.loss_a_rec = 0
         self.loss_zq_kl = 0
         self.loss_za_kl = 0
-        self.loss_zq_mmd = 0
-        self.loss_za_mmd = 0
-        self.loss_prior_info = 0
-        self.loss_info = 0
+        self.loss_zq_info = 0
+        self.loss_za_info = 0
+        # self.loss_prior_info = 0
+        self.loss_qa_info = 0
         self.cnt_steps = 0
 
     def train(self, c_ids, q_ids, a_ids, start_positions, end_positions):
@@ -32,35 +50,55 @@ class VAETrainer(object):
         loss, \
         loss_q_rec, loss_a_rec, \
         loss_zq_kl, loss_za_kl, \
-        loss_zq_mmd, loss_za_mmd, \
-        loss_prior_info, loss_info \
+        loss_qa_info, latent_vars \
         = self.vae(c_ids, q_ids, a_ids, start_positions, end_positions)
 
-        # Backward
-        self.optimizer.zero_grad()
-        loss.backward()
+        loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
+        if self.lambda_z_info > 0:
+            q_embeddings = self.embedding(q_ids).mean(dim=1)
+            c_a_embeddings = self.embedding(c_ids, a_ids, None).mean(dim=1)
+            posterior_zq, prior_zq, posterior_za_logits, prior_za_logits = latent_vars
 
+            loss_zq_info = 0.5*(self.q_infomax_net(q_embeddings, posterior_zq) + self.q_infomax_net(q_embeddings, prior_zq))
+            loss += self.lambda_z_info * loss_zq_info
+
+            nza, nzadim = posterior_za_logits.size(1), posterior_za_logits.size(2)
+            loss_za_info = 0.5*(self.a_infomax_net(c_a_embeddings, posterior_za_logits.view(-1, nza*nzadim)) \
+                           + self.a_infomax_net(c_a_embeddings, prior_za_logits.view(-1, nza*nzadim)))
+            loss += self.lambda_z_info * loss_za_info
+
+        # Backward
+        self.optimizer_vae.zero_grad()
+        loss.backward(retain_graph=True)
         # Step
-        self.optimizer.step()
+        self.optimizer_vae.step()
+
+        if self.lambda_z_info > 0:
+            self.optimizer_q_infomax.zero_grad()
+            loss_zq_info.backward(inputs=list(self.q_infomax_net.parameters()))
+            self.optimizer_q_infomax.step()
+
+            self.optimizer_a_infomax.zero_grad()
+            loss_za_info.backward(inputs=list(self.a_infomax_net.parameters()))
+            self.optimizer_a_infomax.step()
 
         self.total_loss += loss.item()
         self.loss_q_rec += loss_q_rec.item()
         self.loss_a_rec += loss_a_rec.item()
         self.loss_zq_kl += loss_zq_kl.item()
         self.loss_za_kl += loss_za_kl.item()
-        self.loss_zq_mmd += loss_zq_mmd.item()
-        self.loss_za_mmd += loss_za_mmd.item()
-        self.loss_prior_info += loss_prior_info.item()
-        self.loss_info += loss_info.item()
+        self.loss_zq_info += loss_zq_info.item()
+        self.loss_za_info += loss_za_info.item()
+        # self.loss_prior_info += loss_prior_info.item()
+        self.loss_qa_info += loss_qa_info.item()
 
         self.cnt_steps += 1
         if self.cnt_steps % 100 == 0:
-            log_str = "\nStep={:d} - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_mmd={:.4f}, \
-                za_mmd={:.4f}, prior_info={:4f}, info={:.4f})"
+            log_str = "\nStep={:d} - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_info={:.4f}, \
+                za_info={:.4f}, qa_info={:.4f})"
             log_str = log_str.format(self.cnt_steps, float(self.total_loss / self.cnt_steps), float(self.loss_q_rec / self.cnt_steps),
                         float(self.loss_a_rec / self.cnt_steps), float(self.loss_zq_kl / self.cnt_steps), float(self.loss_za_kl / self.cnt_steps),
-                        float(self.loss_zq_mmd / self.cnt_steps), float(self.loss_za_mmd / self.cnt_steps), float(self.loss_prior_info / self.cnt_steps),
-                        float(self.loss_info / self.cnt_steps))
+                        float(self.loss_zq_info / self.cnt_steps), float(self.loss_za_info / self.cnt_steps), float(self.loss_info / self.cnt_steps))
             print(log_str)
 
     def _reset_loss_values(self):
@@ -69,9 +107,9 @@ class VAETrainer(object):
         self.loss_a_rec = 0
         self.loss_zq_kl = 0
         self.loss_za_kl = 0
-        self.loss_zq_mmd = 0
-        self.loss_za_mmd = 0
-        self.loss_info = 0
+        self.loss_zq_info = 0
+        self.loss_za_info = 0
+        self.loss_qa_info = 0
 
     def reset_cnt_steps(self):
         self.cnt_steps = 0

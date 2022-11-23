@@ -781,8 +781,8 @@ class DiscreteVAE(nn.Module):
         self.w_ans = args.w_ans
         self.w_bce = args.w_bce
         self.alpha_kl = args.alpha_kl
-        self.lambda_mmd = args.lambda_mmd
-        self.lambda_z_info = args.lambda_z_info
+        # self.lambda_mmd = args.lambda_mmd
+        # self.lambda_z_info = args.lambda_z_info
         self.lambda_qa_info = args.lambda_qa_info
 
         max_q_len = args.max_q_len
@@ -821,15 +821,15 @@ class DiscreteVAE(nn.Module):
         self.question_kl_criterion = GaussianKLLoss()
         self.answer_kl_criterion = CategoricalKLLoss()
 
-        if self.alpha_kl + self.lambda_mmd - 1 > 0:
-            self.question_mmd_criterion = GaussianKernelMMDLoss()
-            self.answer_mmd_criterion = CategoricalMMDLoss()
+        # if self.alpha_kl + self.lambda_mmd - 1 > 0:
+        #     self.question_mmd_criterion = GaussianKernelMMDLoss()
+        #     self.answer_mmd_criterion = CategoricalMMDLoss()
 
-        if self.lambda_z_info > 0:
-            self.zq_info_model = InfoMaxModel(nzqdim, emsize)
-            self.za_info_model = InfoMaxModel(nza*nzadim, emsize)
-            # self.zq_info_model = MutualInformationEstimator(emsize, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
-            # self.za_info_model = MutualInformationEstimator(emsize, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
+        # if self.lambda_z_info > 0:
+        #     self.zq_info_model = InfoMaxModel(nzqdim, emsize)
+        #     self.za_info_model = InfoMaxModel(nza*nzadim, emsize)
+        #     # self.zq_info_model = MutualInformationEstimator(emsize, self.nzqdim, T_hidden_size=(2*enc_nhidden+self.nzqdim) // 2)
+        #     # self.za_info_model = MutualInformationEstimator(emsize, self.nza*self.nzadim, T_hidden_size=(2*enc_nhidden+self.nza*self.nzadim) // 2)
 
     def return_init_state(self, zq, za):
 
@@ -850,8 +850,8 @@ class DiscreteVAE(nn.Module):
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
 
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
-            posterior_za_logits, posterior_za, q_embs, a_embs \
-            = self.posterior_encoder(c_ids, q_ids, a_ids, return_input_embeds=True)
+            posterior_za_logits, posterior_za \
+            = self.posterior_encoder(c_ids, q_ids, a_ids)
 
         prior_zq_mu, prior_zq_logvar, prior_zq, \
             prior_za_logits, _ \
@@ -886,23 +886,23 @@ class DiscreteVAE(nn.Module):
         loss_za_kl = self.w_ans * self.answer_kl_criterion(posterior_za_logits,
                                                     prior_za_logits)
 
-        loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
-        if self.alpha_kl + self.lambda_mmd - 1 > 0:
-            loss_zq_mmd = self.question_mmd_criterion(posterior_zq, prior_zq)
-            loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits, prior_za_logits)
+        # loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
+        # if self.alpha_kl + self.lambda_mmd - 1 > 0:
+        #     loss_zq_mmd = self.question_mmd_criterion(posterior_zq, prior_zq)
+        #     loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits, prior_za_logits)
 
-        loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
-        if self.lambda_z_info > 0:
-            loss_zq_info = self.zq_info_model(q_embs.clone().detach(), posterior_zq)
-            loss_za_info = self.za_info_model(a_embs.clone().detach(),
-                                        posterior_za_logits.view(-1, posterior_za_logits.size(1)*posterior_za_logits.size(2)))
+        # loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
+        # if self.lambda_z_info > 0:
+        #     loss_zq_info = self.zq_info_model(q_embs.clone().detach(), posterior_zq)
+        #     loss_za_info = self.za_info_model(a_embs.clone().detach(),
+        #                                 posterior_za_logits.view(-1, posterior_za_logits.size(1)*posterior_za_logits.size(2)))
 
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
-        loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
-        loss_prior_info = self.lambda_z_info * (loss_zq_info + loss_za_info)
+        # loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
+        # loss_prior_info = self.lambda_z_info * (loss_zq_info + loss_za_info)
         loss_info = self.lambda_qa_info * loss_info
 
-        loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_mmd + loss_prior_info + loss_info
+        loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_info # + loss_prior_info + loss_mmd
 
         # if self.lambda_z_info > 0:
         #     adaptive_gradient_clipping_(self.prior_encoder, self.za_info_model)
@@ -911,8 +911,8 @@ class DiscreteVAE(nn.Module):
         return loss, \
             loss_q_rec, loss_a_rec, \
             loss_zq_kl, loss_za_kl, \
-            loss_zq_mmd, loss_za_mmd, \
-            loss_prior_info, loss_info
+            loss_info, (posterior_zq, prior_zq, posterior_za_logits, prior_za_logits)
+            # loss_zq_mmd, loss_za_mmd, \
 
     def generate(self, zq, za, c_ids):
         q_init_state, a_init_state = self.return_init_state(zq, za)
