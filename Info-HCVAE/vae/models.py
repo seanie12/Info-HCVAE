@@ -900,9 +900,9 @@ class DiscreteVAE(nn.Module):
         loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
         # loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
         # loss_prior_info = self.lambda_z_info * (loss_zq_info + loss_za_info)
-        loss_info = self.lambda_qa_info * loss_info
+        loss_qa_info = self.lambda_qa_info * loss_info
 
-        loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_info # + loss_prior_info + loss_mmd
+        loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_qa_info # + loss_prior_info + loss_mmd
 
         # if self.lambda_z_info > 0:
         #     adaptive_gradient_clipping_(self.prior_encoder, self.za_info_model)
@@ -911,7 +911,7 @@ class DiscreteVAE(nn.Module):
         return loss, \
             loss_q_rec, loss_a_rec, \
             loss_zq_kl, loss_za_kl, \
-            loss_info, (posterior_zq, prior_zq, posterior_za_logits, prior_za_logits)
+            loss_qa_info, (posterior_zq, prior_zq, posterior_za_logits, prior_za_logits)
             # loss_zq_mmd, loss_za_mmd, \
 
     def generate(self, zq, za, c_ids):
