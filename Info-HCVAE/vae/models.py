@@ -815,7 +815,7 @@ class DiscreteVAE(nn.Module):
             = self.posterior_encoder(c_ids, q_ids, a_ids, return_input_embeds=True)
 
         prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_logits, prior_za \
+            prior_za_logits, _ \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -850,8 +850,7 @@ class DiscreteVAE(nn.Module):
         loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
         if self.alpha_kl + self.lambda_mmd - 1 > 0:
             loss_zq_mmd = self.question_mmd_criterion(posterior_zq, prior_zq)
-
-            loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za, prior_za)
+            loss_za_mmd = self.w_ans * self.answer_mmd_criterion(posterior_za_logits, prior_za_logits)
 
         loss_prior_zq_info, loss_prior_za_info = torch.tensor(0), torch.tensor(0)
         if self.lambda_prior_info > 0:
