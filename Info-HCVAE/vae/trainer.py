@@ -107,11 +107,10 @@ class VAETrainer(object):
         assert log_type in ["step", "epoch"]
         log_str = ""
         if log_type == "step":
-            log_str = "\nStep={:d} - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_info={:.4f}, \
-                    za_info={:.4f}, qa_info={:.4f})"
+            log_str = "\nStep={:d} - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_info={:.4f}, za_info={:.4f}, qa_info={:.4f})"
         else:
-            log_str = "\nEpoch stats (step={:d}) - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_info={:.4f}, \
-                    za_info={:.4f}, qa_info={:.4f})"
+            log_str = "\nEpoch stats (step={:d}) - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_info={:.4f}, za_info={:.4f}, qa_info={:.4f})"
+
         log_str = log_str.format(self.cnt_steps, float(self.total_loss / self.cnt_steps), float(self.loss_q_rec / self.cnt_steps),
                     float(self.loss_a_rec / self.cnt_steps), float(self.loss_zq_kl / self.cnt_steps), float(self.loss_za_kl / self.cnt_steps),
                     float(self.loss_zq_info / self.cnt_steps), float(self.loss_za_info / self.cnt_steps), float(self.loss_qa_info / self.cnt_steps))
