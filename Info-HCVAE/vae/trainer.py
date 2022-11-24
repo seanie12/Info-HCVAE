@@ -22,6 +22,8 @@ class VAETrainer(object):
 
         self.lambda_z_info = args.lambda_z_info
         if self.lambda_z_info > 0:
+            self.stop_infomax_opt = False
+
             self.embedding = self.vae.posterior_encoder.embedding
 
             self.q_infomax_net = InfoMaxModel(args.nzqdim, emsize*2).to(self.device)
@@ -45,6 +47,9 @@ class VAETrainer(object):
 
     def train(self, c_ids, q_ids, a_ids, start_positions, end_positions):
         self.vae = self.vae.train()
+        if self.lambda_z_info > 0 and not self.stop_infomax_opt:
+            self.a_infomax_net = self.a_infomax_net.train()
+            self.q_infomax_net = self.q_infomax_net.train()
 
         # Forward
         loss, \
@@ -75,7 +80,7 @@ class VAETrainer(object):
         # Step
         self.optimizer_vae.step()
 
-        if self.lambda_z_info > 0:
+        if self.lambda_z_info > 0 and not self.stop_infomax_opt:
             self.optimizer_q_infomax.zero_grad()
             loss_zq_info.backward(inputs=list(self.q_infomax_net.parameters()))
             self.optimizer_q_infomax.step()
@@ -123,6 +128,11 @@ class VAETrainer(object):
         self.loss_zq_info = 0
         self.loss_za_info = 0
         self.loss_qa_info = 0
+
+    def stop_infomax_optimization(self):
+        self.stop_infomax_opt = True
+        self.q_infomax_net = self.q_infomax_net.eval()
+        self.a_infomax_net = self.a_infomax_net.eval()
 
     def reset_cnt_steps(self):
         self.cnt_steps = 0

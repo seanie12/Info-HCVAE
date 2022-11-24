@@ -13,10 +13,13 @@ from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
 
 
 def main(args):
+    if args.infomax_epochs >= args.epochs:
+        args.infomax_epochs = args.epochs // 4
+
     tokenizer = BertTokenizer.from_pretrained(args.huggingface_model)
     train_loader = None
     eval_data = None
-    
+
     if args.load_saved_dataloader:
         train_loader = torch.load(os.path.join(args.dataloader_dir, "train_loader.pt"))
         eval_data = torch.load(os.path.join(args.dataloader_dir, "eval_loader.pt"))
@@ -47,6 +50,9 @@ def main(args):
 
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
+        if epoch > args.infomax_epochs:
+            trainer.stop_infomax_optimization()
+
         if epoch+1 < args.resume_epochs:
             continue
 
@@ -110,15 +116,16 @@ if __name__ == "__main__":
     
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
-    parser.add_argument("--load_saved_dataloader", default="False", type=str)
-    parser.add_argument("--use_mine", default="False", type=str)
+    parser.add_argument("--load_saved_dataloader", dest="load_saved_dataloader", action="store_true")
+    parser.add_argument("--use_mine", dest="use_mine", action="store_true")
 
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=20, type=int)
+    parser.add_argument("--infomax_epochs", default=5, type=int, help="Must be less than epochs")
     parser.add_argument("--resume_epochs", default=1, type=int)
-    parser.add_argument("--is_test_run", default="False", type=str)
+    parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")
     parser.add_argument("--prev_best_bleu", default=0.0, type=float)
     parser.add_argument("--prev_best_f1", default=0.0, type=float)
     parser.add_argument("--save_freq", default=2, type=int, help="Model saving should be executed after how many epochs?")
@@ -153,11 +160,6 @@ if __name__ == "__main__":
 
     if args.debug:
         args.model_dir = "./dummy"
-
-    # Determine boolean args
-    args.load_saved_dataloader = True if args.load_saved_dataloader == "True" else False
-    args.use_mine = True if args.use_mine == "True" else False
-    args.is_test_run = True if args.is_test_run == "True" else False
 
     # set model dir
     model_dir = args.model_dir
