@@ -133,7 +133,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", default=2e-3, type=float, help="lr")
     parser.add_argument("--lr_infomax", default=1e-5, type=float, help="lr for infomax net")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
-    parser.add_argument("--weight_decay", default=0.1, type=float, help="weight decay")
+    parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
     parser.add_argument("--clip", default=5.0, type=float, help="max grad norm")
 
     parser.add_argument("--huggingface_model", default='bert-base-uncased', type=str)

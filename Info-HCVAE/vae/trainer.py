@@ -18,7 +18,7 @@ class VAETrainer(object):
 
         self.vae = DiscreteVAE(args).to(self.device)
         params = filter(lambda p: p.requires_grad, self.vae.parameters())
-        self.optimizer_vae = torch.optim.NAdam(params, lr=args.lr, weight_decay=args.weight_decay)
+        self.optimizer_vae = torch.optim.SGD(params, lr=args.lr, momentum=0.9, nesterov=True, weight_decay=args.weight_decay)
 
         self.lambda_z_info = args.lambda_z_info
         if self.lambda_z_info > 0:
@@ -29,12 +29,12 @@ class VAETrainer(object):
             self.q_init_dim = args.dec_q_nlayers*args.dec_q_nhidden
             self.q_infomax_net = InfoMaxModel(self.q_init_dim*2, emsize*2).to(self.device)
             # q_info_params = filter(lambda p: p.requires_grad, self.q_infomax_net.parameters())
-            self.optimizer_q_infomax = torch.optim.NAdam(self.q_infomax_net.parameters(), lr=args.lr_infomax)
+            self.optimizer_q_infomax = torch.optim.Adam(self.q_infomax_net.parameters(), lr=args.lr_infomax)
 
             self.a_init_dim = emsize
             self.a_infomax_net = InfoMaxModel(self.a_init_dim, emsize*2).to(self.device)
             # a_info_params = filter(lambda p: p.requires_grad, self.a_infomax_net.parameters())
-            self.optimizer_a_infomax = torch.optim.NAdam(self.a_infomax_net.parameters(), lr=args.lr_infomax)
+            self.optimizer_a_infomax = torch.optim.Adam(self.a_infomax_net.parameters(), lr=args.lr_infomax)
 
         self.total_loss = 0
         self.loss_q_rec = 0
