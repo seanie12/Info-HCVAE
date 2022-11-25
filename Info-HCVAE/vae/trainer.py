@@ -68,6 +68,7 @@ class VAETrainer(object):
             prior_zq_init, prior_za_init = self.vae.return_init_state(prior_zq, prior_za)
             posterior_zq_init = torch.cat(posterior_zq_init, dim=-1)
             prior_zq_init = torch.cat(prior_zq_init, dim=-1)
+            print(posterior_zq_init.size())
 
             loss_zq_info = 0.5*(self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), posterior_zq_init) \
                 + self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), prior_zq_init))
