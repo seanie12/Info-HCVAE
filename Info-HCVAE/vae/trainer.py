@@ -64,7 +64,7 @@ class VAETrainer(object):
         if self.lambda_z_info > 0:
             q_embeddings = self.embedding(q_ids).mean(dim=1)
             c_embeddings = self.embedding(c_ids).mean(dim=1)
-            c_a_embeddings = self.embedding(c_ids, a_ids, None).sum(dim=1).div(a_ids.sum(dim=-1, keepdim=True))
+            c_a_embeddings = self.embedding(c_ids, a_ids, None).mean(dim=1)
             posterior_zq, prior_zq, posterior_za, prior_za = latent_vars
             posterior_zq_init, posterior_za_init = self.vae.return_init_state(posterior_zq, posterior_za)
             prior_zq_init, prior_za_init = self.vae.return_init_state(prior_zq, prior_za)
