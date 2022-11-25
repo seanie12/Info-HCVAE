@@ -50,7 +50,7 @@ def main(args):
 
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
-        if epoch > args.infomax_epochs:
+        if epoch+1 > args.infomax_epochs:
             trainer.stop_infomax_optimization()
 
         if epoch+1 < args.resume_epochs:
