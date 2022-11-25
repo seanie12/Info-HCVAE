@@ -35,7 +35,7 @@ def main(args):
 
     trainer = VAETrainer(args)
     if args.checkpoint_file is not None:
-        trainer.load_model_state_dict(args.checkpoint_file)
+        trainer.load_model_state_dict(args.checkpoint_file, load_infomax_model=args.lambda_z_info > 0)
 
     # loss_log1 = tqdm(total=0, bar_format='{desc}', position=2)
     # loss_log2 = tqdm(total=0, bar_format='{desc}', position=3)

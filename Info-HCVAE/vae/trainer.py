@@ -174,6 +174,9 @@ class VAETrainer(object):
             }
         torch.save(params, filename)
 
-    def load_model_state_dict(self, filename):
+    def load_model_state_dict(self, filename, load_infomax_model=False):
         params = torch.load(filename)
         self.vae.load_state_dict(params["vae_state_dict"])
+        if load_infomax_model:
+            self.q_infomax_net.load_state_dict(params["q_info_state_dict"])
+            self.a_infomax_net.load_state_dict(params["a_info_state_dict"])
