@@ -77,7 +77,6 @@ class VAETrainer(object):
                     + self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), prior_zq_init))
             loss += self.lambda_z_info * loss_zq_info
 
-            print(c_a_embeddings.size())
             loss_za_info = 0.5*(self.a_infomax_net(torch.cat((c_a_embeddings, c_embeddings), dim=-1), posterior_za_init) \
                            + self.a_infomax_net(torch.cat((c_a_embeddings, c_embeddings), dim=-1), prior_za_init))
             loss += self.lambda_z_info * loss_za_info
