@@ -13,8 +13,8 @@ from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
 
 
 def main(args):
-    # if args.infomax_epochs >= args.epochs:
-    #     args.infomax_epochs = args.epochs // 4
+    if args.infomax_epochs > args.epochs:
+        args.infomax_epochs = args.epochs
 
     tokenizer = BertTokenizer.from_pretrained(args.huggingface_model)
     train_loader = None
@@ -50,8 +50,8 @@ def main(args):
 
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
-        # if epoch > args.infomax_epochs:
-        #     trainer.stop_infomax_optimization()
+        if epoch > args.infomax_epochs:
+            trainer.stop_infomax_optimization()
 
         if epoch+1 < args.resume_epochs:
             continue
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=25, type=int)
-    # parser.add_argument("--infomax_epochs", default=5, type=int, help="Must be less than epochs")
+    parser.add_argument("--infomax_epochs", default=5, type=int, help="Must be less than or equal to epochs")
     parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")
     parser.add_argument("--prev_best_bleu", default=0.0, type=float)
