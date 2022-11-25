@@ -854,7 +854,7 @@ class DiscreteVAE(nn.Module):
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
         prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_logits, _ \
+            prior_za_logits, prior_za \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -911,7 +911,7 @@ class DiscreteVAE(nn.Module):
         return loss, \
             loss_q_rec, loss_a_rec, \
             loss_zq_kl, loss_za_kl, \
-            loss_qa_info, (posterior_zq, prior_zq, posterior_za_logits, prior_za_logits)
+            loss_qa_info, (posterior_zq, prior_zq, posterior_za, prior_za)
             # loss_zq_mmd, loss_za_mmd, \
 
     def generate(self, zq, za, c_ids):

@@ -26,11 +26,11 @@ class VAETrainer(object):
 
             self.embedding = self.vae.posterior_encoder.embedding
 
-            self.q_infomax_net = InfoMaxModel(args.nzqdim, emsize*2).to(self.device)
+            self.q_infomax_net = InfoMaxModel(args.dec_q_nlayers*args.dec_q_nhidden*2, emsize*2).to(self.device)
             # q_info_params = filter(lambda p: p.requires_grad, self.q_infomax_net.parameters())
             self.optimizer_q_infomax = torch.optim.Adam(self.q_infomax_net.parameters(), lr=args.lr_infomax)
 
-            self.a_infomax_net = InfoMaxModel(args.nza*args.nzadim, emsize*2).to(self.device)
+            self.a_infomax_net = InfoMaxModel(args.dec_a_nlayers*args.dec_a_nhidden, emsize*2).to(self.device)
             # a_info_params = filter(lambda p: p.requires_grad, self.a_infomax_net.parameters())
             self.optimizer_a_infomax = torch.optim.Adam(self.a_infomax_net.parameters(), lr=args.lr_infomax)
 
@@ -62,16 +62,19 @@ class VAETrainer(object):
         if self.lambda_z_info > 0:
             q_embeddings = self.embedding(q_ids).mean(dim=1)
             c_embeddings = self.embedding(c_ids).mean(dim=1)
-            c_a_embeddings = self.embedding(c_ids, a_ids, None).mean(dim=1)
-            posterior_zq, prior_zq, posterior_za_logits, prior_za_logits = latent_vars
+            c_a_embeddings = self.embedding(c_ids, a_ids, None).sum(dim=-1).div(a_ids.sum())
+            posterior_zq, prior_zq, posterior_za, prior_za = latent_vars
+            posterior_zq_init, posterior_za_init = self.vae.return_init_state(posterior_zq, posterior_za)
+            prior_zq_init, prior_za_init = self.vae.return_init_state(prior_zq, prior_za)
+            posterior_zq_init = torch.cat(posterior_zq_init, dim=-1)
+            prior_zq_init = torch.cat(prior_zq_init, dim=-1)
 
-            loss_zq_info = 0.5*(self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), posterior_zq) \
-                + self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), prior_zq))
+            loss_zq_info = 0.5*(self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), posterior_zq_init) \
+                + self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), prior_zq_init))
             loss += self.lambda_z_info * loss_zq_info
 
-            nza, nzadim = posterior_za_logits.size(1), posterior_za_logits.size(2)
-            loss_za_info = 0.5*(self.a_infomax_net(torch.cat((c_a_embeddings, c_embeddings), dim=-1), posterior_za_logits.view(-1, nza*nzadim)) \
-                           + self.a_infomax_net(torch.cat((c_a_embeddings, c_embeddings), dim=-1), prior_za_logits.view(-1, nza*nzadim)))
+            loss_za_info = 0.5*(self.a_infomax_net(torch.cat((c_a_embeddings, c_embeddings), dim=-1), posterior_za_init) \
+                           + self.a_infomax_net(torch.cat((c_a_embeddings, c_embeddings), dim=-1), prior_za_init))
             loss += self.lambda_z_info * loss_za_info
 
         # Backward
