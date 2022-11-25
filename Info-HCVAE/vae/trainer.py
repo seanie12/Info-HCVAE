@@ -26,11 +26,13 @@ class VAETrainer(object):
 
             self.embedding = self.vae.posterior_encoder.embedding
 
-            self.q_infomax_net = InfoMaxModel(args.dec_q_nlayers*args.dec_q_nhidden*2, emsize*2).to(self.device)
+            self.q_init_dim = args.dec_q_nlayers*args.dec_q_nhidden
+            self.q_infomax_net = InfoMaxModel(self.q_init_dim*2, emsize*2).to(self.device)
             # q_info_params = filter(lambda p: p.requires_grad, self.q_infomax_net.parameters())
             self.optimizer_q_infomax = torch.optim.Adam(self.q_infomax_net.parameters(), lr=args.lr_infomax)
 
-            self.a_infomax_net = InfoMaxModel(args.dec_a_nlayers*args.dec_a_nhidden, emsize*2).to(self.device)
+            self.a_init_dim = emsize
+            self.a_infomax_net = InfoMaxModel(self.a_init_dim, emsize*2).to(self.device)
             # a_info_params = filter(lambda p: p.requires_grad, self.a_infomax_net.parameters())
             self.optimizer_a_infomax = torch.optim.Adam(self.a_infomax_net.parameters(), lr=args.lr_infomax)
 
@@ -66,9 +68,10 @@ class VAETrainer(object):
             posterior_zq, prior_zq, posterior_za, prior_za = latent_vars
             posterior_zq_init, posterior_za_init = self.vae.return_init_state(posterior_zq, posterior_za)
             prior_zq_init, prior_za_init = self.vae.return_init_state(prior_zq, prior_za)
-            posterior_zq_init = torch.cat(posterior_zq_init, dim=-1)
-            prior_zq_init = torch.cat(prior_zq_init, dim=-1)
-            print(posterior_zq_init.size())
+            posterior_zq_init = torch.cat((posterior_zq_init[0].transpose(0, 1).view(-1, self.q_init_dim),
+                        posterior_zq_init[1].transpose(0, 1).view(-1, self.q_init_dim)), dim=-1)
+            prior_zq_init = torch.cat((prior_zq_init[0].tranpose(0, 1).view(-1, self.q_init_dim),
+                        prior_zq_init[1].tranpose(0, 1).view(-1, self.q_init_dim)), dim=-1)
 
             loss_zq_info = 0.5*(self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), posterior_zq_init) \
                 + self.q_infomax_net(torch.cat((q_embeddings, c_embeddings), dim=-1), prior_zq_init))
