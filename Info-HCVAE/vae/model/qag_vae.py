@@ -166,9 +166,9 @@ class DiscreteVAE(nn.Module):
 
                 loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs], dim=-1), posterior_zq) \
                             + self.prior_zq_info(mean_c_embs, prior_zq)
-                loss_za_info = self.posterior_za_info(torch.cat((mean_c_a_embs, posterior_zq), dim=-1),
+                loss_za_info = self.posterior_za_info(torch.cat((mean_c_a_embs, posterior_zq.clone().detach()), dim=-1),
                                                     posterior_za.view(-1, self.nza*self.nzadim)) \
-                            + self.prior_za_info(torch.cat((mean_c_embs, prior_zq), dim=-1),
+                            + self.prior_za_info(torch.cat((mean_c_embs, prior_zq.clone().detach()), dim=-1),
                                                 prior_za.view(-1, self.nza*self.nzadim))
                 # use sigmoid to prevent the infomax to become too negative
                 # the division by 4 is added to make the infomax value a little bigger
