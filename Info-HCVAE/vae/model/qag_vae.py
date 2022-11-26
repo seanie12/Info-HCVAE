@@ -170,11 +170,9 @@ class DiscreteVAE(nn.Module):
                                                     posterior_za.view(-1, self.nza*self.nzadim)) \
                             + self.prior_za_info(torch.cat((mean_c_embs, prior_zq.clone().detach()), dim=-1),
                                                 prior_za.view(-1, self.nza*self.nzadim))
-                # use sigmoid to prevent the infomax to become too negative
-                # the division by 4 is added to make the infomax value a little bigger
-                # before the sigmoid reaches 0
-                loss_zq_info = torch.sigmoid(loss_zq_info / 4)
-                loss_za_info = torch.sigmoid(loss_za_info / 4)
+                # use exp to prevent the infomax to become too negative
+                loss_zq_info = torch.exp(loss_zq_info)
+                loss_za_info = torch.exp(loss_za_info)
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
