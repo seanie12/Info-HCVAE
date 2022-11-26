@@ -53,12 +53,12 @@ class DiscreteVAE(nn.Module):
 
         self.posterior_encoder = PosteriorEncoder(embedding, emsize,
                                                   enc_nhidden, enc_nlayers,
-                                                  nzqdim, nzadim,
+                                                  nzqdim, nza, nzadim,
                                                   enc_dropout)
 
         self.prior_encoder = PriorEncoder(embedding, emsize,
                                           enc_nhidden, enc_nlayers,
-                                          nzqdim, nzadim, enc_dropout)
+                                          nzqdim, nza, nzadim, enc_dropout)
 
         self.answer_decoder = AnswerDecoder(contextualized_embedding, emsize,
                                             dec_a_nhidden, dec_a_nlayers,
