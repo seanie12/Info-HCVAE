@@ -45,8 +45,8 @@ class VAETrainer(object):
         # Step
         self.optimizer.step()
 
-        for key, value in return_dict.items():
-            self.losses[key] += value.item()
+        for key in return_dict.keys():
+            self.losses[key] += return_dict[key].item()
 
         self.cnt_steps += 1
         if self.cnt_steps % 100 == 0:

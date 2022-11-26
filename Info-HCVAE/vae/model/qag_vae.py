@@ -6,7 +6,6 @@ from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
 from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
 from model.infomax import InfoMaxModel
-from model.model_utils import sample_gumbel
 
 class DiscreteVAE(nn.Module):
     def __init__(self, args):
