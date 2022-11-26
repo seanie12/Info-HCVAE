@@ -89,9 +89,9 @@ class DiscreteVAE(nn.Module):
             self.prior_zq_info = InfoMaxModel(x_dim=emsize, z_dim=nzqdim)
             self.prior_zq_info.denote_infomax_net_for_params()
 
-            self.posterior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
+            self.posterior_za_info = InfoMaxModel(x_dim=emsize+nzqdim, z_dim=nza*nzadim)
             self.posterior_za_info.denote_infomax_net_for_params()
-            self.prior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
+            self.prior_za_info = InfoMaxModel(x_dim=emsize+nzqdim, z_dim=nza*nzadim)
             self.prior_za_info.denote_infomax_net_for_params()
 
 
@@ -116,7 +116,7 @@ class DiscreteVAE(nn.Module):
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
         prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_logits, _ \
+            prior_za_logits, prior_za \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -161,13 +161,13 @@ class DiscreteVAE(nn.Module):
                 mean_c_embs = self.posterior_encoder.embedding(c_ids).mean(dim=1)
                 mean_q_embs = self.posterior_encoder.embedding(q_ids).mean(dim=1)
                 mean_c_a_embs = self.posterior_encoder.embedding(c_ids, a_ids, None).mean(dim=1)
-                soft_posterior_za = sample_gumbel(posterior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
-                soft_prior_za = sample_gumbel(prior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
+                # soft_posterior_za = sample_gumbel(posterior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
+                # soft_prior_za = sample_gumbel(prior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
 
                 loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs], dim=-1), posterior_zq) \
                             + self.prior_zq_info(mean_c_embs, prior_zq)
-                loss_za_info = self.posterior_za_info(mean_c_a_embs, soft_posterior_za) \
-                            + self.prior_za_info(mean_c_embs, soft_prior_za)
+                loss_za_info = self.posterior_za_info(torch.cat((mean_c_a_embs, posterior_zq), dim=-1), posterior_za) \
+                            + self.prior_za_info(torch.cat((mean_c_embs, prior_zq), dim=-1), prior_za)
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
