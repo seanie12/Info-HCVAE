@@ -74,13 +74,13 @@ class CategoricalMMDLoss(nn.Module):
         total_mmd = 0
         num_samples = 10
         for idx in range(batch_size):
-            total_mmd += compute_mmd(posterior_za[idx], prior_za[idx], latent_dim)
+            total_mmd += torch.abs(compute_mmd(posterior_za[idx], prior_za[idx], latent_dim))
 
             # Fake sampling with dropout
             dropout_posterior_za = sample_gumbel(posterior_za_logits[idx], hard=False, num_samples=num_samples)
             dropout_prior_za = sample_gumbel(prior_za_logits[idx], hard=False, num_samples=num_samples)
             for j in range(num_samples):
-                total_mmd += compute_mmd(dropout_posterior_za[j], dropout_prior_za[j], latent_dim)
+                total_mmd += torch.abs(compute_mmd(dropout_posterior_za[j], dropout_prior_za[j], latent_dim))
 
         return total_mmd / ((num_samples+1)*batch_size)
 
