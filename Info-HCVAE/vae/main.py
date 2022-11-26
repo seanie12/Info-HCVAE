@@ -149,7 +149,7 @@ if __name__ == "__main__":
     parser.add_argument('--nzqdim', type=int, default=64)
     # parser.add_argument('--nza', type=int, default=64)
     parser.add_argument('--nzadim', type=int, default=64)
-    parser.add_argument('--w_ans', type=float, default=1.0)
+    parser.add_argument('--w_ans', type=float, default=2.0)
     parser.add_argument('--w_bce', type=float, default=1.0)
     parser.add_argument('--alpha_kl', type=float, default=-0.1)
     parser.add_argument('--lambda_mmd', type=float, default=4.1)
