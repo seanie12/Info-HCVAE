@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from transformers import BertTokenizer
 from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
@@ -174,8 +173,8 @@ class DiscreteVAE(nn.Module):
                 # use sigmoid to prevent the infomax to become too negative
                 # the division by 4 is added to make the infomax value a little bigger
                 # before the sigmoid reaches 0
-                loss_zq_info = F.sigmoid(loss_zq_info / 4)
-                loss_za_info = F.sigmoid(loss_za_info / 4)
+                loss_zq_info = torch.sigmoid(loss_zq_info / 4)
+                loss_za_info = torch.sigmoid(loss_za_info / 4)
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
