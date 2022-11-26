@@ -49,6 +49,8 @@ class Result(object):
 
 
 def eval_vae(epoch, args, trainer, eval_data):
+    trainer.set_eval_mode(True)
+
     tokenizer = BertTokenizer.from_pretrained(args.huggingface_model)
     RawResult = collections.namedtuple("RawResult",
                                        ["unique_id", "start_logits", "end_logits"])

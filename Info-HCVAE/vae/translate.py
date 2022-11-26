@@ -8,7 +8,8 @@ from transformers import AutoTokenizer
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 import os
-from models import DiscreteVAE
+from model.qag_vae import DiscreteVAE
+from model.model_utils import sample_gaussian
 from squad_utils import (InputFeatures, convert_examples_to_harv_features,
                          read_examples, read_squad_examples)
 
@@ -157,14 +158,9 @@ def main(args):
 
             c_texts = [args.tokenizer.decode(c_ids[idx]) for idx in range(c_ids.size(0))]
 
-            zq_mu, zq_logvar, zq, za_logits, za = None, None, None, None, None
             # sample latent variable K times
             for idx in range(args.k):
-                if idx == 0:
-                    zq_mu, zq_logvar, zq, za_logits, za = vae.prior_encoder(c_ids)
-                else:
-                    zq = zq_mu + torch.randn_like(zq_mu)*torch.exp(0.5*zq_logvar)
-                    za = gumbel_softmax(za_logits, hard=True)
+                zq, za = vae.prior_encoder(c_ids)
 
                 with torch.no_grad():
                     batch_q_ids, batch_start, batch_end = vae.generate(zq, za, c_ids)

@@ -59,7 +59,7 @@ def main(args):
         # sample latent variable K times
         for _ in range(args.k):
             with torch.no_grad():
-                _, _, zq, _, za = vae.prior_encoder(c_ids)
+                zq, za = vae.prior_encoder(c_ids)
                 batch_q_ids, batch_start, batch_end = vae.generate(
                     zq, za, c_ids)
 

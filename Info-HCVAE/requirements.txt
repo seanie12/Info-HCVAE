@@ -1,12 +1,8 @@
 transformers
 json_lines
-pytorch_lightning
-matplotlib
 numpy
 tqdm
 torch
 torchvision
-scikit_learn
-pillow
 torch_scatter
 h5py
