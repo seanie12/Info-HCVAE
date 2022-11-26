@@ -9,7 +9,7 @@ class VAETrainer(object):
         self.device = args.device
 
         self.vae = DiscreteVAE(args).to(self.device)
-        params = filter(lambda p: p.requires_grad, self.parameters())
+        params = filter(lambda p: p.requires_grad, self.vae.parameters())
         # params = self.vae.get_vae_params(lr=args.lr) + (self.vae.get_infomax_params(lr=args.lr_infomax) if args.use_infomax_net else [])
         if args.use_sgd:
             self.optimizer = torch.optim.SGD(params, lr=args.lr, momentum=0.9, nesterov=True, weight_decay=args.weight_decay)
