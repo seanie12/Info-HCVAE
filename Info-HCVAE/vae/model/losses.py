@@ -65,7 +65,7 @@ class CategoricalMMDLoss(nn.Module):
     def forward(self, posterior_za_logits, prior_za_logits):
         # input shape = (batch, num_samples, dim)
         # batch_size = posterior_za_logits.size(0)
-        nlatent = posterior_za.size(1)
+        nlatent = posterior_za_logits.size(1)
         latent_dim = posterior_za_logits.size(2)
 
         posterior_za = gumbel_softmax(posterior_za_logits, hard=False)
