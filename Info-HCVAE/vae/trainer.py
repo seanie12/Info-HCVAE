@@ -67,9 +67,9 @@ class VAETrainer(object):
             log_str = "\nEpoch={:d} - ".format(epoch)
 
         for key, value in self.losses.items():
-            log_str += "{:s}={:.4f}".format(key, value / self.cnt_steps)
+            log_str += "{:s}={:.4f};".format(key, value / self.cnt_steps)
 
-        print(log_str)
+        print(log_str + "\n")
 
 
     def _reset_loss_values(self):
