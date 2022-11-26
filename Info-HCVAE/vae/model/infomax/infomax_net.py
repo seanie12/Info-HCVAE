@@ -51,11 +51,11 @@ class InfoMaxModel(nn.Module):
         self.running_mean = 0
         self.discriminator = nn.Sequential(
             nn.Linear(self.x_dim + self.z_dim, 1000),
-            nn.ReLU(True),
+            nn.ReLU(),
             nn.Linear(1000, 400),
-            nn.ReLU(True),
+            nn.ReLU(),
             nn.Linear(400, 100),
-            nn.ReLU(True),
+            nn.ReLU(),
             nn.Linear(100, 1),
         )
 
