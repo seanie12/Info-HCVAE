@@ -42,7 +42,7 @@ class InfoMaxModel(nn.Module):
         x_dim (int): input dim, for example m x n x c for [m, n, c]
         z_dim (int): dimension of latent code (typically a number in [10 - 256])
     """
-    def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.01, loss_type="mine_biased"):
+    def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.01, loss_type="fdiv"):
         super(InfoMaxModel, self).__init__()
         self.z_dim = z_dim
         self.x_dim = x_dim
@@ -67,8 +67,8 @@ class InfoMaxModel(nn.Module):
         """
         x_z_real = torch.cat((x, z), dim=1)
         x_z_fake = torch.cat((x, self._permute_dims(z)), dim=1)
-        d_x_z_real = self.discriminator(x_z_real).squeeze()
-        d_x_z_fake = self.discriminator(x_z_fake).squeeze()
+        d_x_z_real = self.discriminator(x_z_real)
+        d_x_z_fake = self.discriminator(x_z_fake)
 
         neg_info_xz = -d_x_z_real.mean()
         if self.loss_type == "fdiv":
