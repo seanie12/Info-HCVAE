@@ -85,14 +85,14 @@ class DiscreteVAE(nn.Module):
 
         if self.lambda_z_info > 0:
             self.posterior_zq_info = InfoMaxModel(x_dim=2*emsize, z_dim=nzqdim)
-            self.posterior_zq_info.denote_infomax_net_for_params()
+            # self.posterior_zq_info.denote_infomax_net_for_params()
             self.prior_zq_info = InfoMaxModel(x_dim=emsize, z_dim=nzqdim)
-            self.prior_zq_info.denote_infomax_net_for_params()
+            # self.prior_zq_info.denote_infomax_net_for_params()
 
             self.posterior_za_info = InfoMaxModel(x_dim=emsize+nzqdim, z_dim=nza*nzadim)
-            self.posterior_za_info.denote_infomax_net_for_params()
+            # self.posterior_za_info.denote_infomax_net_for_params()
             self.prior_za_info = InfoMaxModel(x_dim=emsize+nzqdim, z_dim=nza*nzadim)
-            self.prior_za_info.denote_infomax_net_for_params()
+            # self.prior_za_info.denote_infomax_net_for_params()
 
 
     def return_init_state(self, zq, za):

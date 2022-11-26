@@ -42,7 +42,7 @@ class InfoMaxModel(nn.Module):
         x_dim (int): input dim, for example m x n x c for [m, n, c]
         z_dim (int): dimension of latent code (typically a number in [10 - 256])
     """
-    def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.01, loss_type="mine"):
+    def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.01, loss_type="fdiv"):
         super(InfoMaxModel, self).__init__()
         self.z_dim = z_dim
         self.x_dim = x_dim
