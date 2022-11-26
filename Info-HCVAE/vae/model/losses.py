@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from model.model_utils import sample_gaussian, gumbel_softmax
+from model.model_utils import sample_gaussian, gumbel_softmax, sample_gumbel
 
 # Define MMD loss
 def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="rbf"):
@@ -72,16 +72,17 @@ class CategoricalMMDLoss(nn.Module):
         prior_za = gumbel_softmax(prior_za_logits, hard=False)
 
         total_mmd = 0
+        num_samples = 10
         for idx in range(batch_size):
             total_mmd += compute_mmd(posterior_za[idx], prior_za[idx], latent_dim)
 
-            # Fake sampling 9 times by using dropout to model Q(za | c) and P(za | c)
-            for _ in range(9):
-                dropout_posterior_za = gumbel_softmax(F.dropout(posterior_za_logits[idx].unsqueeze(0), p=0.15), hard=False).squeeze()
-                dropout_prior_za = gumbel_softmax(F.dropout(prior_za_logits[idx].unsqueeze(0), p=0.15), hard=False).squeeze()
-                total_mmd += compute_mmd(dropout_posterior_za, dropout_prior_za, latent_dim)
+            # Fake sampling with dropout
+            dropout_posterior_za = sample_gumbel(posterior_za_logits[idx], num_samples=num_samples)
+            dropout_prior_za = sample_gumbel(prior_za_logits[idx], num_samples=num_samples)
+            for j in range(num_samples):
+                total_mmd += compute_mmd(dropout_posterior_za[idx], dropout_prior_za[idx], latent_dim)
 
-        return total_mmd / (10*batch_size)
+        return total_mmd / ((num_samples+1)*batch_size)
 
 
 class ContinuousKernelMMDLoss(nn.Module):

@@ -15,6 +15,16 @@ def sample_gaussian(mu, logvar, num_samples=None):
             return mu + torch.randn((num_samples, mu.size(1)), device=device)*torch.exp(0.5 * logvar)
 
 
+def sample_gumbel(logits, hard=True, num_samples=None):
+    if num_samples is None:
+        assert len(logits.size()) == 3
+        return gumbel_softmax(logits, hard=hard)
+    else:
+        assert len(logits.size()) == 2
+        # Fake sampling using dropout
+        return gumbel_softmax(F.dropout(logits.unsqueeze(0).repeat(num_samples, 1, 1), 0.15), hard=hard)
+
+
 def return_mask_lengths(ids):
     mask = torch.sign(ids).float()
     lengths = torch.sum(mask, 1)
