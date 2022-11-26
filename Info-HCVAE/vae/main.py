@@ -126,7 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_freq", default=2, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=10, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
-    parser.add_argument("--lr_infomax", default=5e-5, type=float, help="lr infomax")
+    parser.add_argument("--lr_infomax", default=1e-3, type=float, help="lr infomax")
     parser.add_argument("--use_sgd", dest="use_sgd", action="store_true")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     parser.add_argument('--w_bce', type=float, default=1.0)
     parser.add_argument('--alpha_kl', type=float, default=0.0)
     parser.add_argument('--lambda_mmd', type=float, default=0.0)
-    parser.add_argument('--lambda_z_info', type=float, default=0.1)
+    parser.add_argument('--lambda_z_info', type=float, default=3.0)
     parser.add_argument('--lambda_qa_info', type=float, default=1.0)
 
     args = parser.parse_args()

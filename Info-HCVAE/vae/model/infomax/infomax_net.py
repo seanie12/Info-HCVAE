@@ -77,8 +77,7 @@ class InfoMaxModel(nn.Module):
             second_term, self.running_mean = ema_loss(d_x_z_fake, self.running_mean, self.running_mean_weight)
             neg_info_xz += second_term
         elif self.loss_type == "mine_biased":
-            second_term = torch.logsumexp(d_x_z_fake, 0) - math.log(d_x_z_fake.size(0))
-            neg_info_xz += second_term
+            neg_info_xz += torch.logsumexp(d_x_z_fake, 0) - math.log(d_x_z_fake.size(0))
 
         return neg_info_xz
 
