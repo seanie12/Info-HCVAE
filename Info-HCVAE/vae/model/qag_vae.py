@@ -180,23 +180,3 @@ class DiscreteVAE(nn.Module):
         start_logits, end_logits = self.answer_decoder(a_init_state, c_ids)
 
         return start_logits, end_logits
-
-
-    def get_params_for_training(self, return_infomax_params=False):
-        parameters_for_training = filter(lambda p: p.requires_grad, self.parameters())
-        if not return_infomax_params:
-            if self.lambda_z_info > 0:
-                # Set requires_grad to False to exclude infomax net params
-                for param in self.q_infomax_net.parameters():
-                    param.requires_grad = False
-                for param in self.a_infomax_net.parameters():
-                    param.requires_grad = False
-                parameters_for_training = filter(lambda p: p.requires_grad, self.parameters())
-
-                # Restore requires_grad to True
-                for param in self.q_infomax_net.parameters():
-                    param.requires_grad = True
-                for param in self.a_infomax_net.parameters():
-                    param.requires_grad = True
-
-        return parameters_for_training
