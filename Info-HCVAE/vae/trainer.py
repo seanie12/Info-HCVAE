@@ -10,7 +10,10 @@ class VAETrainer(object):
 
         self.vae = DiscreteVAE(args).to(self.device)
         params = filter(lambda p: p.requires_grad, self.vae.parameters())
-        self.optimizer = torch.optim.SGD(params, lr=args.lr, momentum=0.9, nesterov=True, weight_decay=args.weight_decay)
+        if args.use_sgd:
+            self.optimizer = torch.optim.SGD(params, lr=args.lr, momentum=0.9, nesterov=True, weight_decay=args.weight_decay)
+        else:
+            self.optimizer = torch.optim.Adam(params, lr=args.lr, weight_decay=args.weight_decay)
 
         self.total_loss = 0
         self.loss_q_rec = 0
