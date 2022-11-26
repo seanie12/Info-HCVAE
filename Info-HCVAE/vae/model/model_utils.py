@@ -7,11 +7,12 @@ def sample_gaussian(mu, logvar, num_samples=None):
         return mu + torch.randn_like(mu)*torch.exp(0.5 * logvar)
     else:
         assert len(mu.size()) == len(logvar.size())
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if len(mu.size()) == 1:
-            return mu.unsqueeze(0) + torch.randn((num_samples, mu.size(0)))*torch.exp(0.5 * logvar.unsqueeze(0))
+            return mu.unsqueeze(0) + torch.randn((num_samples, mu.size(0)), device=device)*torch.exp(0.5 * logvar.unsqueeze(0))
         elif len(mu.size()) == 2:
             assert mu.size(0) == 1 and logvar.size(0) == 1
-            return mu + torch.randn((num_samples, mu.size(1)))*torch.exp(0.5 * logvar)
+            return mu + torch.randn((num_samples, mu.size(1)), device=device)*torch.exp(0.5 * logvar)
 
 
 def return_mask_lengths(ids):
