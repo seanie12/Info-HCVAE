@@ -70,20 +70,18 @@ class CategoricalMMDLoss(nn.Module):
 
         posterior_za = gumbel_softmax(posterior_za_logits, hard=False)
         prior_za = gumbel_softmax(prior_za_logits, hard=False)
-        dropout_posterior_za = gumbel_softmax(F.dropout(posterior_za_logits, p=0.1), hard=False)
-        dropout_prior_za = gumbel_softmax(F.dropout(prior_za_logits, p=0.1), hard=False)
 
         total_mmd = 0
         for idx in range(batch_size):
             total_mmd += compute_mmd(posterior_za[idx], prior_za[idx], latent_dim)
 
-            # Fake sampling 63 times by using dropout to model Q(za | c) and P(za | c)
-            for _ in range(63):
+            # Fake sampling 9 times by using dropout to model Q(za | c) and P(za | c)
+            for _ in range(9):
                 dropout_posterior_za = gumbel_softmax(F.dropout(posterior_za_logits[idx].unsqueeze(0), p=0.15), hard=False).squeeze()
                 dropout_prior_za = gumbel_softmax(F.dropout(prior_za_logits[idx].unsqueeze(0), p=0.15), hard=False).squeeze()
                 total_mmd += compute_mmd(dropout_posterior_za, dropout_prior_za, latent_dim)
 
-        return total_mmd / (64*batch_size)
+        return total_mmd / (10*batch_size)
 
 
 class ContinuousKernelMMDLoss(nn.Module):
@@ -96,8 +94,8 @@ class ContinuousKernelMMDLoss(nn.Module):
         latent_dim = posterior_z_mu.size(1)
         total_mmd = 0
         for idx in range(batch_size):
-            rand_posterior = sample_gaussian(posterior_z_mu[idx], posterior_z_logvar[idx], num_samples=64)
-            rand_prior = sample_gaussian(prior_z_mu[idx], prior_z_logvar[idx], num_samples=64)
+            rand_posterior = sample_gaussian(posterior_z_mu[idx], posterior_z_logvar[idx], num_samples=32)
+            rand_prior = sample_gaussian(prior_z_mu[idx], prior_z_logvar[idx], num_samples=32)
             # Apply dropout to mimic the variations in Q(zq | context) & P(zq | context) distribution
             total_mmd += compute_mmd(F.dropout(rand_posterior, p=0.2), F.dropout(rand_prior, p=0.2), latent_dim)
         return total_mmd / batch_size
