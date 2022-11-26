@@ -5,7 +5,8 @@ from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
 from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
-from model.infomax_model import InfoMaxModel
+from model.infomax import InfoMaxModel
+from model.model_utils import sample_gumbel
 
 class DiscreteVAE(nn.Module):
     def __init__(self, args):
@@ -39,6 +40,7 @@ class DiscreteVAE(nn.Module):
         self.w_bce = args.w_bce
         self.alpha_kl = args.alpha_kl
         self.lambda_mmd = args.lambda_mmd
+        self.lambda_z_info = args.lambda_z_info
         self.lambda_qa_info = args.lambda_qa_info
 
         max_q_len = args.max_q_len
@@ -81,6 +83,13 @@ class DiscreteVAE(nn.Module):
             self.continuous_mmd_criterion = ContinuousKernelMMDLoss()
             self.categorical_mmd_criterion = CategoricalMMDLoss()
 
+        if self.lambda_z_info > 0:
+            self.posterior_zq_info = InfoMaxModel(x_dim=2*emsize, z_dim=nzqdim)
+            self.prior_zq_info = InfoMaxModel(x_dim=emsize, z_dim=nzqdim)
+
+            self.posterior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
+            self.prior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
+
 
     def return_init_state(self, zq, za):
         q_init_h = self.q_h_linear(zq)
@@ -102,7 +111,7 @@ class DiscreteVAE(nn.Module):
             posterior_za_logits, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, _, \
+        prior_zq_mu, prior_zq_logvar, prior_zq, \
             prior_za_logits, _ \
             = self.prior_encoder(c_ids)
 
@@ -137,26 +146,45 @@ class DiscreteVAE(nn.Module):
             loss_za_kl = self.w_ans * self.categorical_kl_criterion(posterior_za_logits,
                                                         prior_za_logits)
 
-            loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
+            loss_zq_mmd, loss_za_mmd = 0, 0
             if self.alpha_kl + self.lambda_mmd - 1 > 0:
                 loss_zq_mmd = self.continuous_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
                                             prior_zq_mu, prior_zq_logvar)
                 loss_za_mmd = self.w_ans * self.categorical_mmd_criterion(posterior_za_logits, prior_za_logits)
 
+            loss_zq_info, loss_za_info = 0, 0
+            if self.lambda_z_info > 0:
+                mean_c_embs = self.posterior_encoder.embedding(c_ids).mean(dim=1)
+                mean_q_embs = self.posterior_encoder.embedding(q_ids).mean(dim=1)
+                mean_c_a_embs = self.posterior_encoder.embedding(c_ids, a_ids, None).mean(dim=1)
+                soft_posterior_za = sample_gumbel(posterior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
+                soft_prior_za = sample_gumbel(prior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
+
+                loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs]), posterior_zq) \
+                            + self.prior_zq_info(mean_c_embs, prior_zq)
+                loss_za_info = self.posterior_za_info(mean_c_a_embs, soft_posterior_za) \
+                            + self.prior_za_info(mean_c_embs, soft_prior_za)
+
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
+            loss_z_info = self.lambda_z_info * (loss_zq_info + loss_za_info)
             loss_qa_info = self.lambda_qa_info * loss_info
 
-            loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_qa_info + loss_mmd
+            loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_qa_info + loss_mmd + loss_z_info
 
             return_dict = {
                 "total_loss": loss,
                 "loss_q_rec": loss_q_rec,
                 "loss_a_rec": loss_a_rec,
+                "loss_kl": loss_kl,
                 "loss_zq_kl": loss_zq_kl,
                 "loss_za_kl": loss_za_kl,
+                "loss_mmd": loss_mmd,
                 "loss_zq_mmd": loss_zq_mmd,
                 "loss_za_mmd": loss_za_mmd,
+                "loss_z_info": loss_z_info,
+                "loss_zq_info": loss_zq_info,
+                "loss_za_info": loss_za_info,
                 "loss_qa_info": loss_qa_info,
             }
             return return_dict
@@ -179,3 +207,36 @@ class DiscreteVAE(nn.Module):
         start_logits, end_logits = self.answer_decoder(a_init_state, c_ids)
 
         return start_logits, end_logits
+
+
+    def get_vae_params(self, lr=1e-3):
+        # Set requires_grad to False to exclude infomax net
+        for param in self.posterior_zq_info.parameters():
+            param.requires_grad = False
+        for param in self.prior_zq_info.parameters():
+            param.requires_grad = False
+        for param in self.posterior_za_info.parameters():
+            param.requires_grad = False
+        for param in self.prior_za_info.parameters():
+            param.requires_grad = False
+
+        params = filter(lambda p: p.requires_grad, self.vae.parameters())
+
+        # Restore requires_grad
+        for param in self.posterior_zq_info.parameters():
+            param.requires_grad = True
+        for param in self.prior_zq_info.parameters():
+            param.requires_grad = True
+        for param in self.posterior_za_info.parameters():
+            param.requires_grad = True
+        for param in self.prior_za_info.parameters():
+            param.requires_grad = True
+
+        return [ { "params": params, "lr": lr } ]
+
+
+    def get_infomax_params(self, lr=1e-5):
+        return [ { "params": self.posterior_zq_info.parameters(), "lr": lr },
+            { "params": self.prior_zq_info.parameters(), "lr": lr },
+            { "params": self.posterior_za_info.parameters(), "lr": lr },
+            { "params": self.prior_za_info.parameters(), "lr": lr } ]

@@ -69,7 +69,7 @@ def main(args):
                 # stop training if over the num of training samples limit
                 break
 
-        trainer.print_log(log_type="epoch")
+        trainer.print_log(log_type="epoch", epoch=epoch+1)
 
         if (epoch + 1) % args.eval_freq == 0:
             metric_dict, bleu, _ = eval_vae(epoch, args, trainer, eval_data)
@@ -117,7 +117,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
     parser.add_argument("--epochs", default=20, type=int)
-    # parser.add_argument("--infomax_epochs", default=5, type=int, help="Must be less than or equal to epochs")
+    parser.add_argument("--use_infomax_net", dest="use_infomax_net", action="store_true")
+    parser.add_argument("--infomax_epochs", default=5, type=int, help="Must be less than or equal to epochs")
     parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")
     parser.add_argument("--prev_best_bleu", default=0.0, type=float)
@@ -125,6 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_freq", default=2, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=10, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
+    parser.add_argument("--lr_infomax", default=1e-5, type=float, help="lr infomax")
     parser.add_argument("--use_sgd", dest="use_sgd", action="store_true")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
@@ -147,6 +149,7 @@ if __name__ == "__main__":
     parser.add_argument('--w_bce', type=float, default=1.0)
     parser.add_argument('--alpha_kl', type=float, default=0.0)
     parser.add_argument('--lambda_mmd', type=float, default=101.0)
+    parser.add_argument('--lambda_z_info', type=float, default=0.02)
     parser.add_argument('--lambda_qa_info', type=float, default=1.0)
 
     args = parser.parse_args()

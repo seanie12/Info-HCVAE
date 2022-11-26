@@ -9,20 +9,27 @@ class VAETrainer(object):
         self.device = args.device
 
         self.vae = DiscreteVAE(args).to(self.device)
-        params = filter(lambda p: p.requires_grad, self.vae.parameters())
+        params = self.vae.get_vae_params(lr=args.lr) + (self.get_infomax_params(lr=args.lr_infomax) if args.use_infomax_net else [])
         if args.use_sgd:
             self.optimizer = torch.optim.SGD(params, lr=args.lr, momentum=0.9, nesterov=True, weight_decay=args.weight_decay)
         else:
             self.optimizer = torch.optim.Adam(params, lr=args.lr, weight_decay=args.weight_decay)
 
-        self.total_loss = 0
-        self.loss_q_rec = 0
-        self.loss_a_rec = 0
-        self.loss_zq_kl = 0
-        self.loss_za_kl = 0
-        self.loss_zq_mmd = 0
-        self.loss_za_mmd = 0
-        self.loss_qa_info = 0
+        self.losses = {
+            "total_loss": 0,
+            "loss_q_rec": 0,
+            "loss_a_rec": 0,
+            "loss_kl": 0,
+            "loss_zq_kl": 0,
+            "loss_za_kl": 0,
+            "loss_mmd": 0,
+            "loss_zq_mmd": 0,
+            "loss_za_mmd": 0,
+            "loss_z_info": 0,
+            "loss_zq_info": 0,
+            "loss_za_info": 0,
+            "loss_qa_info": 0,
+        }
         self.cnt_steps = 0
 
     def train(self, c_ids, q_ids, a_ids, start_positions, end_positions):
@@ -30,54 +37,44 @@ class VAETrainer(object):
 
         # Forward
         return_dict = self.vae(c_ids, q_ids, a_ids, start_positions, end_positions)
-        total_loss = return_dict["total_loss"]
 
         # Backward
         self.optimizer.zero_grad()
-        total_loss.backward()
+        return_dict["total_loss"].backward()
         # Step
         self.optimizer.step()
 
-        self.total_loss += total_loss.item()
-        self.loss_q_rec += return_dict["loss_q_rec"].item()
-        self.loss_a_rec += return_dict["loss_a_rec"].item()
-        self.loss_zq_kl += return_dict["loss_zq_kl"].item()
-        self.loss_za_kl += return_dict["loss_za_kl"].item()
-        self.loss_zq_mmd += return_dict["loss_zq_mmd"].item()
-        self.loss_za_mmd += return_dict["loss_za_mmd"].item()
-        self.loss_qa_info += return_dict["loss_qa_info"].item()
+        for key, value in return_dict.items():
+            self.losses[key] += value
 
         self.cnt_steps += 1
         if self.cnt_steps % 100 == 0:
             self.print_log()
 
 
-    def print_log(self, log_type="step"):
+    def print_log(self, log_type="step", epoch=None):
         """
             log_type: "epoch" or "step"
+            epoch: enter a number
         """
         assert log_type in ["step", "epoch"]
+        assert log_type == "step" or (log_type == "epoch" and epoch is not None)
+
         log_str = ""
         if log_type == "step":
-            log_str = "\nStep={:d} - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_mmd={:.4f}, za_mmd={:.4f}, qa_info={:.4f})"
+            log_str = "\nStep={:d} - ".format(self.cnt_steps)
         else:
-            log_str = "\nEpoch stats (step={:d}) - AVG LOSS={:.4f} (q_rec={:.4f}, a_rec={:.4f}, zq_kl={:.4f}, za_kl={:.4f}, zq_mmd={:.4f}, za_mmd={:.4f}, qa_info={:.4f})"
+            log_str = "\nEpoch={:d} - ".format(epoch)
 
-        log_str = log_str.format(self.cnt_steps, float(self.total_loss / self.cnt_steps), float(self.loss_q_rec / self.cnt_steps),
-                    float(self.loss_a_rec / self.cnt_steps), float(self.loss_zq_kl / self.cnt_steps), float(self.loss_za_kl / self.cnt_steps),
-                    float(self.loss_zq_mmd / self.cnt_steps), float(self.loss_za_mmd / self.cnt_steps), float(self.loss_qa_info / self.cnt_steps))
+        for key, value in self.losses.items():
+            log_str += "{:s}={:.4f}".format(key, value / self.cnt_steps)
+
         print(log_str)
 
 
     def _reset_loss_values(self):
-        self.total_loss = 0
-        self.loss_q_rec = 0
-        self.loss_a_rec = 0
-        self.loss_zq_kl = 0
-        self.loss_za_kl = 0
-        self.loss_zq_mmd = 0
-        self.loss_za_mmd = 0
-        self.loss_qa_info = 0
+        for key in self.losses.keys():
+            self.losses[key] = 0
 
 
     def reset_cnt_steps(self):
