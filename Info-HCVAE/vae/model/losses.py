@@ -64,25 +64,26 @@ class CategoricalMMDLoss(nn.Module):
 
     def forward(self, posterior_za_logits, prior_za_logits):
         # input shape = (batch, num_samples, dim)
-        batch_size = posterior_za_logits.size(0)
-        # nlatent = posterior_za.size(1)
+        # batch_size = posterior_za_logits.size(0)
+        nlatent = posterior_za.size(1)
         latent_dim = posterior_za_logits.size(2)
 
         posterior_za = gumbel_softmax(posterior_za_logits, hard=False)
         prior_za = gumbel_softmax(prior_za_logits, hard=False)
 
-        total_mmd = 0
-        num_samples = 10
-        for idx in range(batch_size):
-            total_mmd += torch.abs(compute_mmd(posterior_za[idx], prior_za[idx], latent_dim))
+        # total_mmd = 0
+        # num_samples = 10
+        # for idx in range(batch_size):
+        #     total_mmd += torch.abs(compute_mmd(posterior_za[idx], prior_za[idx], latent_dim))
 
-            # Fake sampling with dropout
-            dropout_posterior_za = sample_gumbel(posterior_za_logits[idx], hard=False, num_samples=num_samples)
-            dropout_prior_za = sample_gumbel(prior_za_logits[idx], hard=False, num_samples=num_samples)
-            for j in range(num_samples):
-                total_mmd += torch.abs(compute_mmd(dropout_posterior_za[j], dropout_prior_za[j], latent_dim))
+        #     # Fake sampling with dropout
+        #     dropout_posterior_za = sample_gumbel(posterior_za_logits[idx], hard=False, num_samples=num_samples)
+        #     dropout_prior_za = sample_gumbel(prior_za_logits[idx], hard=False, num_samples=num_samples)
+        #     for j in range(num_samples):
+        #         total_mmd += torch.abs(compute_mmd(dropout_posterior_za[j], dropout_prior_za[j], latent_dim))
 
-        return total_mmd / ((num_samples+1)*batch_size)
+        # return total_mmd / ((num_samples+1)*batch_size)
+        return compute_mmd(posterior_za.view(-1, nlatent*latent_dim), prior_za.view(-1, nlatent*latent_dim), nlatent*latent_dim)
 
 
 class ContinuousKernelMMDLoss(nn.Module):
@@ -91,12 +92,14 @@ class ContinuousKernelMMDLoss(nn.Module):
 
     def forward(self, posterior_z_mu, posterior_z_logvar, prior_z_mu, prior_z_logvar):
         # input shape = (batch, dim)
-        batch_size = posterior_z_mu.size(0)
+        # batch_size = posterior_z_mu.size(0)
         latent_dim = posterior_z_mu.size(1)
-        total_mmd = 0
-        for idx in range(batch_size):
-            rand_posterior = sample_gaussian(posterior_z_mu[idx], posterior_z_logvar[idx], num_samples=32)
-            rand_prior = sample_gaussian(prior_z_mu[idx], prior_z_logvar[idx], num_samples=32)
-            # Apply dropout to mimic the variations in Q(zq | context) & P(zq | context) distribution
-            total_mmd += compute_mmd(F.dropout(rand_posterior, p=0.2), F.dropout(rand_prior, p=0.2), latent_dim)
-        return total_mmd / batch_size
+        # total_mmd = 0
+        posterior_z = sample_gaussian(posterior_z_mu, posterior_z_logvar)
+        prior_z = sample_gaussian(prior_z_mu, prior_z_logvar)
+        # for idx in range(batch_size):
+        #     rand_posterior = sample_gaussian(posterior_z_mu[idx], posterior_z_logvar[idx], num_samples=10)
+        #     rand_prior = sample_gaussian(prior_z_mu[idx], prior_z_logvar[idx], num_samples=10)
+        #     # Apply dropout to mimic the variations in Q(zq | context) & P(zq | context) distribution
+        #     total_mmd += compute_mmd(F.dropout(rand_posterior, p=0.2), F.dropout(rand_prior, p=0.2), latent_dim)
+        return compute_mmd(posterior_z, prior_z, latent_dim)
