@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
 from model.customized_layers import CustomLSTM
-from model.model_utils import return_mask_lengths, cal_attn, sample_gaussian
+from model.model_utils import return_mask_lengths, cal_attn, sample_gaussian, gumbel_softmax
 
 class PriorEncoder(nn.Module):
     def __init__(self, embedding, emsize,
                  nhidden, nlayers,
-                 nzqdim, nzadim,
+                 nzqdim, nza, nzadim,
                  dropout=0):
         super(PriorEncoder, self).__init__()
 
@@ -14,7 +14,7 @@ class PriorEncoder(nn.Module):
         self.nhidden = nhidden
         self.nlayers = nlayers
         self.nzqdim = nzqdim
-        # self.nza = nza
+        self.nza = nza
         self.nzadim = nzadim
 
         self.context_encoder = CustomLSTM(input_size=emsize,
@@ -26,7 +26,7 @@ class PriorEncoder(nn.Module):
         self.zq_attention = nn.Linear(nzqdim, 2 * nhidden)
 
         self.zq_linear = nn.Linear(2 * nhidden, 2 * nzqdim)
-        self.za_linear = nn.Linear(nzqdim + 2 * 2 * nhidden, 2 * nzadim)
+        self.za_linear = nn.Linear(nzqdim + 2 * 2 * nhidden, nza * nzadim)
 
 
     def forward(self, c_ids):
@@ -48,14 +48,14 @@ class PriorEncoder(nn.Module):
 
         h = torch.cat([zq, c_attned_by_zq, c_h], dim=-1)
 
-        # za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
-        # # za_prob = F.softmax(za_logits, dim=-1)
-        # za = gumbel_softmax(za_logits, hard=True)
-        za_mu, za_logvar = torch.split(self.za_linear(h), self.nzadim, dim=1)
-        za = sample_gaussian(za_mu, za_logvar)
+        za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
+        # za_prob = F.softmax(za_logits, dim=-1)
+        za = gumbel_softmax(za_logits, hard=True)
+        # za_mu, za_logvar = torch.split(self.za_linear(h), self.nzadim, dim=1)
+        # za = sample_gaussian(za_mu, za_logvar)
 
         if self.training:
-            return zq_mu, zq_logvar, zq, za_mu, za_logvar, za
+            return zq_mu, zq_logvar, zq, za_logits, za
         else:
             return zq, za
 
@@ -75,9 +75,9 @@ class PriorEncoder(nn.Module):
 
         h = torch.cat([zq, c_attned_by_zq, c_h], dim=-1)
 
-        # za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
-        # za = gumbel_softmax(za_logits, hard=True)
-        za_mu, za_logvar = torch.split(self.za_linear(h), self.nzadim, dim=1)
-        za = sample_gaussian(za_mu, za_logvar)
+        za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
+        za = gumbel_softmax(za_logits, hard=True)
+        # za_mu, za_logvar = torch.split(self.za_linear(h), self.nzadim, dim=1)
+        # za = sample_gaussian(za_mu, za_logvar)
 
         return za

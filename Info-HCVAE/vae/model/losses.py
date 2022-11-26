@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from model.model_utils import sample_gaussian
+from model.model_utils import sample_gaussian, gumbel_softmax
 
 # Define MMD loss
 def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="rbf"):
@@ -62,16 +62,28 @@ class CategoricalMMDLoss(nn.Module):
     def __init__(self):
         super(CategoricalMMDLoss, self).__init__()
 
-    def forward(self, posterior_za, prior_za):
-        # input shape = (batch, dim1, dim2)
-        batch_size = posterior_za.size(0)
+    def forward(self, posterior_za_logits, prior_za_logits):
+        # input shape = (batch, num_samples, dim)
+        batch_size = posterior_za_logits.size(0)
         # nlatent = posterior_za.size(1)
-        latent_dim = posterior_za.size(2)
+        latent_dim = posterior_za_logits.size(2)
+
+        posterior_za = gumbel_softmax(posterior_za_logits, hard=False)
+        prior_za = gumbel_softmax(prior_za_logits, hard=False)
+        dropout_posterior_za = gumbel_softmax(F.dropout(posterior_za_logits, p=0.1), hard=False)
+        dropout_prior_za = gumbel_softmax(F.dropout(prior_za_logits, p=0.1), hard=False)
+
         total_mmd = 0
         for idx in range(batch_size):
-            # Each latent variable of 
             total_mmd += compute_mmd(posterior_za[idx], prior_za[idx], latent_dim)
-        return total_mmd / batch_size
+
+            # Fake sampling 63 times by using dropout to model Q(za | c) and P(za | c)
+            for _ in range(63):
+                dropout_posterior_za = gumbel_softmax(F.dropout(posterior_za_logits[idx].unsqueeze(0), p=0.15), hard=False).squeeze()
+                dropout_prior_za = gumbel_softmax(F.dropout(prior_za_logits[idx].unsqueeze(0), p=0.15), hard=False).squeeze()
+                total_mmd += compute_mmd(dropout_posterior_za, dropout_prior_za, latent_dim)
+
+        return total_mmd / (64*batch_size)
 
 
 class ContinuousKernelMMDLoss(nn.Module):
@@ -87,6 +99,5 @@ class ContinuousKernelMMDLoss(nn.Module):
             rand_posterior = sample_gaussian(posterior_z_mu[idx], posterior_z_logvar[idx], num_samples=64)
             rand_prior = sample_gaussian(prior_z_mu[idx], prior_z_logvar[idx], num_samples=64)
             # Apply dropout to mimic the variations in Q(zq | context) & P(zq | context) distribution
-            # Use alpha_dropout to maintain original mean & stddev
-            total_mmd += compute_mmd(F.alpha_dropout(rand_posterior, p=0.1), F.alpha_dropout(rand_prior, p=0.1), latent_dim)
+            total_mmd += compute_mmd(F.dropout(rand_posterior, p=0.2), F.dropout(rand_prior, p=0.2), latent_dim)
         return total_mmd / batch_size

@@ -32,7 +32,7 @@ class DiscreteVAE(nn.Module):
         self.dec_q_nlayers = dec_q_nlayers = args.dec_q_nlayers
         dec_q_dropout = args.dec_q_dropout
         self.nzqdim = nzqdim = args.nzqdim
-        # self.nza = nza = args.nza
+        self.nza = nza = args.nza
         self.nzadim = nzadim = args.nzadim
 
         self.w_ans = args.w_ans
@@ -71,15 +71,15 @@ class DiscreteVAE(nn.Module):
 
         self.q_h_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
         self.q_c_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
-        self.a_linear = nn.Linear(nzadim, emsize, False)
+        self.a_linear = nn.Linear(nza*nzadim, emsize, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
-        self.kl_criterion = GaussianKLLoss()
-        # self.answer_kl_criterion = CategoricalKLLoss()
+        self.gaussian_kl_criterion = GaussianKLLoss()
+        self.categorical_kl_criterion = CategoricalKLLoss()
 
         if self.alpha_kl + self.lambda_mmd - 1 > 0:
-            self.mmd_criterion = ContinuousKernelMMDLoss()
-            # self.answer_mmd_criterion = CategoricalMMDLoss()
+            self.continuous_mmd_criterion = ContinuousKernelMMDLoss()
+            self.categorical_mmd_criterion = CategoricalMMDLoss()
 
 
     def return_init_state(self, zq, za):
@@ -91,7 +91,7 @@ class DiscreteVAE(nn.Module):
                                  self.dec_q_nhidden).transpose(0, 1).contiguous()
         q_init_state = (q_init_h, q_init_c)
 
-        # za_flatten = za.view(-1, self.nza * self.nzadim)
+        za_flatten = za.view(-1, self.nza * self.nzadim)
         a_init_state = self.a_linear(za)
 
         return q_init_state, a_init_state
@@ -99,11 +99,11 @@ class DiscreteVAE(nn.Module):
 
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
-            posterior_za_mu, posterior_za_logvar, posterior_za \
+            posterior_za_logits, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
         prior_zq_mu, prior_zq_logvar, _, \
-            prior_za_mu, prior_za_logvar, _ \
+            prior_za_logits, _ \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -131,18 +131,17 @@ class DiscreteVAE(nn.Module):
             loss_a_rec = self.w_ans * 0.5 * (loss_start_a_rec + loss_end_a_rec)
 
             # kl loss
-            loss_zq_kl = self.kl_criterion(posterior_zq_mu, posterior_zq_logvar,
+            loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
                                             prior_zq_mu, prior_zq_logvar)
 
-            loss_za_kl = self.w_ans * self.kl_criterion(posterior_za_mu, posterior_za_logvar,
-                                                        prior_za_mu, prior_za_logvar)
+            loss_za_kl = self.w_ans * self.categorical_kl_criterion(posterior_za_logits,
+                                                        prior_za_logits)
 
             loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
             if self.alpha_kl + self.lambda_mmd - 1 > 0:
-                loss_zq_mmd = self.mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
+                loss_zq_mmd = self.continuous_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
                                             prior_zq_mu, prior_zq_logvar)
-                loss_za_mmd = self.w_ans * self.mmd_criterion(posterior_za_mu, posterior_za_logvar,
-                                                        prior_za_mu, prior_za_logvar)
+                loss_za_mmd = self.w_ans * self.categorical_mmd_criterion(posterior_za_logits, prior_za_logits)
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
