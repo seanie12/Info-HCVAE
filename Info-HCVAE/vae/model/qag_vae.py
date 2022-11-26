@@ -164,7 +164,7 @@ class DiscreteVAE(nn.Module):
                 soft_posterior_za = sample_gumbel(posterior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
                 soft_prior_za = sample_gumbel(prior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
 
-                loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs]), posterior_zq) \
+                loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs], dim=-1), posterior_zq) \
                             + self.prior_zq_info(mean_c_embs, prior_zq)
                 loss_za_info = self.posterior_za_info(mean_c_a_embs, soft_posterior_za) \
                             + self.prior_za_info(mean_c_embs, soft_prior_za)
