@@ -149,13 +149,13 @@ class DiscreteVAE(nn.Module):
             loss_za_kl = self.w_ans * self.categorical_kl_criterion(posterior_za_logits,
                                                         prior_za_logits)
 
-            loss_zq_mmd, loss_za_mmd = 0, 0
+            loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
             if self.alpha_kl + self.lambda_mmd - 1 > 0:
                 loss_zq_mmd = self.continuous_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
                                             prior_zq_mu, prior_zq_logvar)
                 loss_za_mmd = self.w_ans * self.categorical_mmd_criterion(posterior_za_logits, prior_za_logits)
 
-            loss_zq_info, loss_za_info = 0, 0
+            loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
             if self.lambda_z_info > 0:
                 mean_c_embs = self.posterior_encoder.embedding(c_ids).mean(dim=1)
                 mean_q_embs = self.posterior_encoder.embedding(q_ids).mean(dim=1)
