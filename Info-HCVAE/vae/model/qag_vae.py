@@ -220,6 +220,7 @@ class DiscreteVAE(nn.Module):
         for param in self.prior_za_info.parameters():
             param.requires_grad = False
 
+        # Get params
         params = filter(lambda p: p.requires_grad, self.parameters())
 
         # Restore requires_grad
