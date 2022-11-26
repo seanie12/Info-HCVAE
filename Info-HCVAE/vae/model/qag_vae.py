@@ -85,10 +85,14 @@ class DiscreteVAE(nn.Module):
 
         if self.lambda_z_info > 0:
             self.posterior_zq_info = InfoMaxModel(x_dim=2*emsize, z_dim=nzqdim)
+            self.posterior_zq_info.denote_infomax_net_for_params()
             self.prior_zq_info = InfoMaxModel(x_dim=emsize, z_dim=nzqdim)
+            self.prior_zq_info.denote_infomax_net_for_params()
 
             self.posterior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
+            self.posterior_za_info.denote_infomax_net_for_params()
             self.prior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
+            self.prior_za_info.denote_infomax_net_for_params()
 
 
     def return_init_state(self, zq, za):
@@ -210,29 +214,8 @@ class DiscreteVAE(nn.Module):
 
 
     def get_vae_params(self, lr=1e-3):
-        # Set requires_grad to False to exclude infomax net
-        for param in self.posterior_zq_info.parameters():
-            param.requires_grad = False
-        for param in self.prior_zq_info.parameters():
-            param.requires_grad = False
-        for param in self.posterior_za_info.parameters():
-            param.requires_grad = False
-        for param in self.prior_za_info.parameters():
-            param.requires_grad = False
-
-        # Get params
-        params = filter(lambda p: p.requires_grad, self.parameters())
-
-        # Restore requires_grad
-        for param in self.posterior_zq_info.parameters():
-            param.requires_grad = True
-        for param in self.prior_zq_info.parameters():
-            param.requires_grad = True
-        for param in self.posterior_za_info.parameters():
-            param.requires_grad = True
-        for param in self.prior_za_info.parameters():
-            param.requires_grad = True
-
+        # Get params exclude infomax params
+        params = filter(lambda p: p.requires_grad and (not hasattr(p, "is_infomax_param")), self.parameters())
         return [ { "params": params, "lr": lr } ]
 
 

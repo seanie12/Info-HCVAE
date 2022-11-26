@@ -91,3 +91,8 @@ class InfoMaxModel(nn.Module):
         perm = torch.randperm(B)
         perm_z = z[perm]
         return perm_z
+
+
+    def denote_infomax_net_for_params(self):
+        for param in self.parameters():
+            setattr(param, "is_infomax_param", True)
