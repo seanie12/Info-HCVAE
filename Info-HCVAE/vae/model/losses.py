@@ -67,7 +67,7 @@ class CategoricalMMDLoss(nn.Module):
         batch_size = posterior_za.size(0)
         # nlatent = posterior_za.size(1)
         latent_dim = posterior_za.size(2)
-        total_mmd = torch.tensor(0)
+        total_mmd = 0
         for idx in range(batch_size):
             # Each latent variable of 
             total_mmd += compute_mmd(posterior_za[idx], prior_za[idx], latent_dim)
@@ -82,7 +82,7 @@ class ContinuousKernelMMDLoss(nn.Module):
         # input shape = (batch, dim)
         batch_size = posterior_z_mu.size(0)
         latent_dim = posterior_z_mu.size(1)
-        total_mmd = torch.tensor(0)
+        total_mmd = 0
         for idx in range(batch_size):
             rand_posterior = sample_gaussian(posterior_z_mu[idx], posterior_z_logvar[idx], num_samples=64)
             rand_prior = sample_gaussian(prior_z_mu[idx], prior_z_logvar[idx], num_samples=64)
