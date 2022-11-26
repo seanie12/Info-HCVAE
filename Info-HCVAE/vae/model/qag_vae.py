@@ -92,7 +92,7 @@ class DiscreteVAE(nn.Module):
         q_init_state = (q_init_h, q_init_c)
 
         za_flatten = za.view(-1, self.nza * self.nzadim)
-        a_init_state = self.a_linear(za)
+        a_init_state = self.a_linear(za_flatten)
 
         return q_init_state, a_init_state
 
