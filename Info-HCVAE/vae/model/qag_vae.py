@@ -88,9 +88,9 @@ class DiscreteVAE(nn.Module):
             self.prior_zq_info = InfoMaxModel(x_dim=emsize, z_dim=nzqdim)
             # self.prior_zq_info.denote_infomax_net_for_params()
 
-            self.posterior_za_info = InfoMaxModel(x_dim=emsize+nzqdim, z_dim=nza*nzadim)
+            self.posterior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
             # self.posterior_za_info.denote_infomax_net_for_params()
-            self.prior_za_info = InfoMaxModel(x_dim=emsize+nzqdim, z_dim=nza*nzadim)
+            self.prior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
             # self.prior_za_info.denote_infomax_net_for_params()
 
 
@@ -165,10 +165,8 @@ class DiscreteVAE(nn.Module):
 
                 loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs], dim=-1), posterior_zq) \
                             + self.prior_zq_info(mean_c_embs, prior_zq)
-                loss_za_info = self.posterior_za_info(torch.cat((mean_c_a_embs, posterior_zq.clone().detach()), dim=-1),
-                                                    posterior_za.view(-1, self.nza*self.nzadim)) \
-                            + self.prior_za_info(torch.cat((mean_c_embs, prior_zq.clone().detach()), dim=-1),
-                                                prior_za.view(-1, self.nza*self.nzadim))
+                loss_za_info = self.posterior_za_info(mean_c_a_embs, posterior_za.view(-1, self.nza*self.nzadim)) \
+                            + self.prior_za_info(mean_c_embs, prior_za.view(-1, self.nza*self.nzadim))
                 # use exp to prevent the infomax to become too negative
                 loss_zq_info = torch.exp(loss_zq_info)
                 loss_za_info = torch.exp(loss_za_info)
