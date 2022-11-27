@@ -32,7 +32,7 @@ def main(args):
 
     trainer = VAETrainer(args)
     if args.checkpoint_file is not None:
-        trainer.load_model_state_dict(args.checkpoint_file, load_infomax_model=args.lambda_z_info > 0)
+        trainer.load_model_state_dict(args.checkpoint_file)
 
     # loss_log1 = tqdm(total=0, bar_format='{desc}', position=2)
     # loss_log2 = tqdm(total=0, bar_format='{desc}', position=3)
@@ -147,9 +147,9 @@ if __name__ == "__main__":
     parser.add_argument('--nzadim', type=int, default=20)
     parser.add_argument('--w_ans', type=float, default=2.0)
     parser.add_argument('--w_bce', type=float, default=1.0)
-    parser.add_argument('--alpha_kl', type=float, default=0.9)
-    parser.add_argument('--lambda_mmd', type=float, default=0.1)
-    parser.add_argument('--lambda_z_info', type=float, default=0.3)
+    parser.add_argument('--alpha_kl', type=float, default=0.5)
+    parser.add_argument('--lambda_mmd', type=float, default=0.5)
+    parser.add_argument('--lambda_z_info', type=float, default=0.5)
     parser.add_argument('--lambda_qa_info', type=float, default=1.0)
 
     args = parser.parse_args()
