@@ -4,7 +4,7 @@ from transformers import BertTokenizer
 from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
-from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
+from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss, DIoUAnswerSpanLoss
 from model.infomax import InfoMaxModel
 
 class DiscreteVAE(nn.Module):
@@ -75,6 +75,7 @@ class DiscreteVAE(nn.Module):
         self.a_linear = nn.Linear(nza*nzadim, emsize, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
+        self.a_diou_criterion = DIoUAnswerSpanLoss()
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
 
@@ -114,8 +115,8 @@ class DiscreteVAE(nn.Module):
             posterior_za_logits, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_logits, prior_za \
+        prior_zq_mu, prior_zq_logvar, _, \
+            prior_za_logits, _ \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -140,7 +141,8 @@ class DiscreteVAE(nn.Module):
             end_positions.clamp_(0, max_c_len)
             loss_start_a_rec = a_rec_criterion(start_logits, start_positions)
             loss_end_a_rec = a_rec_criterion(end_logits, end_positions)
-            loss_a_rec = self.w_ans * 0.5 * (loss_start_a_rec + loss_end_a_rec)
+            loss_a_rec = self.w_ans * (0.5 * (loss_start_a_rec + loss_end_a_rec) \
+                            + self.a_diou_criterion(c_ids, a_ids, start_positions, end_positions, start_logits, end_logits))
 
             # kl loss
             loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from model.model_utils import sample_gaussian, gumbel_softmax, sample_gumbel
+from model.model_utils import sample_gaussian, gumbel_softmax, return_mask_lengths
 
 # Define MMD loss
 def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="rbf"):
@@ -103,3 +103,43 @@ class ContinuousKernelMMDLoss(nn.Module):
         #     # Apply dropout to mimic the variations in Q(zq | context) & P(zq | context) distribution
         #     total_mmd += compute_mmd(F.dropout(rand_posterior, p=0.2), F.dropout(rand_prior, p=0.2), latent_dim)
         return compute_mmd(posterior_z, prior_z, latent_dim)
+
+
+class DIoUAnswerSpanLoss(nn.Module):
+    def __init__(self):
+        super(DIoUAnswerSpanLoss, self).__init__()
+
+    def forward(self, c_ids, gt_a_ids, gt_start_positions, gt_end_positions, start_logits, end_logits):
+        c_mask, _ = return_mask_lengths(c_ids)
+        batch_size, max_c_len = c_ids.size()
+
+        mask = torch.matmul(c_mask.unsqueeze(2).float(),
+                            c_mask.unsqueeze(1).float())
+        mask = torch.triu(mask) == 0
+        score = (F.log_softmax(start_logits).unsqueeze(2)
+                 + F.log_softmax(end_logits).unsqueeze(1))
+        score = score.masked_fill(mask, -10000.0)
+        score, start_positions = score.max(dim=1)
+        score, end_positions = score.max(dim=1)
+        start_positions = torch.gather(start_positions,
+                                       1,
+                                       end_positions.view(-1, 1)).squeeze(1)
+
+        idxes = torch.arange(0, max_c_len, out=torch.LongTensor(max_c_len))
+        idxes = idxes.unsqueeze(0).to(
+            start_logits.device).repeat(batch_size, 1)
+
+        start_positions = start_positions.unsqueeze(1)
+        start_mask = (idxes >= start_positions).long()
+        end_positions = end_positions.unsqueeze(1)
+        end_mask = (idxes <= end_positions).long()
+        a_ids = start_mask + end_mask - 1
+
+        center_dist = (end_positions - start_positions + 1) / 2
+        gt_center_dist = (gt_end_positions - gt_start_positions + 1) / 2
+        center_loss = F.mse_loss(center_dist, gt_center_dist)
+
+        intersection = ((a_ids > 0) * (gt_a_ids > 0)).sum(dim=-1)
+        union = ((a_ids + gt_a_ids) > 0).sum(dim=-1)
+        iou = (1 - (intersection / union)).mean()
+        return iou + center_loss
