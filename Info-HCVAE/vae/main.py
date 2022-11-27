@@ -72,6 +72,9 @@ def main(args):
             # loss_log1.set_description_str(str1)
             # loss_log2.set_description_str(str2)
 
+            if epoch == 0 and cnt_samples == 0: # first iteration
+                trainer.print_log() # get first run loss to verify correctness
+
             cnt_samples += c_ids.shape[0] # add batch dimension to get number of samples
             if cnt_samples >= num_samples_limit:
                 # stop training if over the num of training samples limit
