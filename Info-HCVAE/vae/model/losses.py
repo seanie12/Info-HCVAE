@@ -137,7 +137,11 @@ class DIoUAnswerSpanLoss(nn.Module):
 
         center_dist = (end_positions - start_positions + 1) / 2
         gt_center_dist = (gt_end_positions - gt_start_positions + 1) / 2
-        center_loss = F.mse_loss(center_dist, gt_center_dist)
+        min_start_positions = torch.min(torch.cat((start_positions.unsqueeze(-1), gt_start_positions.unsqueeze(-1)), dim=-1),
+                                    dim=-1)
+        max_end_positions = torch.max(torch.cat((end_positions.unsqueeze(-1), gt_end_positions.unsqueeze(-1)), dim=-1),
+                                    dim=-1)
+        center_loss = (center_dist - gt_center_dist).pow(2).sum(dim=-1) / (max_end_positions - min_start_positions).pow(2).sum(dim=-1)
 
         intersection = ((a_ids > 0) * (gt_a_ids > 0)).sum(dim=-1)
         union = ((a_ids + gt_a_ids) > 0).sum(dim=-1)
