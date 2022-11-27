@@ -109,7 +109,24 @@ class DIoUAnswerSpanLoss(nn.Module):
     def __init__(self):
         super(DIoUAnswerSpanLoss, self).__init__()
 
+
+    def compute_diou(self, start_positions, end_positions, a_ids, gt_start_positions, gt_end_positions, gt_a_ids):
+        center_dist = (end_positions - start_positions + 1) / 2
+        gt_center_dist = (gt_end_positions - gt_start_positions + 1) / 2
+        min_start_positions = torch.min(torch.cat((start_positions.unsqueeze(-1), gt_start_positions.unsqueeze(-1)), dim=-1),
+                                    dim=-1)
+        max_end_positions = torch.max(torch.cat((end_positions.unsqueeze(-1), gt_end_positions.unsqueeze(-1)), dim=-1),
+                                    dim=-1)
+        center_loss = (center_dist - gt_center_dist).pow(2).sum(dim=-1) / (max_end_positions - min_start_positions).pow(2).sum(dim=-1)
+
+        intersection = ((a_ids > 0) * (gt_a_ids > 0)).sum(dim=-1)
+        union = ((a_ids + gt_a_ids) > 0).sum(dim=-1)
+        iou = (1 - (intersection / union))
+        return (iou + center_loss).mean()
+
+
     def forward(self, c_ids, gt_a_ids, gt_start_positions, gt_end_positions, start_logits, end_logits):
+        # Extract answer mask, start pos, & end pos using start logits & end logits
         c_mask, _ = return_mask_lengths(c_ids)
         batch_size, max_c_len = c_ids.size()
 
@@ -135,15 +152,4 @@ class DIoUAnswerSpanLoss(nn.Module):
         end_mask = (idxes <= end_positions).long()
         a_ids = start_mask + end_mask - 1
 
-        center_dist = (end_positions - start_positions + 1) / 2
-        gt_center_dist = (gt_end_positions - gt_start_positions + 1) / 2
-        min_start_positions = torch.min(torch.cat((start_positions.unsqueeze(-1), gt_start_positions.unsqueeze(-1)), dim=-1),
-                                    dim=-1)
-        max_end_positions = torch.max(torch.cat((end_positions.unsqueeze(-1), gt_end_positions.unsqueeze(-1)), dim=-1),
-                                    dim=-1)
-        center_loss = (center_dist - gt_center_dist).pow(2).sum(dim=-1) / (max_end_positions - min_start_positions).pow(2).sum(dim=-1)
-
-        intersection = ((a_ids > 0) * (gt_a_ids > 0)).sum(dim=-1)
-        union = ((a_ids + gt_a_ids) > 0).sum(dim=-1)
-        iou = (1 - (intersection / union)).mean()
-        return iou + center_loss
+        return self.compute_diou(start_positions, end_positions, a_ids, gt_start_positions, gt_end_positions, gt_a_ids)
