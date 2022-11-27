@@ -45,10 +45,21 @@ def main(args):
     if args.is_test_run:
         num_samples_limit = 2000
 
+    current_lr = args.lr
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         if epoch+1 < args.resume_epochs:
             continue
+
+        if epoch+1 == 26:
+            current_lr = current_lr / 10
+            trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+        elif epoch+1 == 36:
+            current_lr = current_lr / 10
+            trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+        elif epoch+1 == 46:
+            current_lr = current_lr / 10
+            trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
 
         trainer.reset_cnt_steps()
         cnt_samples = 0
@@ -116,8 +127,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
-    parser.add_argument("--epochs", default=20, type=int)
-    parser.add_argument("--use_infomax_net", dest="use_infomax_net", action="store_true")
+    parser.add_argument("--epochs", default=55, type=int)
     parser.add_argument("--infomax_epochs", default=5, type=int, help="Must be less than or equal to epochs")
     parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")

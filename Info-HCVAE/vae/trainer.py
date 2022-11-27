@@ -53,6 +53,15 @@ class VAETrainer(object):
             self.print_log()
 
 
+    def change_optimizer(self, optimizer="adam", lr=1e-4, weight_decay=0.0):
+        assert optimizer in ["sgd", "adam"]
+        params = filter(lambda p: p.requires_grad, self.vae.parameters())
+        if optimizer == "sgd":
+            self.optimizer = torch.optim.SGD(params, lr=lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
+        else:
+            self.optimizer = torch.optim.Adam(params, lr=lr, weight_decay=weight_decay)
+
+
     def print_log(self, log_type="step", epoch=None):
         """
             log_type: "epoch" or "step"
