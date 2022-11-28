@@ -136,6 +136,8 @@ class DIoUAnswerSpanLoss(nn.Module):
 
         mask = torch.matmul(c_mask.unsqueeze(2).float(),
                             c_mask.unsqueeze(1).float())
+        print(c_mask.size())
+        print(mask.size())
         mask = torch.triu(mask) == 0
         score = (F.log_softmax(start_logits, dim=1).unsqueeze(2)
                  + F.log_softmax(end_logits, dim=1).unsqueeze(1))
