@@ -75,7 +75,6 @@ class DiscreteVAE(nn.Module):
         self.a_linear = nn.Linear(nza*nzadim, emsize, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
-        self.a_diou_criterion = DIoUAnswerSpanLoss()
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
 
@@ -141,8 +140,7 @@ class DiscreteVAE(nn.Module):
             end_positions.clamp_(0, max_c_len)
             loss_start_a_rec = a_rec_criterion(start_logits, start_positions)
             loss_end_a_rec = a_rec_criterion(end_logits, end_positions)
-            loss_a_rec = self.w_ans * (0.5 * (loss_start_a_rec + loss_end_a_rec) \
-                            + 0.25 * self.a_diou_criterion(c_ids, start_positions, end_positions, start_logits, end_logits))
+            loss_a_rec = self.w_ans * 0.5 * (loss_start_a_rec + loss_end_a_rec)
 
             # kl loss
             loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,

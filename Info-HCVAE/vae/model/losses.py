@@ -106,6 +106,7 @@ class ContinuousKernelMMDLoss(nn.Module):
 
 
 class DIoUAnswerSpanLoss(nn.Module):
+    """ Maybe i'll try later - but it's not sure that this will work """
     def __init__(self):
         super(DIoUAnswerSpanLoss, self).__init__()
 
