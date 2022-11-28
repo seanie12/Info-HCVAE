@@ -111,6 +111,10 @@ class DIoUAnswerSpanLoss(nn.Module):
 
 
     def compute_diou(self, start_positions, end_positions, a_ids, gt_start_positions, gt_end_positions, gt_a_ids):
+        print(start_positions.size())
+        print(gt_start_positions.size())
+        print(end_positions.size())
+        print(gt_end_positions.size())
         center_dist = (end_positions - start_positions + 1) / 2
         gt_center_dist = (gt_end_positions - gt_start_positions + 1) / 2
         min_start_positions = torch.min(torch.cat((start_positions.unsqueeze(-1), gt_start_positions.unsqueeze(-1)), dim=-1),
@@ -133,9 +137,10 @@ class DIoUAnswerSpanLoss(nn.Module):
         mask = torch.matmul(c_mask.unsqueeze(2).float(),
                             c_mask.unsqueeze(1).float())
         mask = torch.triu(mask) == 0
-        score = (F.log_softmax(start_logits).unsqueeze(2)
-                 + F.log_softmax(end_logits).unsqueeze(1))
+        score = (F.log_softmax(start_logits, dim=1).unsqueeze(2)
+                 + F.log_softmax(end_logits, dim=1).unsqueeze(1))
         score = score.masked_fill(mask, -10000.0)
+        print(score.size())
         score, start_positions = score.max(dim=1)
         score, end_positions = score.max(dim=1)
         start_positions = torch.gather(start_positions,
