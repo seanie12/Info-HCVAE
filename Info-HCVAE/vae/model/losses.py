@@ -110,11 +110,7 @@ class DIoUAnswerSpanLoss(nn.Module):
         super(DIoUAnswerSpanLoss, self).__init__()
 
 
-    def compute_diou(self, start_positions, end_positions, a_ids, gt_start_positions, gt_end_positions, gt_a_ids):
-        print(start_positions.size())
-        print(gt_start_positions.size())
-        print(end_positions.size())
-        print(gt_end_positions.size())
+    def compute_diou(self, start_positions, end_positions, gt_start_positions, gt_end_positions):
         center_dist = (end_positions - start_positions + 1) / 2
         gt_center_dist = (gt_end_positions - gt_start_positions + 1) / 2
         min_start_positions = torch.min(torch.cat((start_positions.unsqueeze(-1), gt_start_positions.unsqueeze(-1)), dim=-1),
@@ -123,40 +119,28 @@ class DIoUAnswerSpanLoss(nn.Module):
                                     dim=-1)
         center_loss = (center_dist - gt_center_dist).pow(2).sum(dim=-1) / (max_end_positions - min_start_positions).pow(2).sum(dim=-1)
 
-        intersection = ((a_ids > 0) * (gt_a_ids > 0)).sum(dim=-1)
-        union = ((a_ids + gt_a_ids) > 0).sum(dim=-1)
-        iou = (1 - (intersection / union))
-        return (iou + center_loss).mean()
+        max_start_positions = torch.max(start_positions, gt_start_positions)
+        min_end_positions = torch.min(end_positions, gt_end_positions)
+        intersection = torch.max(min_end_positions - max_start_positions, 0).sum(dim=-1)
+        union = (((end_positions - start_positions) + (gt_end_positions - gt_start_positions)) - intersection).sum(dim=-1)
+        iou = intersection / union
+        return ((1 - iou) + center_loss).mean()
 
 
-    def forward(self, c_ids, gt_a_ids, gt_start_positions, gt_end_positions, start_logits, end_logits):
+    def forward(self, c_ids, gt_start_positions, gt_end_positions, start_logits, end_logits):
         # Extract answer mask, start pos, & end pos using start logits & end logits
         c_mask, _ = return_mask_lengths(c_ids)
-        batch_size, max_c_len = c_ids.size()
 
         mask = torch.matmul(c_mask.unsqueeze(2).float(),
-                            c_mask.unsqueeze(1).float())
-        print(c_mask.size())
-        print(mask.size())
+                            c_mask.unsqueeze(1).float()) # shape = (batch, c_len, c_len)
         mask = torch.triu(mask) == 0
         score = (F.log_softmax(start_logits, dim=1).unsqueeze(2)
-                 + F.log_softmax(end_logits, dim=1).unsqueeze(1))
+                 + F.log_softmax(end_logits, dim=1).unsqueeze(1)) # shape = (batch, c_len, c_len)
         score = score.masked_fill(mask, -10000.0)
-        print(score.size())
-        score, start_positions = score.max(dim=1)
+        score, start_positions = score.max(dim=1) # score's shape = (batch, c_len)
         score, end_positions = score.max(dim=1)
         start_positions = torch.gather(start_positions,
                                        1,
                                        end_positions.view(-1, 1)).squeeze(1)
 
-        idxes = torch.arange(0, max_c_len, out=torch.LongTensor(max_c_len))
-        idxes = idxes.unsqueeze(0).to(
-            start_logits.device).repeat(batch_size, 1)
-
-        start_positions = start_positions.unsqueeze(1)
-        start_mask = (idxes >= start_positions).long()
-        end_positions = end_positions.unsqueeze(1)
-        end_mask = (idxes <= end_positions).long()
-        a_ids = start_mask + end_mask - 1
-
-        return self.compute_diou(start_positions, end_positions, a_ids, gt_start_positions, gt_end_positions, gt_a_ids)
+        return self.compute_diou(start_positions, end_positions, gt_start_positions, gt_end_positions)

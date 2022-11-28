@@ -142,7 +142,7 @@ class DiscreteVAE(nn.Module):
             loss_start_a_rec = a_rec_criterion(start_logits, start_positions)
             loss_end_a_rec = a_rec_criterion(end_logits, end_positions)
             loss_a_rec = self.w_ans * (0.5 * (loss_start_a_rec + loss_end_a_rec) \
-                            + self.a_diou_criterion(c_ids, a_ids, start_positions, end_positions, start_logits, end_logits))
+                            + 0.25 * self.a_diou_criterion(c_ids, start_positions, end_positions, start_logits, end_logits))
 
             # kl loss
             loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
