@@ -119,9 +119,9 @@ class DIoUAnswerSpanLoss(nn.Module):
                                     dim=-1)[0] # return tuple of torch.max = (max, max_indices)
         center_loss = (center_dist - gt_center_dist).pow(2).sum(dim=-1) / (max_end_positions - min_start_positions).pow(2).sum(dim=-1)
 
-        max_start_positions = torch.max(start_positions, gt_start_positions)
-        min_end_positions = torch.min(end_positions, gt_end_positions)
-        intersection = torch.max(min_end_positions - max_start_positions, 0).sum(dim=-1)
+        max_start_positions = torch.max(start_positions, gt_start_positions)[0]
+        min_end_positions = torch.min(end_positions, gt_end_positions)[0]
+        intersection = torch.max(min_end_positions - max_start_positions, 0)[0].sum(dim=-1)
         union = (((end_positions - start_positions) + (gt_end_positions - gt_start_positions)) - intersection).sum(dim=-1)
         iou = intersection / union
         return ((1 - iou) + center_loss).mean()
