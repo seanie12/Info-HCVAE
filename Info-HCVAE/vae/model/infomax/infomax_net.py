@@ -97,6 +97,8 @@ class ContextualizedInfoMax(nn.Module):
     def __init__(self, embedding, max_seq_len, max_question_len, emsize, nzqdim, nzadim):
         super(ContextualizedInfoMax, self).__init__()
         self.embedding = embedding
+        self.max_seq_len = max_seq_len
+        self.max_question_len = max_question_len
         self.emsize = emsize
         self.nzqdim = nzqdim
         self.nzadim = nzadim
@@ -107,11 +109,12 @@ class ContextualizedInfoMax(nn.Module):
 
     def forward(self, q_ids, c_ids, a_ids, zq, za):
         N, _ = q_ids.size()
+        q_ids = q_ids[:, :self.max_question_len]
+        c_ids = c_ids[:, :self.max_seq_len]
+        print(c_ids)
         c_emb = self.embedding(c_ids)
         q_emb = self.embedding(q_ids)
         c_a_emb = self.embedding(c_ids, a_ids, None)
-        print(c_emb.size())
-        print(q_emb.size())
         return self.zq_infomax(torch.cat([q_emb, c_emb], dim=1).view(N, -1), zq), \
             self.za_infomax(torch.cat([q_emb, c_a_emb], dim=1).view(N, -1), za)
 
