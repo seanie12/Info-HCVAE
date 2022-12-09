@@ -26,13 +26,19 @@ class LatentDimMutualInfoMax(nn.Module):
             self.zq_infomax = DimBceInfoMax(x_dim=emsize*(max_seq_len+max_question_len), z_dim=nzqdim)
             self.za_infomax = DimBceInfoMax(x_dim=emsize*max_seq_len + nzqdim, z_dim=nza*nzadim, linear_bias=False)
 
-    def forward(self, q_f, c_f, c_a_f, zq, za):
+    def forward(self, zq, za, c_f, c_a_f=None, q_f=None):
         N, _, _ = c_f.size()
+
         if q_f is not None:
             x_zq = torch.cat([q_f, c_f], dim=1).view(N, -1)
         else:
             x_zq = c_f.view(N, -1)
-        x_za = torch.cat([zq, c_a_f.view(N, -1)], dim=1)
+
+        if c_a_f is not None:
+            x_za = torch.cat([zq, c_a_f.view(N, -1)], dim=1)
+        else:
+            x_za = torch.cat([zq, c_f.view(N, -1)], dim=1)
+
         return self.zq_infomax(x_zq, zq), self.za_infomax(x_za, za.view(N, -1))
 
     def denote_is_infomax_net_for_params(self):

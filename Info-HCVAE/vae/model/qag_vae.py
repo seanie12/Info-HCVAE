@@ -75,6 +75,7 @@ class DiscreteVAE(nn.Module):
         self.a_linear = nn.Linear(nza*nzadim, emsize, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
+        self.a_rec_criterion = nn.CrossEntropyLoss(ignore_index=args.max_c_len)
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
 
@@ -131,12 +132,10 @@ class DiscreteVAE(nn.Module):
 
             # a rec loss
             max_c_len = c_ids.size(1)
-            # Emphasize the importance of predicting the correct span
-            a_rec_criterion = nn.CrossEntropyLoss(ignore_index=max_c_len)
             start_positions.clamp_(0, max_c_len)
             end_positions.clamp_(0, max_c_len)
-            loss_start_a_rec = a_rec_criterion(start_logits, start_positions)
-            loss_end_a_rec = a_rec_criterion(end_logits, end_positions)
+            loss_start_a_rec = self.a_rec_criterion(start_logits, start_positions)
+            loss_end_a_rec = self.a_rec_criterion(end_logits, end_positions)
             loss_a_rec = self.w_ans * 0.5 * (loss_start_a_rec + loss_end_a_rec)
 
             # kl loss
@@ -154,10 +153,9 @@ class DiscreteVAE(nn.Module):
 
             loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
             if self.lambda_z_info > 0:
-                loss_pos_zq_info, loss_pos_za_info = self.posterior_infomax_net(q_features, c_features, c_a_features, \
-                    posterior_zq, posterior_za)
-                loss_prior_zq_info, loss_prior_za_info = self.posterior_infomax_net(None, prior_c_features, prior_c_features, \
-                    prior_zq, prior_za)
+                loss_pos_zq_info, loss_pos_za_info = self.posterior_infomax_net(posterior_zq, posterior_za, c_features, \
+                    c_a_f=c_a_features, q_f=q_features)
+                loss_prior_zq_info, loss_prior_za_info = self.posterior_infomax_net(prior_zq, prior_za, prior_c_features)
                 loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
                 loss_za_info = loss_pos_za_info + loss_prior_za_info
 
