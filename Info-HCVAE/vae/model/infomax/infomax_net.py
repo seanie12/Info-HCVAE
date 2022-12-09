@@ -108,24 +108,13 @@ class ContextualizedInfoMax(nn.Module):
 
 
     def forward(self, q_ids, c_ids, a_ids, zq, za):
-        N, q_len = q_ids.size()
-        _, c_len = c_ids.size()
-
-        if q_len > self.max_question_len:
-            q_ids = q_ids[:, :self.max_question_len] # reduce oversize
-        elif q_len < self.max_question_len:
-            q_ids = q_ids.expand((-1, self.max_question_len))
-            q_ids[:, q_len:] = 0 # pad to max length
-
-        if c_len > self.max_seq_len:
-            c_ids = c_ids[:, :self.max_seq_len] # reduce oversize
-        elif c_len < self.max_seq_len:
-            c_ids = c_ids.expand((-1, self.max_seq_len))
-            c_ids[:, c_len:] = 0 # pad to max length
+        N, _ = q_ids.size()
 
         c_emb = self.embedding(c_ids)
         q_emb = self.embedding(q_ids)
         c_a_emb = self.embedding(c_ids, a_ids, None)
+        print(c_emb.size())
+        print(q_emb.size())
         return self.zq_infomax(torch.cat([q_emb, c_emb], dim=1).view(N, -1), zq), \
             self.za_infomax(torch.cat([q_emb, c_a_emb], dim=1).view(N, -1), za)
 
