@@ -1,1 +1,1 @@
-from .infomax_net import InfoMaxModel
+from .infomax_net import ContextualizedInfoMax

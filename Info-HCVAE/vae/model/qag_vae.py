@@ -4,8 +4,8 @@ from transformers import BertTokenizer
 from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
-from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss, DIoUAnswerSpanLoss
-from model.infomax import InfoMaxModel
+from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
+from model.infomax import ContextualizedInfoMax
 
 class DiscreteVAE(nn.Module):
     def __init__(self, args):
@@ -83,15 +83,7 @@ class DiscreteVAE(nn.Module):
             self.categorical_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_z_info > 0:
-            self.posterior_zq_info = InfoMaxModel(x_dim=2*emsize, z_dim=nzqdim)
-            # self.posterior_zq_info.denote_infomax_net_for_params()
-            # self.prior_zq_info = InfoMaxModel(x_dim=emsize, z_dim=nzqdim)
-            # self.prior_zq_info.denote_infomax_net_for_params()
-
-            self.posterior_za_info = InfoMaxModel(x_dim=2*emsize, z_dim=nza*nzadim)
-            # self.posterior_za_info.denote_infomax_net_for_params()
-            # self.prior_za_info = InfoMaxModel(x_dim=emsize, z_dim=nza*nzadim)
-            # self.prior_za_info.denote_infomax_net_for_params()
+            self.infomax_net = ContextualizedInfoMax(contextualized_embedding, emsize, nzqdim, nza*nzadim)
 
 
     def return_init_state(self, zq, za):
@@ -157,21 +149,8 @@ class DiscreteVAE(nn.Module):
 
             loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
             if self.lambda_z_info > 0:
-                mean_c_embs = self.posterior_encoder.embedding(c_ids).mean(dim=1)
-                mean_q_embs = self.posterior_encoder.embedding(q_ids).mean(dim=1)
-                mean_c_a_embs = self.posterior_encoder.embedding(c_ids, a_ids, None).mean(dim=1)
-                # soft_posterior_za = sample_gumbel(posterior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
-                # soft_prior_za = sample_gumbel(prior_za_logits, hard=False).view(-1, self.nza*self.nzadim)
-
-                # loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs], dim=-1), posterior_zq) \
-                #             + self.prior_zq_info(mean_c_embs, prior_zq)
-                # loss_za_info = self.posterior_za_info(mean_c_a_embs, posterior_za.view(-1, self.nza*self.nzadim)) \
-                #             + self.prior_za_info(mean_c_embs, prior_za.view(-1, self.nza*self.nzadim))
-                loss_zq_info = self.posterior_zq_info(torch.cat([mean_c_embs, mean_q_embs], dim=-1), posterior_zq)
-                loss_za_info = self.posterior_za_info(torch.cat([mean_q_embs, mean_c_a_embs], dim=-1), posterior_za.view(-1, self.nza*self.nzadim))
-                # use exp to prevent the infomax to become too negative
-                loss_zq_info = torch.exp(loss_zq_info)
-                loss_za_info = torch.exp(loss_za_info)
+                loss_zq_info, loss_za_info = self.infomax_net(q_ids, c_ids, a_ids, \
+                    posterior_zq, posterior_za.view(-1, self.nza*self.nzadim))
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
@@ -224,7 +203,8 @@ class DiscreteVAE(nn.Module):
 
 
     def get_infomax_params(self, lr=1e-5):
-        return [ { "params": self.posterior_zq_info.parameters(), "lr": lr },
-            { "params": self.prior_zq_info.parameters(), "lr": lr },
-            { "params": self.posterior_za_info.parameters(), "lr": lr },
-            { "params": self.prior_za_info.parameters(), "lr": lr } ]
+        return [ { "params": self.infomax_net.parameters(), "lr": lr } ]
+
+
+    def reduce_infomax_weight_by_10(self):
+        self.lambda_z_info /= 10

@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -6,6 +7,24 @@ from torch.utils.data import DataLoader, TensorDataset
 from squad_utils import (convert_examples_to_features_answer_id,
                          convert_examples_to_harv_features,
                          read_squad_examples)
+
+
+def generate_testing_dataset_for_model_choosing(train_data, batch_size=16, num_samples=100, train_size=0.8):
+    train_loader, train_examples, train_features = train_data
+    dataset = train_loader.dataset[:num_samples]
+    examples = deepcopy(train_examples[:num_samples])
+    features = deepcopy(train_features[:num_samples])
+
+    rand_perm = torch.randperm(num_samples)
+    perm_dataset = TensorDataset(*tuple(tensor.clone()[rand_perm] for tensor in dataset))
+    test_train_loader = DataLoader(perm_dataset, batch_size, shuffle=True)
+    test_eval_loader = DataLoader(perm_dataset, batch_size, shuffle=False)
+
+    shuffled_examples = [examples[idx] for idx in rand_perm.tolist()]
+    shuffled_features = [features[idx] for idx in rand_perm.tolist()]
+
+    return (test_train_loader, shuffled_examples, shuffled_features), \
+        (test_eval_loader, shuffled_examples, shuffled_features)
 
 
 def get_squad_data_loader(tokenizer, file, shuffle, is_train_set, args):

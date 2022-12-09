@@ -1,6 +1,7 @@
 import math
 import torch
 import torch.nn as nn
+from model.model_utils import return_mask_lengths
 
 _EPS_ = 1e-6
 
@@ -36,14 +37,14 @@ def ema_loss(x, running_mean, alpha):
     return t_log, running_mean
 
 
-class InfoMaxModel(nn.Module):
+class _InfoMaxModel(nn.Module):
     """discriminator network.
     Args:
         x_dim (int): input dim, for example m x n x c for [m, n, c]
         z_dim (int): dimension of latent code (typically a number in [10 - 256])
     """
     def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.1, loss_type="mine"):
-        super(InfoMaxModel, self).__init__()
+        super(_InfoMaxModel, self).__init__()
         self.z_dim = z_dim
         self.x_dim = x_dim
         self.loss_type = loss_type
@@ -51,11 +52,11 @@ class InfoMaxModel(nn.Module):
         self.running_mean = 0
         self.discriminator = nn.Sequential(
             nn.Linear(self.x_dim + self.z_dim, 1000),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(1000, 400),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(400, 100),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(100, 1),
         )
 
@@ -92,6 +93,28 @@ class InfoMaxModel(nn.Module):
         return perm_z
 
 
-    def denote_infomax_net_for_params(self):
+class ContextualizedInfoMax(nn.Module):
+    def __init__(self, context_embedding, emsize, nzqdim, nzadim):
+        super(ContextualizedInfoMax, self).__init__()
+        self.context_embedding = context_embedding
+        self.emsize = emsize
+        self.nzqdim = nzqdim
+        self.nzadim = nzadim
+
+        self.zq_infomax = _InfoMaxModel(x_dim=emsize*2, z_dim=nzqdim)
+        self.za_infomax = _InfoMaxModel(x_dim=emsize*2, z_dim=nzadim)
+
+
+    def forward(self, q_ids, c_ids, a_ids, zq, za):
+        c_mask, _ = return_mask_lengths(c_ids)
+        q_mask, _ = return_mask_lengths(q_ids)
+        c_cls = self.context_embedding(c_ids, c_mask)[:, 0, :]
+        q_cls = self.context_embedding(q_ids, q_mask)[:, 0, :]
+        c_a_cls = self.context_embedding(c_ids, c_mask, a_ids)[:, 0, :]
+        return self.zq_infomax(torch.cat([q_cls, c_cls], dim=-1), zq), \
+            self.za_infomax(torch.cat([q_cls, c_a_cls], dim=-1), za)
+
+
+    def denote_is_infomax_net_for_params(self):
         for param in self.parameters():
             setattr(param, "is_infomax_param", True)

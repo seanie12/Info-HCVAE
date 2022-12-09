@@ -9,7 +9,7 @@ from transformers import BertTokenizer
 
 from eval import eval_vae
 from trainer import VAETrainer
-from utils import batch_to_device, get_harv_data_loader, get_squad_data_loader
+from utils import batch_to_device, get_squad_data_loader, generate_testing_dataset_for_model_choosing
 
 
 def main(args):
@@ -18,15 +18,15 @@ def main(args):
     eval_data = None
 
     if args.load_saved_dataloader:
-        train_loader = torch.load(os.path.join(args.dataloader_dir, "train_loader.pt"))
-        eval_data = torch.load(os.path.join(args.dataloader_dir, "eval_loader.pt"))
+        train_data = torch.load(os.path.join(args.dataloader_dir, "train_data.pt"))
+        eval_data = torch.load(os.path.join(args.dataloader_dir, "eval_data.pt"))
     else:
-        train_loader, _, _ = get_squad_data_loader(tokenizer, args.train_dir,
+        train_data = get_squad_data_loader(tokenizer, args.train_dir,
                                          shuffle=True, is_train_set=True, args=args)
         eval_data = get_squad_data_loader(tokenizer, args.dev_dir,
                                           shuffle=False, is_train_set=False, args=args)
-        torch.save(train_loader, os.path.join(args.dataloader_dir, "train_loader.pt"))
-        torch.save(eval_data, os.path.join(args.dataloader_dir, "eval_loader.pt"))
+        torch.save(train_data, os.path.join(args.dataloader_dir, "train_data.pt"))
+        torch.save(eval_data, os.path.join(args.dataloader_dir, "eval_data.pt"))
 
     args.device = torch.cuda.current_device()
 
@@ -41,44 +41,36 @@ def main(args):
 
     print("MODEL DIR: " + args.model_dir)
 
-    num_samples_limit = 1000000000
     if args.is_test_run:
-        num_samples_limit = 2000
+        test_train_data, test_eval_data = generate_testing_dataset_for_model_choosing(train_data)
+        train_data = test_train_data
+        eval_data = test_eval_data
 
+    train_loader, _, _ = train_data
     current_lr = args.lr
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
+    first_run = True
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         if epoch+1 < args.resume_epochs:
             continue
 
-        if epoch+1 == 21:
-            current_lr = current_lr / 10
-            trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
-        elif epoch+1 == 31:
-            current_lr = current_lr / 10
-            trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+        if not args.is_test_run:
+            if epoch+1 == 11:
+                current_lr = current_lr / 10
+                trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+            elif epoch+1 == 21:
+                current_lr = current_lr / 10
+                trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
 
         trainer.reset_cnt_steps()
-        cnt_samples = 0
         for batch in tqdm(train_loader, leave=False, position=1):
             c_ids, q_ids, a_ids, start_positions, end_positions \
                 = batch_to_device(batch, args.device)
             trainer.train(c_ids, q_ids, a_ids, start_positions, end_positions)
 
-            # str1 = 'Q REC : {:.6f} A REC : {:.6f}'
-            # str2 = 'ZQ KL : {:.6f} ZA KL : {:.6f} ZQ MMD : {:.6f} ZA MMD : {:.6f} INFO : {:.6f}'
-            # str1 = str1.format(float(trainer.loss_q_rec), float(trainer.loss_a_rec))
-            # str2 = str2.format(float(trainer.loss_zq_kl), float(trainer.loss_za_kl), float(trainer.loss_zq_mmd), float(trainer.loss_za_mmd), float(trainer.loss_info))
-            # loss_log1.set_description_str(str1)
-            # loss_log2.set_description_str(str2)
-
-            if epoch == 0 and cnt_samples == 0: # first iteration
+            if epoch == 0 and first_run: # first iteration
                 trainer.print_log() # get first run loss to verify correctness
-
-            cnt_samples += c_ids.shape[0] # add batch dimension to get number of samples
-            if cnt_samples >= num_samples_limit:
-                # stop training if over the num of training samples limit
-                break
+                first_run = False
 
         trainer.print_log(log_type="epoch", epoch=epoch+1)
 
@@ -105,7 +97,8 @@ def main(args):
 
             with open(os.path.join(args.model_dir, "metrics.json"), "wt") as f:
                 import json
-                json.dump({"best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1}, f, indent=4)
+                json.dump({ "latest_bleu": bleu, "latest_em": em, "latest_f1": f1,
+                            "best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1 }, f, indent=4)
 
         if (epoch + 1) % args.save_freq == 0:
             trainer.save(os.path.join(args.save_by_epoch_dir, "model-epoch-{:02d}.pt".format(epoch + 1)))
@@ -153,13 +146,13 @@ if __name__ == "__main__":
     parser.add_argument('--dec_q_nlayers', type=int, default=2)
     parser.add_argument('--dec_q_dropout', type=float, default=0.3)
     parser.add_argument('--nzqdim', type=int, default=64)
-    parser.add_argument('--nza', type=int, default=30)
-    parser.add_argument('--nzadim', type=int, default=20)
-    parser.add_argument('--w_ans', type=float, default=2.0)
+    parser.add_argument('--nza', type=int, default=32)
+    parser.add_argument('--nzadim', type=int, default=16)
+    parser.add_argument('--w_ans', type=float, default=1.0)
     parser.add_argument('--w_bce', type=float, default=1.0)
-    parser.add_argument('--alpha_kl', type=float, default=0.9)
-    parser.add_argument('--lambda_mmd', type=float, default=0.1)
-    parser.add_argument('--lambda_z_info', type=float, default=0.3)
+    parser.add_argument('--alpha_kl', type=float, default=0.0)
+    parser.add_argument('--lambda_mmd', type=float, default=1.0)
+    parser.add_argument('--lambda_z_info', type=float, default=20.0)
     parser.add_argument('--lambda_qa_info', type=float, default=1.0)
 
     args = parser.parse_args()

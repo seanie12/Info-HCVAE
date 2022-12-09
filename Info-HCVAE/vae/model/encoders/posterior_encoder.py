@@ -83,8 +83,6 @@ class PosteriorEncoder(nn.Module):
         za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
         # za_prob = F.softmax(za_logits, dim=-1)
         za = gumbel_softmax(za_logits, hard=True)
-        # za_mu, za_logvar = torch.split(self.za_linear(h), self.nzadim, dim=1)
-        # za = sample_gaussian(za_mu, za_logvar)
 
         if self.training:
             return zq_mu, zq_logvar, zq, za_logits, za
