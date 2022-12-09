@@ -110,6 +110,8 @@ class ContextualizedInfoMax(nn.Module):
         c_emb = self.embedding(c_ids)
         q_emb = self.embedding(q_ids)
         c_a_emb = self.embedding(c_ids, a_ids, None)
+        print(c_emb.size())
+        print(q_emb.size())
         return self.zq_infomax(torch.cat([q_emb, c_emb], dim=1).view(N, -1), zq), \
             self.za_infomax(torch.cat([q_emb, c_a_emb], dim=1).view(N, -1), za)
 
