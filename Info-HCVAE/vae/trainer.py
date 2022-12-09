@@ -63,7 +63,7 @@ class VAETrainer(object):
 
     def change_optimizer(self, optimizer="adam", lr=1e-4, weight_decay=0.0):
         assert optimizer in ["sgd", "adam"]
-        # params = filter(lambda p: p.requires_grad, self.vae.parameters())
+        self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
         if optimizer == "sgd":
             self.optimizer = torch.optim.SGD(self.params, lr=lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
         else:
