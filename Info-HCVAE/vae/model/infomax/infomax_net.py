@@ -106,7 +106,7 @@ class ContextualizedInfoMax(nn.Module):
 
 
     def forward(self, q_ids, c_ids, a_ids, zq, za):
-        N, _, _= q_ids.size()
+        N, _ = q_ids.size()
         c_emb = self.embedding(c_ids)
         q_emb = self.embedding(q_ids)
         c_a_emb = self.embedding(c_ids, a_ids, None)
