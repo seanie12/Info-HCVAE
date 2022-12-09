@@ -76,14 +76,12 @@ def batch_to_device(batch, device):
     c_ids, q_ids, a_ids, start_positions, end_positions = batch
 
     # c_len = torch.sum(torch.sign(c_ids), 1)
-    c_len = c_ids.size(1)
-    max_c_len = torch.max(c_len)
-    c_ids = c_ids[:, :max_c_len]
-    a_ids = a_ids[:, :max_c_len]
+    # max_c_len = torch.max(c_len)
+    # c_ids = c_ids[:, :max_c_len]
+    # a_ids = a_ids[:, :max_c_len]
 
     # q_len = torch.sum(torch.sign(q_ids), 1)
-    q_len = q_ids.size(1)
-    max_q_len = torch.max(q_len)
-    q_ids = q_ids[:, :max_q_len]
+    # max_q_len = torch.max(q_len)
+    # q_ids = q_ids[:, :max_q_len]
 
     return c_ids, q_ids, a_ids, start_positions, end_positions
