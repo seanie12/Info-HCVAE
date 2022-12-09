@@ -152,7 +152,7 @@ if __name__ == "__main__":
     parser.add_argument('--w_bce', type=float, default=1.0)
     parser.add_argument('--alpha_kl', type=float, default=0.0)
     parser.add_argument('--lambda_mmd', type=float, default=1.0)
-    parser.add_argument('--lambda_z_info', type=float, default=0.02)
+    parser.add_argument('--lambda_z_info', type=float, default=1.0)
     parser.add_argument('--lambda_qa_info', type=float, default=1.0)
 
     args = parser.parse_args()
