@@ -2,6 +2,7 @@ import math
 import torch
 import torch.nn as nn
 from model.model_utils import return_mask_lengths
+from model.customized_layers import CustomLSTM
 
 _EPS_ = 1e-6
 
@@ -43,33 +44,41 @@ class _InfoMaxModel(nn.Module):
         x_dim (int): input dim, for example m x n x c for [m, n, c]
         z_dim (int): dimension of latent code (typically a number in [10 - 256])
     """
-    def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.1, loss_type="mine"):
+    def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.1, dropout=0.0, loss_type="mine"):
         super(_InfoMaxModel, self).__init__()
         self.z_dim = z_dim
         self.x_dim = x_dim
         self.loss_type = loss_type
         self.running_mean_weight = running_mean_weight
         self.running_mean = 0
+        self.nhidden = 512
+        self.lstm = CustomLSTM(input_size=x_dim+z_dim,
+                                        hidden_size=self.nhidden,
+                                        num_layers=1,
+                                        dropout=dropout,
+                                        bidirectional=False)
         self.discriminator = nn.Sequential(
-            nn.Linear(self.x_dim + self.z_dim, 1000),
+            nn.Linear(self.nhidden, 256),
             nn.ReLU(True),
-            nn.Linear(1000, 400),
+            nn.Linear(256, 128),
             nn.ReLU(True),
-            nn.Linear(400, 100),
+            nn.Linear(128, 100),
             nn.ReLU(True),
             nn.Linear(100, 1),
         )
 
-    def forward(self, x, z):
+    def forward(self, x, x_length, z):
         """
         Inputs:
-            x : input from train_loader (batch_size x input_size )
+            x : input from train_loader (batch_size x seq_len x input_size)
             z : latent codes associated with x (batch_size x z_dim)
         """
-        x_z_real = torch.cat((x, z), dim=1)
-        x_z_fake = torch.cat((x, self._permute_dims(z)), dim=1)
-        d_x_z_real = self.discriminator(x_z_real)
-        d_x_z_fake = self.discriminator(x_z_fake)
+        x_z_real = torch.cat((x, z.unsqueeze(1)), dim=-1)
+        x_z_fake = torch.cat((x, self._permute_dims(z).unsqueeze(1)), dim=-1)
+        xz_real_out, _ = self.lstm(x_z_real, x_length.to("cpu"))
+        d_x_z_real = self.discriminator(xz_real_out.mean(dim=1)) # sum along seq_len dim
+        xz_fake_out, _ = self.discriminator(x_z_fake, x_length.to("cpu"))
+        d_x_z_fake = self.discriminator(xz_fake_out.mean(dim=1))
 
         neg_info_xz = -d_x_z_real.mean()
         if self.loss_type == "fdiv":
@@ -94,9 +103,9 @@ class _InfoMaxModel(nn.Module):
 
 
 class ContextualizedInfoMax(nn.Module):
-    def __init__(self, context_embedding, emsize, nzqdim, nzadim):
+    def __init__(self, embedding, emsize, nzqdim, nzadim):
         super(ContextualizedInfoMax, self).__init__()
-        self.context_embedding = context_embedding
+        self.embedding = embedding
         self.emsize = emsize
         self.nzqdim = nzqdim
         self.nzadim = nzadim
@@ -106,13 +115,13 @@ class ContextualizedInfoMax(nn.Module):
 
 
     def forward(self, q_ids, c_ids, a_ids, zq, za):
-        c_mask, _ = return_mask_lengths(c_ids)
-        q_mask, _ = return_mask_lengths(q_ids)
-        c_cls = self.context_embedding(c_ids, c_mask)[:, 0, :]
-        q_cls = self.context_embedding(q_ids, q_mask)[:, 0, :]
-        c_a_cls = self.context_embedding(c_ids, c_mask, a_ids)[:, 0, :]
-        return self.zq_infomax(torch.cat([q_cls, c_cls], dim=-1), zq), \
-            self.za_infomax(torch.cat([q_cls, c_a_cls], dim=-1), za)
+        _, c_lengths = return_mask_lengths(c_ids)
+        _, q_lengths = return_mask_lengths(q_ids)
+        c_h = self.embedding(c_ids)
+        q_h = self.embedding(q_ids)
+        c_a_h = self.embedding(c_ids, a_ids, None)
+        return self.zq_infomax(torch.cat([q_h, c_h], dim=-1), torch.cat([q_lengths, c_lengths], dim=-1), zq), \
+            self.za_infomax(torch.cat([q_h, c_a_h], dim=-1), torch.cat([q_lengths, c_lengths], dim=-1), za)
 
 
     def denote_is_infomax_net_for_params(self):
