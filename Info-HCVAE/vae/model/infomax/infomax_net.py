@@ -72,7 +72,9 @@ class _InfoMaxModel(nn.Module):
         d_x_z_fake = self.discriminator(x_z_fake)
 
         neg_info_xz = -d_x_z_real.mean()
+        print(neg_info_xz)
         if self.loss_type == "fdiv":
+            print((d_x_z_fake - 1).mean())
             neg_info_xz += torch.exp(d_x_z_fake - 1).mean()
         elif self.loss_type == "mine":
             second_term, self.running_mean = ema_loss(d_x_z_fake, self.running_mean, self.running_mean_weight)
