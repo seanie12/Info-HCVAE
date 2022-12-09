@@ -85,6 +85,6 @@ class PosteriorEncoder(nn.Module):
         za = gumbel_softmax(za_logits, hard=True)
 
         if self.training:
-            return zq_mu, zq_logvar, zq, za_logits, za
+            return zq_mu, zq_logvar, zq, za_logits, za, (q_hs, c_hs, c_a_hs)
         else:
             return zq, za

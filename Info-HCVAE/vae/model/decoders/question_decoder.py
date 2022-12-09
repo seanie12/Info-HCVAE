@@ -80,7 +80,7 @@ class QuestionDecoder(nn.Module):
             param.requires_grad = False
 
         # self.discriminator = nn.Bilinear(emsize, nhidden, 1)
-        self.infomax_est = DimBceInfoMax(emsize, nhidden)
+        self.infomax_est = DimBceInfoMax(emsize, nhidden, add_linear=False)
 
     def postprocess(self, q_ids):
         eos_mask = q_ids == self.eos_id

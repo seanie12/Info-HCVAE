@@ -53,7 +53,7 @@ class PriorEncoder(nn.Module):
         za = gumbel_softmax(za_logits, hard=True)
 
         if self.training:
-            return zq_mu, zq_logvar, zq, za_logits, za
+            return zq_mu, zq_logvar, zq, za_logits, za, c_hs
         else:
             return zq, za
 
