@@ -5,7 +5,7 @@ from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
 from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
-from model.infomax import ContextualizedInfoMax
+from model.infomax import LatentDimMutualInfoMax
 
 class DiscreteVAE(nn.Module):
     def __init__(self, args):
@@ -83,7 +83,7 @@ class DiscreteVAE(nn.Module):
             self.categorical_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_z_info > 0:
-            self.infomax_net = ContextualizedInfoMax(embedding, args.max_c_len, args.max_q_len, emsize, nzqdim, nza*nzadim)
+            self.infomax_net = LatentDimMutualInfoMax(embedding, args.max_c_len, args.max_q_len, emsize, nzqdim, nza, nzadim, infomax_type="bce")
             self.infomax_net.denote_is_infomax_net_for_params()
 
 

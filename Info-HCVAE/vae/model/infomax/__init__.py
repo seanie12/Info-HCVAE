@@ -1,1 +1,1 @@
-from .infomax_net import ContextualizedInfoMax
+from .infomax_net import LatentDimMutualInfoMax

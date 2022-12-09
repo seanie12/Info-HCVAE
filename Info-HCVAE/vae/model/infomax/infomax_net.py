@@ -5,6 +5,7 @@ from model.model_utils import return_mask_lengths
 
 _EPS_ = 1e-6
 
+
 class _EMALoss(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, running_ema):
@@ -16,7 +17,8 @@ class _EMALoss(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, running_mean = ctx.saved_tensors
-        grad = grad_output * input.exp().detach() / (running_mean + _EPS_) / input.shape[0]
+        grad = grad_output * input.exp().detach() / (running_mean + _EPS_) / \
+            input.shape[0]
         return grad, None
 
 
@@ -43,6 +45,7 @@ class _InfoMaxModel(nn.Module):
         x_dim (int): input dim, for example m x n x c for [m, n, c]
         z_dim (int): dimension of latent code (typically a number in [10 - 256])
     """
+
     def __init__(self, x_dim=784, z_dim=64, running_mean_weight=0.1, loss_type="fdiv"):
         super(_InfoMaxModel, self).__init__()
         self.z_dim = z_dim
@@ -51,13 +54,15 @@ class _InfoMaxModel(nn.Module):
         self.running_mean_weight = running_mean_weight
         self.running_mean = 0
         self.discriminator = nn.Sequential(
-            nn.Linear(self.x_dim + self.z_dim, 1000),
+            nn.Linear(self.x_dim + self.z_dim, 200000),
             nn.ReLU(True),
-            nn.Linear(1000, 400),
+            nn.Linear(200000, 50000),
             nn.ReLU(True),
-            nn.Linear(400, 100),
+            nn.Linear(50000, 12000),
             nn.ReLU(True),
-            nn.Linear(100, 1),
+            nn.Linear(12000, 3000),
+            nn.ReLU(True),
+            nn.Linear(3000, 1),
         )
 
     def forward(self, x, z):
@@ -75,13 +80,14 @@ class _InfoMaxModel(nn.Module):
         if self.loss_type == "fdiv":
             neg_info_xz += torch.exp(d_x_z_fake - 1).mean()
         elif self.loss_type == "mine":
-            second_term, self.running_mean = ema_loss(d_x_z_fake, self.running_mean, self.running_mean_weight)
+            second_term, self.running_mean = ema_loss(
+                d_x_z_fake, self.running_mean, self.running_mean_weight)
             neg_info_xz += second_term
         elif self.loss_type == "mine_biased":
-            neg_info_xz += (torch.logsumexp(d_x_z_fake, 0) - math.log(d_x_z_fake.size(0)))
+            neg_info_xz += (torch.logsumexp(d_x_z_fake, 0) -
+                            math.log(d_x_z_fake.size(0)))
 
         return neg_info_xz
-
 
     def _permute_dims(self, z):
         """
@@ -93,19 +99,27 @@ class _InfoMaxModel(nn.Module):
         return perm_z
 
 
-class ContextualizedInfoMax(nn.Module):
-    def __init__(self, embedding, max_seq_len, max_question_len, emsize, nzqdim, nzadim):
-        super(ContextualizedInfoMax, self).__init__()
+class LatentDimMutualInfoMax(nn.Module):
+    def __init__(self, embedding, max_seq_len, max_question_len, emsize, nzqdim, nza, nzadim, infomax_type="deep"):
+        super(LatentDimMutualInfoMax, self).__init__()
+        assert infomax_type in ["deep", "bce"]
         self.embedding = embedding
         self.max_seq_len = max_seq_len
         self.max_question_len = max_question_len
         self.emsize = emsize
         self.nzqdim = nzqdim
+        self.nza = nza
         self.nzadim = nzadim
+        self.infomax_type = infomax_type
 
-        self.zq_infomax = _InfoMaxModel(x_dim=emsize*(max_seq_len+max_question_len), z_dim=nzqdim)
-        self.za_infomax = _InfoMaxModel(x_dim=emsize*(max_seq_len+max_question_len), z_dim=nzadim)
-
+        if infomax_type == "deep":
+            self.zq_infomax = _InfoMaxModel(
+                x_dim=emsize*(max_seq_len+max_question_len), z_dim=nzqdim)
+            self.za_infomax = _InfoMaxModel(
+                x_dim=emsize*(max_seq_len+max_question_len), z_dim=nza*nzadim)
+        elif infomax_type == "bce":
+            self.zq_infomax = nn.Bilinear(emsize*(max_seq_len+max_question_len), nzqdim, 1)
+            self.za_infomax = nn.Bilinear(emsize*(max_seq_len+max_question_len), nza*nzadim, 1)
 
     def forward(self, q_ids, c_ids, a_ids, zq, za):
         N, _ = q_ids.size()
@@ -113,9 +127,31 @@ class ContextualizedInfoMax(nn.Module):
         c_emb = self.embedding(c_ids)
         q_emb = self.embedding(q_ids)
         c_a_emb = self.embedding(c_ids, a_ids, None)
-        return self.zq_infomax(torch.cat([q_emb, c_emb], dim=1).view(N, -1), zq), \
-            self.za_infomax(torch.cat([q_emb, c_a_emb], dim=1).view(N, -1), za)
+        x_zq = torch.cat([q_emb, c_emb], dim=1).view(N, -1)
+        x_za = torch.cat([q_emb, c_a_emb], dim=1).view(N, -1)
+        if self.infomax_type == "deep":
+            return self.zq_infomax(x_zq, zq), self.za_infomax(x_za, za.view(N, -1))
+        else:
+            def estimate_mi_with_bce(bce_loss, discriminator, x, z):
+                fake_x = torch.cat([x[-1].unsqueeze(0), x[:-1]], dim=0)
+                fake_z = torch.cat([z[-1].unsqueeze(0), z[:-1]], dim=0)
 
+                true_logits = discriminator(x, z)
+                true_labels = torch.ones_like(true_logits)
+
+                fake_z_logits = discriminator(x, fake_z)
+                fake_x_logits = discriminator(fake_x, z)
+                fake_logits = torch.cat([fake_z_logits, fake_x_logits], dim=0)
+                fake_labels = torch.zeros_like(fake_logits)
+
+                true_loss = bce_loss(true_logits, true_labels)
+                fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
+                loss_info = true_loss + fake_loss
+                return loss_info
+
+            bce_loss = nn.BCEWithLogitsLoss()
+            return estimate_mi_with_bce(bce_loss, self.zq_infomax, x_zq, zq), \
+                estimate_mi_with_bce(bce_loss, self.za_infomax, x_za, za.view(N, -1))
 
     def denote_is_infomax_net_for_params(self):
         for param in self.parameters():
