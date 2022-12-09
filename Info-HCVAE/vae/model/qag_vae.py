@@ -84,6 +84,7 @@ class DiscreteVAE(nn.Module):
 
         if self.lambda_z_info > 0:
             self.infomax_net = ContextualizedInfoMax(embedding, args.max_c_len, args.max_q_len, emsize, nzqdim, nza*nzadim)
+            self.infomax_net.denote_is_infomax_net_for_params()
 
 
     def return_init_state(self, zq, za):
