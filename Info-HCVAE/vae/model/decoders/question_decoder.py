@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from model.customized_layers import CustomLSTM
 from model.model_utils import return_mask_lengths, cal_attn
 from torch_scatter import scatter_max
+from model.infomax.dim_bce_infomax import DimBceInfoMax
 
 class _ContextEncoderforQG(nn.Module):
     def __init__(self, embedding, emsize,
@@ -78,7 +79,8 @@ class QuestionDecoder(nn.Module):
         for param in self.logit_linear.parameters():
             param.requires_grad = False
 
-        self.discriminator = nn.Bilinear(emsize, nhidden, 1)
+        # self.discriminator = nn.Bilinear(emsize, nhidden, 1)
+        self.infomax_est = DimBceInfoMax(emsize, nhidden)
 
     def postprocess(self, q_ids):
         eos_mask = q_ids == self.eos_id
@@ -141,25 +143,25 @@ class QuestionDecoder(nn.Module):
             q_emb = q_maxouted * q_mask.unsqueeze(2)
             q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
 
-            fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
-                                            a_mean_emb[:-1]], dim=0)
-            fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
-                                        q_mean_emb[:-1]], dim=0)
+            # fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
+            #                                 a_mean_emb[:-1]], dim=0)
+            # fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
+            #                             q_mean_emb[:-1]], dim=0)
 
-            bce_loss = nn.BCEWithLogitsLoss()
-            true_logits = self.discriminator(q_mean_emb, a_mean_emb)
-            true_labels = torch.ones_like(true_logits)
+            # bce_loss = nn.BCEWithLogitsLoss()
+            # true_logits = self.discriminator(q_mean_emb, a_mean_emb)
+            # true_labels = torch.ones_like(true_logits)
 
-            fake_a_logits = self.discriminator(q_mean_emb, fake_a_mean_emb)
-            fake_q_logits = self.discriminator(fake_q_mean_emb, a_mean_emb)
-            fake_logits = torch.cat([fake_a_logits, fake_q_logits], dim=0)
-            fake_labels = torch.zeros_like(fake_logits)
+            # fake_a_logits = self.discriminator(q_mean_emb, fake_a_mean_emb)
+            # fake_q_logits = self.discriminator(fake_q_mean_emb, a_mean_emb)
+            # fake_logits = torch.cat([fake_a_logits, fake_q_logits], dim=0)
+            # fake_labels = torch.zeros_like(fake_logits)
 
-            true_loss = bce_loss(true_logits, true_labels)
-            fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
-            loss_info = true_loss + fake_loss
+            # true_loss = bce_loss(true_logits, true_labels)
+            # fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
+            # loss_info = true_loss + fake_loss
 
-            return logits, loss_info
+            return logits, self.infomax_est(q_mean_emb, a_mean_emb)
         else:
             return logits
 
