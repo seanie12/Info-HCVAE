@@ -94,25 +94,24 @@ class _InfoMaxModel(nn.Module):
 
 
 class ContextualizedInfoMax(nn.Module):
-    def __init__(self, context_embedding, emsize, nzqdim, nzadim):
+    def __init__(self, embedding, max_seq_len, max_question_len, emsize, nzqdim, nzadim):
         super(ContextualizedInfoMax, self).__init__()
-        self.context_embedding = context_embedding
+        self.embedding = embedding
         self.emsize = emsize
         self.nzqdim = nzqdim
         self.nzadim = nzadim
 
-        self.zq_infomax = _InfoMaxModel(x_dim=emsize*2, z_dim=nzqdim)
-        self.za_infomax = _InfoMaxModel(x_dim=emsize*2, z_dim=nzadim)
+        self.zq_infomax = _InfoMaxModel(x_dim=emsize*(max_seq_len+max_question_len), z_dim=nzqdim)
+        self.za_infomax = _InfoMaxModel(x_dim=emsize*(max_seq_len+max_question_len), z_dim=nzadim)
 
 
     def forward(self, q_ids, c_ids, a_ids, zq, za):
-        c_mask, _ = return_mask_lengths(c_ids)
-        q_mask, _ = return_mask_lengths(q_ids)
-        c_cls = self.context_embedding(c_ids, c_mask)[:, 0, :]
-        q_cls = self.context_embedding(q_ids, q_mask)[:, 0, :]
-        c_a_cls = self.context_embedding(c_ids, c_mask, a_ids)[:, 0, :]
-        return self.zq_infomax(torch.cat([q_cls, c_cls], dim=-1), zq), \
-            self.za_infomax(torch.cat([q_cls, c_a_cls], dim=-1), za)
+        N, _, _= q_ids.size()
+        c_emb = self.embedding(c_ids)
+        q_emb = self.embedding(q_ids)
+        c_a_emb = self.embedding(c_ids, a_ids, None)
+        return self.zq_infomax(torch.cat([q_emb, c_emb], dim=1).view(N, -1), zq), \
+            self.za_infomax(torch.cat([q_emb, c_a_emb], dim=1).view(N, -1), za)
 
 
     def denote_is_infomax_net_for_params(self):

@@ -83,7 +83,7 @@ class DiscreteVAE(nn.Module):
             self.categorical_mmd_criterion = CategoricalMMDLoss()
 
         if self.lambda_z_info > 0:
-            self.infomax_net = ContextualizedInfoMax(contextualized_embedding, emsize, nzqdim, nza*nzadim)
+            self.infomax_net = ContextualizedInfoMax(embedding, args.max_c_len, args.max_q_len, emsize, nzqdim, nza*nzadim)
 
 
     def return_init_state(self, zq, za):
