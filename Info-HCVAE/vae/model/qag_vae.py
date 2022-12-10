@@ -176,8 +176,8 @@ class DiscreteVAE(nn.Module):
 
                 # generate fake examples by shifting
                 shift = random.randint(1, len(context_enc))
-                context_fake = [context_enc[-shift:]] + context_enc[:-shift]
-                ans_fake = [ans_enc[-shift:]] + ans_enc[:-shift]
+                context_fake = context_enc[-shift:] + context_enc[:-shift]
+                ans_fake = ans_enc[-shift:] + ans_enc[:-shift]
 
                 global_loss = 0
                 local_loss = 0
