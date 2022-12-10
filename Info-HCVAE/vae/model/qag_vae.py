@@ -5,7 +5,7 @@ from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
 from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
-from model.infomax import LatentDimMutualInfoMax
+from model.infomax import AnswerLatentDimMutualInfoMax
 
 class DiscreteVAE(nn.Module):
     def __init__(self, args):
@@ -85,11 +85,11 @@ class DiscreteVAE(nn.Module):
 
         if self.lambda_z_info > 0:
             # enc_nhidden * 2 to account for bidirectional case
-            self.posterior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*4, enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
-            self.posterior_infomax_net.denote_is_infomax_net_for_params()
+            self.answer_infomax_net = AnswerLatentDimMutualInfoMax(enc_nhidden*4, enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
+            self.answer_infomax_net.denote_is_infomax_net_for_params()
 
-            self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
-            self.prior_infomax_net.denote_is_infomax_net_for_params()
+            # self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
+            # self.prior_infomax_net.denote_is_infomax_net_for_params()
 
 
     def return_init_state(self, zq, za):
@@ -109,11 +109,11 @@ class DiscreteVAE(nn.Module):
 
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
-            posterior_za_logits, posterior_za, (q_features, c_features, c_a_features) \
+            posterior_za_logits, posterior_za, (q_embs, c_embs) \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_logits, prior_za, prior_c_features \
+        prior_zq_mu, prior_zq_logvar, _, \
+            prior_za_logits, _ \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -153,11 +153,15 @@ class DiscreteVAE(nn.Module):
 
             loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
             if self.lambda_z_info > 0:
-                loss_pos_zq_info, loss_pos_za_info = self.posterior_infomax_net(posterior_zq, posterior_za, c_features, \
-                    c_a_f=c_a_features, q_f=q_features)
-                loss_prior_zq_info, loss_prior_za_info = self.prior_infomax_net(prior_zq, prior_za, prior_c_features)
-                loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
-                loss_za_info = loss_pos_za_info + loss_prior_za_info
+                # loss_zq_info, loss_zq_info = self.posterior_infomax_net(posterior_zq, posterior_za, c_features, \
+                #     c_a_f=c_a_features, q_f=q_features)
+                # loss_prior_zq_info, loss_prior_za_info = self.prior_infomax_net(prior_zq, prior_za, prior_c_features)
+                # loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
+                # loss_zq_info = loss_pos_za_info + loss_prior_za_info
+                a_embs = c_embs * a_ids.unsqueeze(-1)
+                # c_embs = c_embs * (1 - a_embs).unsqueeze(-1)
+                loss_za_info = self.answer_infomax_net(q_embs, c_embs, a_embs, posterior_za)
+                pass
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
@@ -210,8 +214,7 @@ class DiscreteVAE(nn.Module):
 
 
     def get_infomax_params(self, lr=1e-5):
-        return [ { "params": self.posterior_infomax_net.parameters(), "lr": lr },
-            { "params": self.prior_infomax_net.parameters(), "lr": lr } ]
+        return [ { "params": self.answer_infomax_net.parameters(), "lr": lr } ]
 
 
     def reduce_infomax_weight_by_10(self):

@@ -1,1 +1,1 @@
-from .infomax_net import LatentDimMutualInfoMax
+from .answer_infomax_net import AnswerLatentDimMutualInfoMax

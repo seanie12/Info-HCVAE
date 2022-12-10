@@ -2,6 +2,7 @@ import random
 import torch
 import torch.nn as nn
 
+
 class DimBceInfoMax(nn.Module):
     """discriminator network.
     Args:
@@ -20,7 +21,7 @@ class DimBceInfoMax(nn.Module):
             z_size_bilinear = 400
         self.discriminator = nn.Bilinear(x_dim, z_size_bilinear, 1)
         self.bce_loss = nn.BCEWithLogitsLoss()
-
+        self.dropout = nn.Dropout(0.5)
 
     def forward(self, x, z):
         """
@@ -30,8 +31,10 @@ class DimBceInfoMax(nn.Module):
         """
         # Generate fake data by shifting
         shift = random.randint(1, x.size(0) - 1)
-        fake_x = torch.cat([x[-shift:], x[:-shift]], dim=0)
-        fake_z = torch.cat([z[-shift:], z[:-shift]], dim=0)
+        fake_x = self.dropout(torch.cat([x[-shift:], x[:-shift]], dim=0))
+        fake_z = self.dropout(torch.cat([z[-shift:], z[:-shift]], dim=0))
+        x = self.dropout(x)
+        z = self.dropout(z)
 
         if self.add_linear:
             z_lin = self.z_linear(z)
