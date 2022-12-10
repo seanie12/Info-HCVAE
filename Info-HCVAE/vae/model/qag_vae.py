@@ -137,7 +137,7 @@ class DiscreteVAE(nn.Module):
             loss_start_a_rec = self.a_rec_criterion(
                 start_logits, start_positions)
             loss_end_a_rec = self.a_rec_criterion(end_logits, end_positions)
-            loss_a_rec = loss_start_a_rec + loss_end_a_rec
+            loss_a_rec = 0.5 * (loss_start_a_rec + loss_end_a_rec)
 
             # kl loss
             loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
@@ -206,14 +206,11 @@ class DiscreteVAE(nn.Module):
 
                 loss_span_info = self.gamma_span_info * \
                     (0.5 * global_loss + local_loss) / len(ans_enc)
-                loss_a_rec = (loss_a_rec + loss_span_info) / 3
-            else:
-                loss_a_rec = loss_a_rec / 2
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
             loss = self.w_bce * (loss_q_rec + loss_a_rec) + \
-                loss_kl + loss_qa_info
+                loss_kl + loss_qa_info + loss_span_info
 
             return_dict = {
                 "total_loss": loss,
