@@ -198,7 +198,9 @@ class DiscreteVAE(nn.Module):
                     ## Compute LC ##
                     # sample one
                     start_idx, end_idx = sampled_word_range[b_idx]
-                    rand_idx = random.randint(start_idx, end_idx)
+                    rand_idx = start_idx # take into account the case when start_idx == end_idx
+                    if start_idx < end_idx:
+                        rand_idx = random.randint(start_idx, end_idx)
                     a_enc_word = a_enc[0, rand_idx, :]
                     rand_idx = random.randint(0, a_fake.size(1) - 1)
                     a_enc_fake = a_fake[0, rand_idx, :]
