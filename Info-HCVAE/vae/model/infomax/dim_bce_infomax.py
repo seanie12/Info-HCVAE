@@ -14,9 +14,17 @@ class DimBceInfoMax(nn.Module):
         super(DimBceInfoMax, self).__init__()
         self.z_dim = z_dim
         self.x_dim = x_dim
-        self.discriminator = nn.Bilinear(x_dim, z_dim, 1)
+        self.discriminator = nn.Sequential(
+            nn.Linear(self.x_dim + self.z_dim, 1024),
+            nn.Mish(True),
+            nn.Dropout(0.5),
+            nn.Linear(1024, 512),
+            nn.Mish(True),
+            nn.Linear(512, 256),
+            nn.Mish(True),
+            nn.Linear(256, 1),
+        )
         self.bce_loss = nn.BCEWithLogitsLoss()
-        self.dropout = nn.Dropout(0.5)
 
     def forward(self, x, z):
         """
@@ -26,16 +34,14 @@ class DimBceInfoMax(nn.Module):
         """
         # Generate fake data by shifting
         shift = random.randint(1, x.size(0) - 1)
-        fake_x = self.dropout(torch.cat([x[-shift:], x[:-shift]], dim=0))
-        fake_z = self.dropout(torch.cat([z[-shift:], z[:-shift]], dim=0))
-        x = self.dropout(x)
-        z = self.dropout(z)
+        fake_x = torch.cat([x[-shift:], x[:-shift]], dim=0)
+        fake_z = torch.cat([z[-shift:], z[:-shift]], dim=0)
 
-        true_logits = self.discriminator(x, z)
+        true_logits = self.discriminator(torch.cat((x, z), dim=-1))
         true_labels = torch.ones_like(true_logits)
 
-        fake_z_logits = self.discriminator(x, fake_z)
-        fake_x_logits = self.discriminator(fake_x, z)
+        fake_z_logits = self.discriminator(torch.cat((x, fake_z), dim=-1))
+        fake_x_logits = self.discriminator(torch.cat((fake_x, z), dim=-1))
         fake_logits = torch.cat([fake_z_logits, fake_x_logits], dim=0)
         fake_labels = torch.zeros_like(fake_logits)
 

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from transformers import BertTokenizer
 from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
@@ -72,7 +73,7 @@ class DiscreteVAE(nn.Module):
 
         self.q_h_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
         self.q_c_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
-        self.a_linear = nn.Linear(nza*nzadim, emsize, False)
+        self.a_linear = nn.Linear(nza*nzadim, emsize*args.max_c_len, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
         self.a_rec_criterion = nn.CrossEntropyLoss(ignore_index=args.max_c_len)
@@ -88,13 +89,10 @@ class DiscreteVAE(nn.Module):
             self.answer_infomax_net = AnswerLatentDimMutualInfoMax(emsize, args.max_c_len, nza, nzadim, infomax_type="bce")
             self.answer_infomax_net.denote_is_infomax_net_for_params()
 
-            # self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
-            # self.prior_infomax_net.denote_is_infomax_net_for_params()
-
 
     def return_init_state(self, zq, za):
-        q_init_h = self.q_h_linear(zq)
-        q_init_c = self.q_c_linear(zq)
+        q_init_h = F.mish(self.q_h_linear(zq))
+        q_init_c = F.mish(self.q_c_linear(zq))
         q_init_h = q_init_h.view(-1, self.dec_q_nlayers,
                                  self.dec_q_nhidden).transpose(0, 1).contiguous()
         q_init_c = q_init_c.view(-1, self.dec_q_nlayers,
@@ -102,14 +100,14 @@ class DiscreteVAE(nn.Module):
         q_init_state = (q_init_h, q_init_c)
 
         za_flatten = za.view(-1, self.nza * self.nzadim)
-        a_init_state = self.a_linear(za_flatten)
+        a_init_state = F.mish(self.a_linear(za_flatten))
 
         return q_init_state, a_init_state
 
 
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
-            posterior_za_logits, posterior_za, c_a_embeddings \
+            posterior_za_logits, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
         prior_zq_mu, prior_zq_logvar, _, \
@@ -160,7 +158,7 @@ class DiscreteVAE(nn.Module):
                 # loss_zq_info = loss_pos_za_info + loss_prior_za_info
                 # a_embs = c_embs * a_ids.unsqueeze(-1)
                 # c_embs = c_embs * (1 - a_embs).unsqueeze(-1)
-                loss_za_info = self.answer_infomax_net(c_a_embeddings, a_ids, posterior_za)
+                loss_za_info = self.answer_infomax_net(a_ids, posterior_za)
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)

@@ -15,35 +15,16 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
         self.nzadim = nzadim
         self.infomax_type = infomax_type
 
-        linear_span_dim = 256
-        linear_z_dim = 384
-        self.span_linear = nn.Linear(seq_len, linear_span_dim, bias=False)
-        self.za_linear = nn.Linear(nza*nzadim, linear_z_dim, bias=False)
-        self.mish = nn.Mish()
-
         if infomax_type == "deep":
             self.ans_span_infomax = MineInfoMax(
                 x_dim=seq_len, z_dim=nza*nzadim)
-            self.global_context_answer_infomax = MineInfoMax(
-                x_dim=emsize, z_dim=nza*nzadim)
         elif infomax_type == "bce":
             self.ans_span_infomax = DimBceInfoMax(
-                x_dim=linear_span_dim, z_dim=linear_z_dim)
-            self.global_context_answer_infomax = DimBceInfoMax(
-                x_dim=emsize, z_dim=linear_z_dim)
+                x_dim=seq_len, z_dim=nza*nzadim)
 
-    def summarize_embeddings(self, emb, weights):
-        # emb shape = (N, seq_len, emsize)
-        # weights shape = (N, seq_len)
-        return torch.sigmoid(torch.mean(weights.unsqueeze(-1) * emb, dim=1))
-
-    def forward(self, c_a_embs, a_ids, za):
-        N, _, _ = c_a_embs.size()
-        a_act = self.mish(self.span_linear(a_ids.float()))
-        za_act = self.mish(self.za_linear(za.view(N, -1)))
-        a_embs = (c_a_embs * a_ids.unsqueeze(-1)).sum(dim=1).div(a_ids.sum(dim=1, keepdims=True))
-        return self.ans_span_infomax(a_act, za_act) + \
-            0.25*self.global_context_answer_infomax(a_embs, za_act)
+    def forward(self, a_ids, za):
+        N, _ = a_ids.size()
+        return self.ans_span_infomax(a_ids.float(), za.view(N, -1))
 
     def denote_is_infomax_net_for_params(self):
         for param in self.parameters():

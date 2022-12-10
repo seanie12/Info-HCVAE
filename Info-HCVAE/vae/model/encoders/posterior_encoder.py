@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from model.customized_layers import CustomLSTM
 from model.model_utils import return_mask_lengths, cal_attn, gumbel_softmax, sample_gaussian
 
@@ -53,6 +54,7 @@ class PosteriorEncoder(nn.Module):
         c_a_h = c_a_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
         # attetion q, c
+        # For attention calculation, linear layer is there for projection
         mask = c_mask.unsqueeze(1)
         c_attned_by_q, _ = cal_attn(self.question_attention(q_h).unsqueeze(1),
                                     c_hs,
@@ -60,6 +62,7 @@ class PosteriorEncoder(nn.Module):
         c_attned_by_q = c_attned_by_q.squeeze(1)
 
         # attetion c, q
+        # For attention calculation, linear layer is there for projection
         mask = q_mask.unsqueeze(1)
         q_attned_by_c, _ = cal_attn(self.context_attention(c_h).unsqueeze(1),
                                     q_hs,
@@ -68,10 +71,11 @@ class PosteriorEncoder(nn.Module):
 
         h = torch.cat([q_h, q_attned_by_c, c_h, c_attned_by_q], dim=-1)
 
-        zq_mu, zq_logvar = torch.split(self.zq_linear(h), self.nzqdim, dim=1)
+        zq_mu, zq_logvar = torch.split(F.mish(self.zq_linear(h)), self.nzqdim, dim=1)
         zq = sample_gaussian(zq_mu, zq_logvar)
 
         # attention zq, c_a
+        # For attention calculation, linear layer is there for projection
         mask = c_mask.unsqueeze(1)
         c_a_attned_by_zq, _ = cal_attn(self.zq_attention(zq).unsqueeze(1),
                                        c_a_hs,
@@ -80,11 +84,11 @@ class PosteriorEncoder(nn.Module):
 
         h = torch.cat([zq, c_a_attned_by_zq, c_a_h], dim=-1)
 
-        za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
+        za_logits = F.mish(self.za_linear(h)).view(-1, self.nza, self.nzadim)
         # za_prob = F.softmax(za_logits, dim=-1)
         za = gumbel_softmax(za_logits, hard=True)
 
         if self.training:
-            return zq_mu, zq_logvar, zq, za_logits, za, c_a_embeddings
+            return zq_mu, zq_logvar, zq, za_logits, za
         else:
             return zq, za

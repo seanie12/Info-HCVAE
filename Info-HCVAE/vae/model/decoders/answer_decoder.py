@@ -23,11 +23,12 @@ class AnswerDecoder(nn.Module):
 
 
     def forward(self, init_state, c_ids):
-        _, max_c_len = c_ids.size()
+        batch_size, max_c_len = c_ids.size()
         c_mask, c_lengths = return_mask_lengths(c_ids)
 
         H = self.embedding(c_ids, c_mask)
-        U = init_state.unsqueeze(1).repeat(1, max_c_len, 1)
+        # U = init_state.unsqueeze(1).repeat(1, max_c_len, 1)
+        U = init_state.view(batch_size, max_c_len, -1)
         G = torch.cat([H, U, H * U, torch.abs(H - U)], dim=-1)
         M, _ = self.context_lstm(G, c_lengths.to("cpu"))
 

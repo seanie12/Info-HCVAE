@@ -40,18 +40,21 @@ def cal_attn(query, memories, mask):
     return attn_outputs, attn_logits
 
 
-def gumbel_softmax(logits, tau=1, hard=False, eps=1e-20, dim=-1):
+def gumbel_softmax(logits, tau=1, hard=False, eps=1e-10, dim=-1):
     # type: (Tensor, float, bool, float, int) -> Tensor
+    def sample_gumbel(shape, device):
+        U = torch.rand(shape).to(device)
+        return -torch.log(-torch.log(U + eps) + eps)
 
-    gumbels = -(torch.empty_like(logits).exponential_() + eps).log()  # ~Gumbel(0,1), shape=(batch, nza, nzadim)
+    gumbels = sample_gumbel(logits.size(), logits.device)  # ~Gumbel(0,1), shape=(batch, nza, nzadim)
     gumbels = (logits + gumbels) / tau  # ~Gumbel(logits,tau), shape=(batch, nza, nzadim)
-    y_soft = gumbels.softmax(dim) # shape=(batch, nza, nzadim)
+    y_soft = F.softmax(gumbels, dim=dim) # shape=(batch, nza, nzadim)
 
     if hard:
         # Straight through.
-        index = y_soft.max(dim, keepdim=True)[1] # shape = (batch, nza, 1)
+        _, index = y_soft.max(dim, keepdim=True) # shape = (batch, nza, 1)
         y_hard = torch.zeros_like(logits).scatter_(dim, index, 1.0) # sampling one-hot categorical variables
-        ret = y_hard - y_soft.detach() + y_soft
+        ret = (y_hard - y_soft).detach() + y_soft
     else:
         # Re-parametrization trick.
         ret = y_soft

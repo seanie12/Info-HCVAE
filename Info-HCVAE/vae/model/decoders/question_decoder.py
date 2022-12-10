@@ -69,8 +69,10 @@ class QuestionDecoder(nn.Module):
         self.question_linear = nn.Linear(nhidden, nhidden)
 
         self.concat_linear = nn.Sequential(nn.Linear(2*nhidden, 2*nhidden),
+                                           nn.Mish(True),
                                            nn.Dropout(dropout),
-                                           nn.Linear(2*nhidden, 2*emsize))
+                                           nn.Linear(2*nhidden, 2*emsize),
+                                           nn.Mish(True))
 
         self.logit_linear = nn.Linear(emsize, ntokens, bias=False)
 
@@ -110,6 +112,7 @@ class QuestionDecoder(nn.Module):
         q_outputs, _ = self.question_lstm(q_embeddings, q_lengths.to("cpu"), init_state)
 
         # attention
+        # For attention calculation, linear layer is there for projection
         mask = torch.matmul(q_mask.unsqueeze(2), c_mask.unsqueeze(1))
         c_attned_by_q, attn_logits = cal_attn(self.question_linear(q_outputs),
                                               c_outputs,
@@ -142,24 +145,6 @@ class QuestionDecoder(nn.Module):
 
             q_emb = q_maxouted * q_mask.unsqueeze(2)
             q_mean_emb = torch.sum(q_emb, 1) / q_lengths.unsqueeze(1).float()
-
-            # fake_a_mean_emb = torch.cat([a_mean_emb[-1].unsqueeze(0),
-            #                                 a_mean_emb[:-1]], dim=0)
-            # fake_q_mean_emb = torch.cat([q_mean_emb[-1].unsqueeze(0),
-            #                             q_mean_emb[:-1]], dim=0)
-
-            # bce_loss = nn.BCEWithLogitsLoss()
-            # true_logits = self.discriminator(q_mean_emb, a_mean_emb)
-            # true_labels = torch.ones_like(true_logits)
-
-            # fake_a_logits = self.discriminator(q_mean_emb, fake_a_mean_emb)
-            # fake_q_logits = self.discriminator(fake_q_mean_emb, a_mean_emb)
-            # fake_logits = torch.cat([fake_a_logits, fake_q_logits], dim=0)
-            # fake_labels = torch.zeros_like(fake_logits)
-
-            # true_loss = bce_loss(true_logits, true_labels)
-            # fake_loss = 0.5 * bce_loss(fake_logits, fake_labels)
-            # loss_info = true_loss + fake_loss
 
             return logits, self.infomax_est(q_mean_emb, a_mean_emb)
         else:

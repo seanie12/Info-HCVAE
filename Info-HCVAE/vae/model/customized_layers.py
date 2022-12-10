@@ -3,10 +3,12 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from transformers import BertModel
 
+
 class Embedding(nn.Module):
     def __init__(self, huggingface_model):
         super(Embedding, self).__init__()
-        self.transformer_embeddings = BertModel.from_pretrained(huggingface_model).embeddings
+        self.transformer_embeddings = BertModel.from_pretrained(
+            huggingface_model).embeddings
         self.word_embeddings = self.transformer_embeddings.word_embeddings
         self.token_type_embeddings = self.transformer_embeddings.token_type_embeddings
         self.position_embeddings = self.transformer_embeddings.position_embeddings
@@ -58,8 +60,8 @@ class ContextualizedEmbedding(nn.Module):
         embedding_output = self.embedding(
             input_ids, position_ids=position_ids, token_type_ids=token_type_ids)
         encoder_outputs = self.encoder(embedding_output,
-                                    extended_attention_mask,
-                                    head_mask=head_mask)
+                                       extended_attention_mask,
+                                       head_mask=head_mask)
         sequence_output = encoder_outputs[0]
 
         return sequence_output

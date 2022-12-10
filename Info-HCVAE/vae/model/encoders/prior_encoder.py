@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from model.customized_layers import CustomLSTM
 from model.model_utils import return_mask_lengths, cal_attn, sample_gaussian, gumbel_softmax
 
@@ -37,9 +38,10 @@ class PriorEncoder(nn.Module):
         c_h = c_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_h = c_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
 
-        zq_mu, zq_logvar = torch.split(self.zq_linear(c_h), self.nzqdim, dim=1)
+        zq_mu, zq_logvar = torch.split(F.mish(self.zq_linear(c_h)), self.nzqdim, dim=1)
         zq = sample_gaussian(zq_mu, zq_logvar)
 
+        # For attention calculation, linear layer is there for projection
         mask = c_mask.unsqueeze(1)
         c_attned_by_zq, _ = cal_attn(self.zq_attention(zq).unsqueeze(1),
                                      c_hs,
@@ -48,7 +50,7 @@ class PriorEncoder(nn.Module):
 
         h = torch.cat([zq, c_attned_by_zq, c_h], dim=-1)
 
-        za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
+        za_logits = F.mish(self.za_linear(h)).view(-1, self.nza, self.nzadim)
         # za_prob = F.softmax(za_logits, dim=-1)
         za = gumbel_softmax(za_logits, hard=True)
 
