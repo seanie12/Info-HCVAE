@@ -80,7 +80,7 @@ class DiscreteVAE(nn.Module):
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
 
-        if self.lambda_z_info > 0:
+        if self.gamma_span_info > 0:
             # enc_nhidden * 2 to account for bidirectional case
             # self.ans_global_infomax = AnswerMutualInfoMax(
             #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
