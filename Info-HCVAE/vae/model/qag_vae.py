@@ -85,7 +85,7 @@ class DiscreteVAE(nn.Module):
 
         if self.lambda_z_info > 0:
             # enc_nhidden * 2 to account for bidirectional case
-            self.answer_infomax_net = AnswerLatentDimMutualInfoMax(enc_nhidden*4, enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
+            self.answer_infomax_net = AnswerLatentDimMutualInfoMax(emsize, args.max_c_len, nza, nzadim, infomax_type="bce")
             self.answer_infomax_net.denote_is_infomax_net_for_params()
 
             # self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
@@ -109,7 +109,7 @@ class DiscreteVAE(nn.Module):
 
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
-            posterior_za_logits, posterior_za, (q_embs, c_embs) \
+            posterior_za_logits, posterior_za, c_a_embeddings \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
         prior_zq_mu, prior_zq_logvar, _, \
@@ -158,9 +158,9 @@ class DiscreteVAE(nn.Module):
                 # loss_prior_zq_info, loss_prior_za_info = self.prior_infomax_net(prior_zq, prior_za, prior_c_features)
                 # loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
                 # loss_zq_info = loss_pos_za_info + loss_prior_za_info
-                a_embs = c_embs * a_ids.unsqueeze(-1)
+                # a_embs = c_embs * a_ids.unsqueeze(-1)
                 # c_embs = c_embs * (1 - a_embs).unsqueeze(-1)
-                loss_za_info = self.answer_infomax_net(q_embs, c_embs, a_embs, posterior_za)
+                loss_za_info = self.answer_infomax_net(c_a_embeddings, a_ids, posterior_za)
                 pass
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
