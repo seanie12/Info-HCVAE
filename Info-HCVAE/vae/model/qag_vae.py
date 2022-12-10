@@ -88,8 +88,8 @@ class DiscreteVAE(nn.Module):
             self.posterior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, args.max_c_len, args.max_q_len, nzqdim, nza, nzadim, infomax_type="bce")
             self.posterior_infomax_net.denote_is_infomax_net_for_params()
 
-            self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, args.max_c_len, 0, nzqdim, nza, nzadim, infomax_type="bce")
-            self.prior_infomax_net.denote_is_infomax_net_for_params()
+            # self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, args.max_c_len, 0, nzqdim, nza, nzadim, infomax_type="bce")
+            # self.prior_infomax_net.denote_is_infomax_net_for_params()
 
 
     def return_init_state(self, zq, za):
@@ -112,8 +112,8 @@ class DiscreteVAE(nn.Module):
             posterior_za_logits, posterior_za, (q_features, c_features, c_a_features) \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_logits, prior_za, prior_c_features \
+        prior_zq_mu, prior_zq_logvar, _, \
+            prior_za_logits, _, _ \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -153,11 +153,11 @@ class DiscreteVAE(nn.Module):
 
             loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
             if self.lambda_z_info > 0:
-                loss_pos_zq_info, loss_pos_za_info = self.posterior_infomax_net(posterior_zq, posterior_za, c_features, \
+                loss_zq_info, loss_za_info = self.posterior_infomax_net(posterior_zq, posterior_za, c_features, \
                     c_a_f=c_a_features, q_f=q_features)
-                loss_prior_zq_info, loss_prior_za_info = self.prior_infomax_net(prior_zq, prior_za, prior_c_features)
-                loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
-                loss_za_info = loss_pos_za_info + loss_prior_za_info
+                # loss_prior_zq_info, loss_prior_za_info = self.prior_infomax_net(prior_zq, prior_za, prior_c_features)
+                # loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
+                # loss_za_info = loss_pos_za_info + loss_prior_za_info
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
