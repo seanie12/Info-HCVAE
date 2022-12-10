@@ -197,7 +197,7 @@ class DiscreteVAE(nn.Module):
 
                     ## Compute LC ##
                     # sample one
-                    rand_idx = random.randint(sampled_word_range[b_idx][0], sampled_word_range[b_idx][1])
+                    rand_idx = random.randint(sampled_word_range[b_idx][0], sampled_word_range[b_idx][1] - 1)
                     a_enc_word = a_enc[0, rand_idx, :]
                     rand_idx = random.randint(0, a_fake.size(1) - 1)
                     a_enc_fake = a_fake[0, rand_idx, :]
