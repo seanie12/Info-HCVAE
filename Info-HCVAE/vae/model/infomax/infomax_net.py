@@ -6,10 +6,11 @@ from .dim_bce_infomax import DimBceInfoMax
 
 
 class LatentDimMutualInfoMax(nn.Module):
-    def __init__(self, emsize, nzqdim, nza, nzadim, infomax_type="deep"):
+    def __init__(self, zq_emsize, za_emsize, nzqdim, nza, nzadim, infomax_type="deep"):
         super(LatentDimMutualInfoMax, self).__init__()
         assert infomax_type in ["deep", "bce"]
-        self.emsize = emsize
+        self.zq_emsize = zq_emsize
+        self.za_emsize = za_emsize
         self.nzqdim = nzqdim
         self.nza = nza
         self.nzadim = nzadim
@@ -17,12 +18,12 @@ class LatentDimMutualInfoMax(nn.Module):
 
         if infomax_type == "deep":
             self.zq_infomax = MineInfoMax(
-                x_dim=emsize*2, z_dim=nzqdim)
+                x_dim=zq_emsize, z_dim=nzqdim)
             self.za_infomax = MineInfoMax(
-                x_dim=emsize + nzqdim, z_dim=nza*nzadim)
+                x_dim=za_emsize + nzqdim, z_dim=nza*nzadim)
         elif infomax_type == "bce":
-            self.zq_infomax = DimBceInfoMax(x_dim=emsize*2, z_dim=nzqdim)
-            self.za_infomax = DimBceInfoMax(x_dim=emsize + nzqdim, z_dim=nza*nzadim, linear_bias=False)
+            self.zq_infomax = DimBceInfoMax(x_dim=zq_emsize, z_dim=nzqdim)
+            self.za_infomax = DimBceInfoMax(x_dim=za_emsize + nzqdim, z_dim=nza*nzadim, linear_bias=False)
 
     def forward(self, zq, za, c_f, c_a_f=None, q_f=None):
         N, _, _ = c_f.size()
