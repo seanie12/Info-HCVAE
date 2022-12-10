@@ -15,9 +15,12 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
         self.nzadim = nzadim
         self.infomax_type = infomax_type
 
-        self.span_linear = nn.Linear(seq_len, 256, bias=False)
-        self.za_linear = nn.Linear(nza*nzadim, 512, bias=False)
+        linear_span_dim = 256
+        linear_z_dim = 384
+        self.span_linear = nn.Linear(seq_len, linear_span_dim, bias=False)
+        self.za_linear = nn.Linear(nza*nzadim, linear_z_dim, bias=False)
         self.mish = nn.Mish()
+
         if infomax_type == "deep":
             self.ans_span_infomax = MineInfoMax(
                 x_dim=seq_len, z_dim=nza*nzadim)
@@ -25,9 +28,9 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
                 x_dim=emsize*seq_len, z_dim=nza*nzadim)
         elif infomax_type == "bce":
             self.ans_span_infomax = DimBceInfoMax(
-                x_dim=256, z_dim=512, linear_bias=False)
+                x_dim=linear_span_dim, z_dim=linear_z_dim)
             self.global_context_answer_infomax = DimBceInfoMax(
-                x_dim=emsize*seq_len, z_dim=512, linear_bias=False)
+                x_dim=emsize*seq_len, z_dim=linear_z_dim)
 
     def summarize_embeddings(self, emb):  # emb shape = (N, seq_len, emsize)
         return torch.sigmoid(torch.mean(emb, dim=1))
