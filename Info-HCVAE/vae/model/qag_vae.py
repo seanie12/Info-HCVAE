@@ -155,7 +155,7 @@ class DiscreteVAE(nn.Module):
             if self.lambda_z_info > 0:
                 loss_pos_zq_info, loss_pos_za_info = self.posterior_infomax_net(posterior_zq, posterior_za, c_features, \
                     c_a_f=c_a_features, q_f=q_features)
-                loss_prior_zq_info, loss_prior_za_info = self.posterior_infomax_net(prior_zq, prior_za, prior_c_features)
+                loss_prior_zq_info, loss_prior_za_info = self.prior_infomax_net(prior_zq, prior_za, prior_c_features)
                 loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
                 loss_za_info = loss_pos_za_info + loss_prior_za_info
 
@@ -210,7 +210,8 @@ class DiscreteVAE(nn.Module):
 
 
     def get_infomax_params(self, lr=1e-5):
-        return [ { "params": self.posterior_infomax_net.parameters(), "lr": lr } ]
+        return [ { "params": self.posterior_infomax_net.parameters(), "lr": lr },
+        { "params": self.prior_infomax_net.parameters(), "lr": lr } ]
 
 
     def reduce_infomax_weight_by_10(self):
