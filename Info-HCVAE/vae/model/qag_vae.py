@@ -161,7 +161,6 @@ class DiscreteVAE(nn.Module):
                 # a_embs = c_embs * a_ids.unsqueeze(-1)
                 # c_embs = c_embs * (1 - a_embs).unsqueeze(-1)
                 loss_za_info = self.answer_infomax_net(c_a_embeddings, a_ids, posterior_za)
-                pass
 
             loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
