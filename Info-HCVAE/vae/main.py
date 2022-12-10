@@ -57,10 +57,10 @@ def main(args):
         if not args.is_test_run:
             if epoch+1 == 11:
                 current_lr = current_lr / 10
-                trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
             elif epoch+1 == 21:
                 current_lr = current_lr / 10
-                trainer.change_optimizer(optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
 
         trainer.reset_cnt_steps()
         for batch in tqdm(train_loader, leave=False, position=1):

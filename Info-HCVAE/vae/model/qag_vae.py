@@ -211,7 +211,7 @@ class DiscreteVAE(nn.Module):
 
     def get_infomax_params(self, lr=1e-5):
         return [ { "params": self.posterior_infomax_net.parameters(), "lr": lr },
-        { "params": self.prior_infomax_net.parameters(), "lr": lr } ]
+            { "params": self.prior_infomax_net.parameters(), "lr": lr } ]
 
 
     def reduce_infomax_weight_by_10(self):
