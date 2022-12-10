@@ -32,8 +32,10 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
             self.global_context_answer_infomax = DimBceInfoMax(
                 x_dim=emsize*seq_len, z_dim=linear_z_dim)
 
-    def summarize_embeddings(self, emb):  # emb shape = (N, seq_len, emsize)
-        return torch.sigmoid(torch.mean(emb, dim=1))
+    def summarize_embeddings(self, emb, weights):
+        # emb shape = (N, seq_len, emsize)
+        # weights shape = (N, seq_len)
+        return torch.sigmoid(torch.mean(weights.unsqueeze(-1) * emb, dim=1))
 
     def forward(self, c_a_embs, a_ids, za):
         N, _, _ = c_a_embs.size()
