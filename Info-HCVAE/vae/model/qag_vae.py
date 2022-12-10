@@ -85,10 +85,10 @@ class DiscreteVAE(nn.Module):
 
         if self.lambda_z_info > 0:
             # enc_nhidden * 2 to account for bidirectional case
-            self.posterior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, args.max_c_len, args.max_q_len, nzqdim, nza, nzadim, infomax_type="bce")
+            self.posterior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
             self.posterior_infomax_net.denote_is_infomax_net_for_params()
 
-            self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, args.max_c_len, 0, nzqdim, nza, nzadim, infomax_type="bce")
+            self.prior_infomax_net = LatentDimMutualInfoMax(enc_nhidden*2, nzqdim, nza, nzadim, infomax_type="bce")
             self.prior_infomax_net.denote_is_infomax_net_for_params()
 
 
