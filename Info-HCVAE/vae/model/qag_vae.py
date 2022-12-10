@@ -1,5 +1,4 @@
 import random
-import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -171,8 +170,8 @@ class DiscreteVAE(nn.Module):
                     extend_end = min(dec_ans_outputs.size(1),
                                      end_positions[b_idx] + 5)
                     # sample a word from answer span to compute LC
-                    start_idx = math.abs(start_positions[b_idx] - extend_start)
-                    end_idx = extend_end - extend_start - math.abs(extend_end - end_positions[b_idx])
+                    start_idx = abs(start_positions[b_idx] - extend_start)
+                    end_idx = extend_end - extend_start - abs(extend_end - end_positions[b_idx])
                     sampled_word_range.append((start_idx, end_idx))
                     # (seq, hidden_size)
                     ans_seq = dec_ans_outputs[b_idx,
