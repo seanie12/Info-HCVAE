@@ -8,6 +8,7 @@ class VAETrainer(object):
         self.args = args
         self.clip = args.clip
         self.device = args.device
+        self.log_loss_info = args.log_loss_info
 
         self.vae = DiscreteVAE(args).to(self.device)
         self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
@@ -87,6 +88,12 @@ class VAETrainer(object):
             log_str += "{:s}={:.4f}; ".format(key, value / self.cnt_steps)
 
         print(log_str + "\n")
+
+        if self.log_loss_info: # log to file for monitoring
+            with open("loss_info.log", "a") as f: # open loss log in the current working dir
+                f.write(("\n\n" if log_type == "epoch" else "") + \
+                    log_str + "\n" + \
+                    ("\n" if log_type == "epoch" else ""))
 
     def _reset_loss_values(self):
         for key in self.losses.keys():
