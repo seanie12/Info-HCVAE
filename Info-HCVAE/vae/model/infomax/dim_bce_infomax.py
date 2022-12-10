@@ -10,16 +10,11 @@ class DimBceInfoMax(nn.Module):
         z_dim (int): dimension of latent code (typically a number in [10 - 256])
     """
 
-    def __init__(self, x_dim=784, z_dim=64, add_linear=True, linear_bias=True):
+    def __init__(self, x_dim=784, z_dim=64):
         super(DimBceInfoMax, self).__init__()
         self.z_dim = z_dim
         self.x_dim = x_dim
-        z_size_bilinear = z_dim
-        self.add_linear = add_linear
-        if add_linear:
-            self.z_linear = nn.Linear(z_dim, 400, linear_bias)
-            z_size_bilinear = 400
-        self.discriminator = nn.Bilinear(x_dim, z_size_bilinear, 1)
+        self.discriminator = nn.Bilinear(x_dim, z_dim, 1)
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.dropout = nn.Dropout(0.5)
 
@@ -36,18 +31,11 @@ class DimBceInfoMax(nn.Module):
         x = self.dropout(x)
         z = self.dropout(z)
 
-        if self.add_linear:
-            z_lin = self.z_linear(z)
-            fake_z_lin = self.z_linear(fake_z)
-        else:
-            z_lin = z
-            fake_z_lin = fake_z
-
-        true_logits = self.discriminator(x, z_lin)
+        true_logits = self.discriminator(x, z)
         true_labels = torch.ones_like(true_logits)
 
-        fake_z_logits = self.discriminator(x, fake_z_lin)
-        fake_x_logits = self.discriminator(fake_x, z_lin)
+        fake_z_logits = self.discriminator(x, fake_z)
+        fake_x_logits = self.discriminator(fake_x, z)
         fake_logits = torch.cat([fake_z_logits, fake_x_logits], dim=0)
         fake_labels = torch.zeros_like(fake_logits)
 

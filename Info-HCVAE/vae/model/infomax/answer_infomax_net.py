@@ -11,11 +11,13 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
         super(AnswerLatentDimMutualInfoMax, self).__init__()
         assert infomax_type in ["deep", "bce"]
         self.emsize = emsize
-        self.seq_len = seq_len
         self.nza = nza
         self.nzadim = nzadim
         self.infomax_type = infomax_type
 
+        self.span_linear = nn.Linear(seq_len, 256, bias=False)
+        self.za_linear = nn.Linear(nza*nzadim, 512, bias=False)
+        self.mish = nn.Mish()
         if infomax_type == "deep":
             self.ans_span_infomax = MineInfoMax(
                 x_dim=seq_len, z_dim=nza*nzadim)
@@ -23,17 +25,19 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
                 x_dim=emsize*seq_len, z_dim=nza*nzadim)
         elif infomax_type == "bce":
             self.ans_span_infomax = DimBceInfoMax(
-                x_dim=seq_len, z_dim=nza*nzadim, linear_bias=False)
+                x_dim=256, z_dim=512, linear_bias=False)
             self.global_context_answer_infomax = DimBceInfoMax(
-                x_dim=emsize*seq_len, z_dim=nza*nzadim, linear_bias=False)
+                x_dim=emsize*seq_len, z_dim=512, linear_bias=False)
 
     def summarize_embeddings(self, emb):  # emb shape = (N, seq_len, emsize)
         return torch.sigmoid(torch.mean(emb, dim=1))
 
     def forward(self, c_a_embs, a_ids, za):
         N, _, _ = c_a_embs.size()
-        return self.ans_span_infomax(a_ids.float(), za.view(N, -1)) + \
-            0.25*self.global_context_answer_infomax(c_a_embs.view(N, -1), za.view(N, -1))
+        a_act = self.mish(self.span_linear(a_ids.float()))
+        za_act = self.mish(self.za_linear(za.view(N, -1)))
+        return self.ans_span_infomax(a_act, za_act) + \
+            0.25*self.global_context_answer_infomax(c_a_embs.view(N, -1), za_act)
 
     def denote_is_infomax_net_for_params(self):
         for param in self.parameters():
