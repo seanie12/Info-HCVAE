@@ -28,6 +28,7 @@ class _ContextEncoderforQG(nn.Module):
         c_embeddings = self.embedding(c_ids, c_mask, a_ids)
         c_outputs, _ = self.context_lstm(c_embeddings, c_lengths.to("cpu"))
         # attention
+        # For attention calculation, linear layer is there for projection
         mask = torch.matmul(c_mask.unsqueeze(2), c_mask.unsqueeze(1))
         c_attned_by_c, _ = cal_attn(self.context_linear(c_outputs),
                                     c_outputs,
