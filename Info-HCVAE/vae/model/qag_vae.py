@@ -208,7 +208,7 @@ class DiscreteVAE(nn.Module):
                                                                      a_enc_fake.unsqueeze(0), a_enc, a_fake, do_summarize=False)
 
                 loss_span_info = self.gamma_span_info * \
-                    (0.5 * global_loss + local_loss) / len(ans_enc)
+                    ((0.5 * global_loss + local_loss) / len(ans_enc))
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
