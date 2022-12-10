@@ -32,7 +32,7 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
 
     def forward(self, c_a_embs, a_ids, za):
         N, _, _ = c_a_embs.size()
-        return self.ans_span_infomax(a_ids, za.view(N, -1)) + \
+        return self.ans_span_infomax(a_ids.float(), za.view(N, -1)) + \
             0.25*self.global_context_answer_infomax(c_a_embs.view(N, -1), za.view(N, -1))
 
     def denote_is_infomax_net_for_params(self):
