@@ -9,8 +9,8 @@ class VAETrainer(object):
         self.device = args.device
 
         self.vae = DiscreteVAE(args).to(self.device)
-        # self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
-        self.params = self.vae.get_vae_params(lr=args.lr) + (self.vae.get_infomax_params(lr=args.lr/100) if args.lambda_z_info > 0 else [])
+        self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
+        # self.params = self.vae.get_vae_params(lr=args.lr) + (self.vae.get_infomax_params(lr=args.lr/100) if args.lambda_z_info > 0 else [])
         if args.use_sgd:
             self.optimizer = torch.optim.SGD(self.params, lr=args.lr, momentum=0.9, nesterov=True, weight_decay=args.weight_decay)
         else:
@@ -63,8 +63,8 @@ class VAETrainer(object):
 
     def change_optimizer(self, args, optimizer="adam", lr=1e-4, weight_decay=0.0):
         assert optimizer in ["sgd", "adam"]
-        # self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
-        self.params = self.vae.get_vae_params(lr=lr) + (self.vae.get_infomax_params(lr=lr/100) if args.lambda_z_info > 0 else [])
+        self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
+        # self.params = self.vae.get_vae_params(lr=lr) + (self.vae.get_infomax_params(lr=lr/100) if args.lambda_z_info > 0 else [])
         if optimizer == "sgd":
             self.optimizer = torch.optim.SGD(self.params, lr=lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
         else:
