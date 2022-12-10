@@ -47,20 +47,20 @@ def main(args):
         eval_data = test_eval_data
 
     train_loader, _, _ = train_data
-    current_lr = args.lr
+    # current_lr = args.lr
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     first_run = True
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         if epoch+1 < args.resume_epochs:
             continue
 
-        if not args.is_test_run:
-            if epoch+1 == 11:
-                current_lr = current_lr / 10
-                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
-            elif epoch+1 == 21:
-                current_lr = current_lr / 10
-                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+        # if not args.is_test_run:
+        #     if epoch+1 == 11:
+        #         current_lr = current_lr / 10
+        #         trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+        #     elif epoch+1 == 21:
+        #         current_lr = current_lr / 10
+        #         trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
 
         trainer.reset_cnt_steps()
         for batch in tqdm(train_loader, leave=False, position=1):
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
-    parser.add_argument("--epochs", default=40, type=int)
+    parser.add_argument("--epochs", default=20, type=int)
     parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")
     parser.add_argument("--log_loss_info", dest="log_loss_info", action="store_true")
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_freq", default=5, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=5, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
-    parser.add_argument("--use_sgd", dest="use_sgd", action="store_true")
+    parser.add_argument("--optimizer", default="swats", type=str, help="optimizer to use, [\"adam\", \"sgd\", \"swats\"] are supported")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
     parser.add_argument("--clip", default=5.0, type=float, help="max grad norm")

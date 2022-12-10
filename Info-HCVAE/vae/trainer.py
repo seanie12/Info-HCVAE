@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 from model.qag_vae import DiscreteVAE
-
+import torch_optimizer as optim
+# import torch.optim as optim
 
 class VAETrainer(object):
     def __init__(self, args):
@@ -13,12 +14,15 @@ class VAETrainer(object):
         self.vae = DiscreteVAE(args).to(self.device)
         self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
         # self.params = self.vae.get_vae_params(lr=args.lr) + (self.vae.get_infomax_params(lr=args.lr/100) if args.lambda_z_info > 0 else [])
-        if args.use_sgd:
-            self.optimizer = torch.optim.SGD(
-                self.params, lr=args.lr, momentum=0.9, nesterov=True, weight_decay=args.weight_decay)
-        else:
-            self.optimizer = torch.optim.Adam(
+        assert args.optimizer in ["sgd", "adam", "swats"]
+        if args.optimizer == "sgd":
+            self.optimizer = optim.SGD(
+                self.params, lr=args.lr, momentum=0.9, nesterov=False, weight_decay=args.weight_decay)
+        elif args.optimizer == "adam":
+            self.optimizer = optim.Adam(
                 self.params, lr=args.lr, weight_decay=args.weight_decay)
+        else:
+            self.optimizer = optim.SWATS(self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
 
         self.losses = {
             "total_loss": 0,
