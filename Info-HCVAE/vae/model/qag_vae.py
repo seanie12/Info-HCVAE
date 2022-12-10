@@ -173,6 +173,7 @@ class DiscreteVAE(nn.Module):
                     start_idx = abs(start_positions[b_idx] - extend_start)
                     end_idx = extend_end - extend_start - abs(extend_end - end_positions[b_idx])
                     sampled_word_range.append((start_idx, end_idx))
+                    print((start_positions[b_idx], end_positions[b_idx], extend_start, extend_end, start_idx, end_idx))
                     # (seq, hidden_size)
                     ans_seq = dec_ans_outputs[b_idx,
                                               extend_start: extend_end, :]
