@@ -25,12 +25,12 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
             self.ans_span_infomax = MineInfoMax(
                 x_dim=seq_len, z_dim=nza*nzadim)
             self.global_context_answer_infomax = MineInfoMax(
-                x_dim=emsize*seq_len, z_dim=nza*nzadim)
+                x_dim=emsize, z_dim=nza*nzadim)
         elif infomax_type == "bce":
             self.ans_span_infomax = DimBceInfoMax(
                 x_dim=linear_span_dim, z_dim=linear_z_dim)
             self.global_context_answer_infomax = DimBceInfoMax(
-                x_dim=emsize*seq_len, z_dim=linear_z_dim)
+                x_dim=emsize, z_dim=linear_z_dim)
 
     def summarize_embeddings(self, emb, weights):
         # emb shape = (N, seq_len, emsize)
@@ -41,8 +41,9 @@ class AnswerLatentDimMutualInfoMax(nn.Module):
         N, _, _ = c_a_embs.size()
         a_act = self.mish(self.span_linear(a_ids.float()))
         za_act = self.mish(self.za_linear(za.view(N, -1)))
+        a_embs = (c_a_embs * a_ids.unsqueeze(-1)).sum(dim=1).div(a_ids.sum(dim=1, keepdims=True))
         return self.ans_span_infomax(a_act, za_act) + \
-            0.25*self.global_context_answer_infomax(c_a_embs.view(N, -1), za_act)
+            0.25*self.global_context_answer_infomax(a_embs, za_act)
 
     def denote_is_infomax_net_for_params(self):
         for param in self.parameters():
