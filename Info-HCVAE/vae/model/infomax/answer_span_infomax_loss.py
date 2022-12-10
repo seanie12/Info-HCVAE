@@ -14,6 +14,14 @@ class _AnswerSpanInfoMaxDiscriminator(nn.Module):
             if m.bias is not None:
                 m.bias.data.fill_(0.0)
 
+    def forward(self, global_enc, local_enc):
+        global_enc = global_enc.unsqueeze(1) # (batch, 1, global_size)
+        global_enc = global_enc.expand(-1, local_enc.size(1), -1) # (batch, seq_len, global_size)
+        # (batch, seq_len, global_size) * (batch, seq_len, local_size) -> (batch, seq_len, 1)
+        scores = self.bilinear(global_enc.contiguous(), local_enc.contiguous())
+
+        return scores
+
 
 class AnswerSpanInfoMaxLoss(nn.Module):
     '''
