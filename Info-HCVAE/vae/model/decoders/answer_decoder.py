@@ -3,6 +3,7 @@ import torch.nn as nn
 from model.customized_layers import CustomLSTM
 from model.model_utils import return_mask_lengths
 
+
 class AnswerDecoder(nn.Module):
     def __init__(self, embedding, emsize,
                  nhidden, nlayers,
@@ -21,27 +22,33 @@ class AnswerDecoder(nn.Module):
         self.end_linear = nn.Linear(2 * nhidden, 1)
         self.ls = nn.LogSoftmax(dim=1)
 
-
     def forward(self, init_state, c_ids):
         batch_size, max_c_len = c_ids.size()
         c_mask, c_lengths = return_mask_lengths(c_ids)
 
-        H = self.embedding(c_ids, c_mask)
+        c_embeddings = self.embedding(c_ids, c_mask)
         # U = init_state.unsqueeze(1).repeat(1, max_c_len, 1)
-        U = init_state.view(batch_size, max_c_len, -1)
-        G = torch.cat([H, U, H * U, torch.abs(H - U)], dim=-1)
-        M, _ = self.context_lstm(G, c_lengths.to("cpu"))
+        reshaped_init_state = init_state.view(batch_size, max_c_len, -1)
+        fused_features = torch.cat([c_embeddings,
+                                    reshaped_init_state,
+                                    c_embeddings * reshaped_init_state,
+                                    torch.abs(c_embeddings - reshaped_init_state)],
+                                   dim=-1)
+        out_features, _ = self.context_lstm(
+            fused_features, c_lengths.to("cpu"))
 
-        start_logits = self.start_linear(M).squeeze(-1)
-        end_logits = self.end_linear(M).squeeze(-1)
+        start_logits = self.start_linear(out_features).squeeze(-1)
+        end_logits = self.end_linear(out_features).squeeze(-1)
 
         start_end_mask = (c_mask == 0)
         masked_start_logits = start_logits.masked_fill(
             start_end_mask, -10000.0)
         masked_end_logits = end_logits.masked_fill(start_end_mask, -10000.0)
 
-        return masked_start_logits, masked_end_logits
-
+        if self.training:
+            return masked_start_logits, masked_end_logits, out_features
+        else:
+            return masked_start_logits, masked_end_logits
 
     def generate(self, init_state, c_ids):
         start_logits, end_logits = self.forward(init_state, c_ids)

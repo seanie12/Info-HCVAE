@@ -7,10 +7,9 @@ from .dim_bce_infomax import DimBceInfoMax
 
 
 class AnswerLatentDimMutualInfoMax(nn.Module):
-    def __init__(self, emsize, seq_len, nza, nzadim, infomax_type="deep"):
+    def __init__(self, seq_len, nza, nzadim, infomax_type="deep"):
         super(AnswerLatentDimMutualInfoMax, self).__init__()
         assert infomax_type in ["deep", "bce"]
-        self.emsize = emsize
         self.nza = nza
         self.nzadim = nzadim
         self.infomax_type = infomax_type

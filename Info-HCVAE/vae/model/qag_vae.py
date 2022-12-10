@@ -1,3 +1,4 @@
+import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,7 +7,8 @@ from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
 from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
-from model.infomax import AnswerLatentDimMutualInfoMax
+from model.infomax import AnswerSpanInfoMaxLoss
+
 
 class DiscreteVAE(nn.Module):
     def __init__(self, args):
@@ -36,11 +38,9 @@ class DiscreteVAE(nn.Module):
         self.nza = nza = args.nza
         self.nzadim = nzadim = args.nzadim
 
-        self.w_ans = args.w_ans
         self.w_bce = args.w_bce
         self.alpha_kl = args.alpha_kl
-        self.lambda_mmd = args.lambda_mmd
-        self.lambda_z_info = args.lambda_z_info
+        self.gamma_span_info = args.gamma_span_info
         self.lambda_qa_info = args.lambda_qa_info
 
         max_q_len = args.max_q_len
@@ -80,15 +80,15 @@ class DiscreteVAE(nn.Module):
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
 
-        if self.alpha_kl + self.lambda_mmd - 1 > 0:
-            self.continuous_mmd_criterion = ContinuousKernelMMDLoss()
-            self.categorical_mmd_criterion = CategoricalMMDLoss()
-
         if self.lambda_z_info > 0:
             # enc_nhidden * 2 to account for bidirectional case
-            self.answer_infomax_net = AnswerLatentDimMutualInfoMax(emsize, args.max_c_len, nza, nzadim, infomax_type="bce")
-            self.answer_infomax_net.denote_is_infomax_net_for_params()
-
+            # self.ans_global_infomax = AnswerMutualInfoMax(
+            #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
+            # self.ans_local_infomax = AnswerMutualInfoMax(
+            #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
+            # self.ans_global_infomax.denote_is_infomax_net_for_params()
+            self.ans_global_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
+            self.ans_local_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
 
     def return_init_state(self, zq, za):
         q_init_h = F.mish(self.q_h_linear(zq))
@@ -104,7 +104,6 @@ class DiscreteVAE(nn.Module):
 
         return q_init_state, a_init_state
 
-
     def forward(self, c_ids, q_ids, a_ids, start_positions, end_positions):
         posterior_zq_mu, posterior_zq_logvar, posterior_zq, \
             posterior_za_logits, posterior_za \
@@ -118,54 +117,97 @@ class DiscreteVAE(nn.Module):
             posterior_zq, posterior_za)
 
         # answer decoding
-        start_logits, end_logits = self.answer_decoder(a_init_state, c_ids)
+        start_logits, end_logits, dec_ans_outputs = self.answer_decoder(
+            a_init_state, c_ids)
         # question decoding
-        q_logits, loss_info = self.question_decoder(q_init_state, c_ids, q_ids, a_ids)
+        q_logits, loss_info = self.question_decoder(
+            q_init_state, c_ids, q_ids, a_ids)
 
         # Compute losses
         if self.training:
             # q rec loss
             loss_q_rec = self.q_rec_criterion(q_logits[:, :-1, :].transpose(1, 2).contiguous(),
-                                            q_ids[:, 1:])
+                                              q_ids[:, 1:])
 
             # a rec loss
             max_c_len = c_ids.size(1)
             start_positions.clamp_(0, max_c_len)
             end_positions.clamp_(0, max_c_len)
-            loss_start_a_rec = self.a_rec_criterion(start_logits, start_positions)
+            loss_start_a_rec = self.a_rec_criterion(
+                start_logits, start_positions)
             loss_end_a_rec = self.a_rec_criterion(end_logits, end_positions)
-            loss_a_rec = self.w_ans * 0.5 * (loss_start_a_rec + loss_end_a_rec)
+            loss_a_rec = loss_start_a_rec + loss_end_a_rec
 
             # kl loss
             loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
-                                            prior_zq_mu, prior_zq_logvar)
+                                                    prior_zq_mu, prior_zq_logvar)
 
-            loss_za_kl = self.w_ans * self.categorical_kl_criterion(posterior_za_logits,
-                                                        prior_za_logits)
+            loss_za_kl = self.categorical_kl_criterion(posterior_za_logits,
+                                                       prior_za_logits)
 
-            loss_zq_mmd, loss_za_mmd = torch.tensor(0), torch.tensor(0)
-            if self.alpha_kl + self.lambda_mmd - 1 > 0:
-                loss_zq_mmd = self.continuous_mmd_criterion(posterior_zq_mu, posterior_zq_logvar,
-                                            prior_zq_mu, prior_zq_logvar)
-                loss_za_mmd = self.w_ans * self.categorical_mmd_criterion(posterior_za_logits, prior_za_logits)
+            loss_span_info = torch.tensor(0, device=loss_zq_kl.device)
+            if self.gamma_span_info > 0:
+                ### compute QAInfomax-based regularizer loss ###
+                # dec_ans_outputs.size() = (N, seq_len, 2*dec_a_nhidden)
 
-            loss_zq_info, loss_za_info = torch.tensor(0), torch.tensor(0)
-            if self.lambda_z_info > 0:
-                # loss_zq_info, loss_zq_info = self.posterior_infomax_net(posterior_zq, posterior_za, c_features, \
-                #     c_a_f=c_a_features, q_f=q_features)
-                # loss_prior_zq_info, loss_prior_za_info = self.prior_infomax_net(prior_zq, prior_za, prior_c_features)
-                # loss_zq_info = loss_pos_zq_info + loss_prior_zq_info
-                # loss_zq_info = loss_pos_za_info + loss_prior_za_info
-                # a_embs = c_embs * a_ids.unsqueeze(-1)
-                # c_embs = c_embs * (1 - a_embs).unsqueeze(-1)
-                loss_za_info = self.answer_infomax_net(a_ids, posterior_za)
+                # context means set of {paragraph embeddings}. answer decoding does not require question embeddings
+                context_enc = []
+                ans_enc = []
+                batch_size = dec_ans_outputs.size(0)
+                for b_idx in range(batch_size):
+                    # invalid example or impossible example
+                    if start_positions[b_idx].item() == 0 and end_positions[b_idx].item() == 0:
+                        continue
 
-            loss_kl = (1.0 - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
-            loss_mmd = (self.alpha_kl + self.lambda_mmd - 1) * (loss_zq_mmd + loss_za_mmd)
-            loss_z_info = self.lambda_z_info * (loss_zq_info + loss_za_info)
+                    context_output = torch.cat((dec_ans_outputs[b_idx, :start_positions[b_idx], :],
+                                                dec_ans_outputs[b_idx, end_positions[b_idx] + 1:, :]),
+                                               dim=0)
+                    context_enc.append(context_output.unsqueeze(0))
+
+                    # extend by 5 tokens to take into account local context
+                    extend_start = max(0, start_positions[b_idx] - 5)
+                    extend_end = min(dec_ans_outputs.size(1),
+                                     end_positions[b_idx] + 5)
+                    # (seq, hidden_size)
+                    ans_seq = dec_ans_outputs[b_idx,
+                                              extend_start: extend_end, :]
+                    ans_enc.append(ans_seq.unsqueeze(0))
+                assert len(ans_enc) == len(context_enc)
+
+                # generate fake examples by shifting
+                shift = random.randint(1, len(context_enc))
+                context_fake = [context_enc[-shift:]] + context_enc[:-shift]
+                ans_fake = [ans_enc[-shift:]] + ans_enc[:-shift]
+
+                global_loss = 0
+                local_loss = 0
+                for b_idx in range(len(context_enc)):
+                    c_enc, c_fake = context_enc[b_idx], context_fake[b_idx]
+                    a_enc, a_fake = ans_enc[b_idx], ans_fake[b_idx]
+
+                    ## Compute GC ##
+                    global_loss = global_loss + self.ans_global_infomax(a_enc, a_fake,
+                                                                        c_enc, c_fake, do_summarize=True)
+
+                    ## Compute LC ##
+                    # sample one
+                    rand_idx = random.randint(0, a_enc.size(1) - 1)
+                    a_enc_word = a_enc[0, rand_idx, :]
+                    rand_idx = random.randint(0, a_fake.size(1) - 1)
+                    a_enc_fake = a_fake[0, rand_idx, :]
+                    local_loss = local_loss + self.ans_local_infomax(a_enc_word.unsqueeze(0),
+                                                                     a_enc_fake.unsqueeze(0), a_enc, a_fake, do_summarize=False)
+
+                loss_span_info = self.gamma_span_info * \
+                    (0.5 * global_loss + local_loss) / len(ans_enc)
+                loss_a_rec = (loss_a_rec + loss_span_info) / 3
+            else:
+                loss_a_rec = loss_a_rec / 2
+
+            loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
-
-            loss = self.w_bce * (loss_q_rec + loss_a_rec) + loss_kl + loss_qa_info + loss_mmd + loss_z_info
+            loss = self.w_bce * (loss_q_rec + loss_a_rec) + \
+                loss_kl + loss_qa_info
 
             return_dict = {
                 "total_loss": loss,
@@ -174,16 +216,10 @@ class DiscreteVAE(nn.Module):
                 "loss_kl": loss_kl,
                 "loss_zq_kl": loss_zq_kl,
                 "loss_za_kl": loss_za_kl,
-                "loss_mmd": loss_mmd,
-                "loss_zq_mmd": loss_zq_mmd,
-                "loss_za_mmd": loss_za_mmd,
-                "loss_z_info": loss_z_info,
-                "loss_zq_info": loss_zq_info,
-                "loss_za_info": loss_za_info,
+                "loss_span_info": loss_span_info,
                 "loss_qa_info": loss_qa_info,
             }
             return return_dict
-
 
     def generate(self, zq, za, c_ids):
         q_init_state, a_init_state = self.return_init_state(zq, za)
@@ -195,7 +231,6 @@ class DiscreteVAE(nn.Module):
 
         return q_ids, start_positions, end_positions
 
-
     def return_answer_logits(self, zq, za, c_ids):
         _, a_init_state = self.return_init_state(zq, za)
 
@@ -203,16 +238,12 @@ class DiscreteVAE(nn.Module):
 
         return start_logits, end_logits
 
-
     def get_vae_params(self, lr=1e-3):
         # Get params exclude infomax params
-        params = filter(lambda p: p.requires_grad and (not hasattr(p, "is_infomax_param")), self.parameters())
-        return [ { "params": params, "lr": lr } ]
+        params = filter(lambda p: p.requires_grad and (
+            not hasattr(p, "is_infomax_param")), self.parameters())
+        return [{"params": params, "lr": lr}]
 
+    # def get_infomax_params(self, lr=1e-5):
+    #     return [{"params": self.answer_infomax_net.parameters(), "lr": lr}]
 
-    def get_infomax_params(self, lr=1e-5):
-        return [ { "params": self.answer_infomax_net.parameters(), "lr": lr } ]
-
-
-    def reduce_infomax_weight_by_10(self):
-        self.lambda_z_info /= 10
