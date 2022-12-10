@@ -1,4 +1,5 @@
 import random
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -153,6 +154,7 @@ class DiscreteVAE(nn.Module):
                 # context means set of {paragraph embeddings}. answer decoding does not require question embeddings
                 context_enc = []
                 ans_enc = []
+                sampled_word_range = [] # for LC computation
                 batch_size = dec_ans_outputs.size(0)
                 for b_idx in range(batch_size):
                     # invalid example or impossible example
@@ -168,6 +170,10 @@ class DiscreteVAE(nn.Module):
                     extend_start = max(0, start_positions[b_idx] - 5)
                     extend_end = min(dec_ans_outputs.size(1),
                                      end_positions[b_idx] + 5)
+                    # sample a word from answer span to compute LC
+                    start_idx = math.abs(start_positions[b_idx] - extend_start)
+                    end_idx = extend_end - extend_start - math.abs(extend_end - end_positions[b_idx])
+                    sampled_word_range.append((start_idx, end_idx))
                     # (seq, hidden_size)
                     ans_seq = dec_ans_outputs[b_idx,
                                               extend_start: extend_end, :]
@@ -191,7 +197,7 @@ class DiscreteVAE(nn.Module):
 
                     ## Compute LC ##
                     # sample one
-                    rand_idx = random.randint(0, a_enc.size(1) - 1)
+                    rand_idx = random.randint(sampled_word_range[b_idx][0], sampled_word_range[b_idx][1])
                     a_enc_word = a_enc[0, rand_idx, :]
                     rand_idx = random.randint(0, a_fake.size(1) - 1)
                     a_enc_fake = a_fake[0, rand_idx, :]
