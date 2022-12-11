@@ -192,19 +192,19 @@ class DiscreteVAE(nn.Module):
                     ## Compute LC infomax ##
                     # sample one
                     # information weights strength of local range of start & end positions
-                    weights = gaussian_kernel(n=start_a_enc.size(1))
+                    weights = gaussian_kernel(n=start_a_enc.size(0))
                     for w_idx, w_value in enumerate(weights):
-                        start_local_loss = start_local_loss + w_value * self.ans_local_infomax(start_a_enc[w_idx:w_idx+1, :], \
-                            start_a_fake[w_idx:w_idx+1, :], ans_embeds, ans_fake_embeds, do_summarize=False)
+                        start_local_loss = start_local_loss + w_value * self.ans_local_infomax(start_a_enc[w_idx].unsqueeze(0), \
+                            start_a_fake[w_idx].unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
                         start_summarized_loss = start_summarized_loss + \
-                            w_value * self.ans_summarized_infomax(start_a_enc[w_idx:w_idx+1, :], \
-                                start_a_fake[w_idx:w_idx+1, :], avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
+                            w_value * self.ans_summarized_infomax(start_a_enc[w_idx].unsqueeze(0), \
+                                start_a_fake[w_idx].unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
 
-                        end_local_loss = end_local_loss + w_value * self.ans_local_infomax(end_a_enc[w_idx:w_idx+1, :], \
-                            end_a_fake[w_idx:w_idx+1, :], ans_embeds, ans_fake_embeds, do_summarize=False)
+                        end_local_loss = end_local_loss + w_value * self.ans_local_infomax(end_a_enc[w_idx].unsqueeze(0), \
+                            end_a_fake[w_idx].unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
                         end_summarized_loss = end_summarized_loss + \
-                            w_value * self.ans_summarized_infomax(end_a_enc[w_idx:w_idx+1, :], \
-                                end_a_fake[w_idx:w_idx+1, :], avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
+                            w_value * self.ans_summarized_infomax(end_a_enc[w_idx].unsqueeze(0), \
+                                end_a_fake[w_idx].unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
 
                 loss_summarized = start_summarized_loss + end_summarized_loss
                 start_end_local_loss = start_local_loss + end_local_loss
