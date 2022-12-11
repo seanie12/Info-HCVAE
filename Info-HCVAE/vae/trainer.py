@@ -129,21 +129,30 @@ class VAETrainer(object):
                 zq, za, c_ids)
         return q_ids, start_positions, end_positions, zq
 
-    def save(self, save_path, epoch, save_freq, max_models_to_keep=4, filename_format="model-epoch-{:02d}.pt"):
+    def save(self, save_path, save_mode="epoch", epoch=None, save_freq=None, max_models_to_keep=4):
+        assert save_mode in ["best_f1", "best_bleu"] or \
+            (save_mode == "epoch" and epoch is not None and save_freq is not None)
         assert epoch % save_freq == 0
 
-        filename = os.path.join(save_path, filename_format.format(epoch))
+        if save_mode == "epoch":
+            filename = os.path.join(save_path, "model-epoch-{:02d}.pt".format(epoch))
+        elif save_mode == "best_f1":
+            filename = os.path.join(save_path, "best_f1_model.pt")
+        else: # best_bleu
+            filename = os.path.join(save_path, "best_bleu_model.pt")
+
         params = {
             "vae_state_dict": self.vae.state_dict(),
             "args": self.args
         }
         torch.save(params, filename)
 
-        if epoch - max_models_to_keep*save_freq >= 1:
-            remove_filename = os.path.join(
-                save_path, filename_format.format(epoch - max_models_to_keep))
-            if os.path.exists(remove_filename):
-                os.remove(remove_filename)
+        if save_mode == "epoch": # max model windows only applies to save_mode="epoch"
+            if epoch - max_models_to_keep*save_freq >= 1:
+                remove_filename = os.path.join(
+                    save_path, "model-epoch-{:02d}.pt".format(epoch - max_models_to_keep))
+                if os.path.exists(remove_filename):
+                    os.remove(remove_filename)
 
     def load_model_state_dict(self, filename):
         params = torch.load(filename)

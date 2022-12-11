@@ -86,10 +86,10 @@ def main(args):
                 best_em = em
             if f1 > best_f1:
                 best_f1 = f1
-                trainer.save(os.path.join(args.best_model_dir, "best_f1_model.pt"))
+                trainer.save(args.best_model_dir, save_mode="best_f1")
             if bleu > best_bleu:
                 best_bleu = bleu
-                trainer.save(os.path.join(args.best_model_dir, "best_bleu_model.pt"))
+                trainer.save(args.best_model_dir, save_mode="best_bleu")
 
             log_str = 'BEST BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
             log_str = log_str.format(best_bleu, best_em, best_f1)
@@ -101,7 +101,7 @@ def main(args):
                             "best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1 }, f, indent=4)
 
         if (epoch + 1) % args.save_freq == 0:
-            trainer.save(args.save_by_epoch_dir, epoch+1, save_freq=args.save_freq)
+            trainer.save(args.save_by_epoch_dir, epoch=epoch+1, save_freq=args.save_freq)
 
 
 if __name__ == "__main__":
