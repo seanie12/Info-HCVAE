@@ -167,11 +167,11 @@ class DiscreteVAE(nn.Module):
                     # extend by 1 tokens left & right to take into account local context
                     start_idx_1, end_idx_1 = max(0, start_positions[b_idx] - 1), \
                         min(end_positions[b_idx], start_positions[b_idx] + 1)
-                    start_ans_seq = dec_ans_outputs[b_idx, start_idx_1:end_idx_1+1, :]
+                    start_ans_seq = dec_ans_outputs[b_idx, start_idx_1:end_idx_1+1, :].unsqueeze(0)
 
                     start_idx_2, end_idx_2 = max(start_positions[b_idx], end_positions[b_idx] - 1), \
                         min(dec_ans_outputs.size(1)-1, end_positions[b_idx] + 1)
-                    end_ans_seq = dec_ans_outputs[b_idx, start_idx_2:end_idx_2+1, :]
+                    end_ans_seq = dec_ans_outputs[b_idx, start_idx_2:end_idx_2+1, :].unsqueeze(0)
 
                     ans_enc.append((start_ans_seq, end_ans_seq, ans_embeds))
 
