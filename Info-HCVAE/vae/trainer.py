@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from model.qag_vae import DiscreteVAE
-import torch_optimizer as optim2
+import torch_optimizer as optim_custom
 import torch.optim as optim
 
 class VAETrainer(object):
@@ -19,7 +19,7 @@ class VAETrainer(object):
         elif args.optimizer == "adam" or args.optimizer == "manual":
             self.optimizer = optim.Adam(self.params, lr=args.lr, weight_decay=args.weight_decay)
         else:
-            self.optimizer = optim2.SWATS(self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
+            self.optimizer = optim_custom.SWATS(self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
 
         self.losses = {
             "total_loss": 0,
