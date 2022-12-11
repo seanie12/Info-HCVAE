@@ -175,6 +175,9 @@ if __name__ == "__main__":
         os.makedirs(dataloader_dir, exist_ok=True)
         args.dataloader_dir = os.path.abspath(dataloader_dir)
 
+    if args.log_loss_info:
+        open("loss_info.log", "w") # empty loss log file if existed
+
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
