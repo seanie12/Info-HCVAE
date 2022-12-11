@@ -88,7 +88,7 @@ class DiscreteVAE(nn.Module):
             # self.ans_local_infomax = AnswerMutualInfoMax(
             #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
             # self.ans_global_infomax.denote_is_infomax_net_for_params()
-            self.ans_summarized_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
+            self.ans_boundary_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
             self.ans_local_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
 
     def return_init_state(self, zq, za):
@@ -179,12 +179,15 @@ class DiscreteVAE(nn.Module):
                 shift = random.randint(1, len(ans_enc))
                 ans_fake = ans_enc[-shift:] + ans_enc[:-shift]
 
-                start_local_loss, start_summarized_loss = 0, 0
-                end_local_loss, end_summarized_loss = 0, 0
+                start_local_loss, start_pos_loss = 0, 0
+                end_local_loss, end_pos_loss = 0, 0
                 for b_idx in range(len(ans_enc)):
                     a_enc, a_fake = ans_enc[b_idx], ans_fake[b_idx]
                     start_a_enc, end_a_enc, ans_embeds = a_enc
                     start_a_fake, end_a_fake, ans_fake_embeds = a_fake
+
+                    start_embeds, end_embeds = a_enc[0, 0, :], a_enc[0, -1, :]
+                    start_embeds_fake, end_embeds_fake = a_fake[0, 0, :], a_fake[0, -1, :]
 
                     avg_ans_embeds = ans_embeds.mean(dim=1, keepdims=True)
                     avg_ans_fake_embeds = ans_fake_embeds.mean(dim=1, keepdims=True)
@@ -194,22 +197,20 @@ class DiscreteVAE(nn.Module):
                     # information weights strength of local range of start & end positions
                     weights = gaussian_kernel(n=start_a_enc.size(0))
                     for w_idx, w_value in enumerate(weights):
-                        start_local_loss = start_local_loss + w_value * self.ans_local_infomax(start_a_enc[w_idx].unsqueeze(0), \
-                            start_a_fake[w_idx].unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
-                        start_summarized_loss = start_summarized_loss + \
-                            w_value * self.ans_summarized_infomax(start_a_enc[w_idx].unsqueeze(0), \
-                                start_a_fake[w_idx].unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
+                        start_local_loss = start_local_loss + w_value * self.ans_local_infomax(start_a_enc, \
+                            start_a_fake, ans_embeds, ans_fake_embeds, do_summarize=True)
+                        start_pos_loss = start_pos_loss + self.ans_boundary_infomax(start_embeds.unsqueeze(0), \
+                                start_embeds_fake.unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
 
-                        end_local_loss = end_local_loss + w_value * self.ans_local_infomax(end_a_enc[w_idx].unsqueeze(0), \
-                            end_a_fake[w_idx].unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
-                        end_summarized_loss = end_summarized_loss + \
-                            w_value * self.ans_summarized_infomax(end_a_enc[w_idx].unsqueeze(0), \
-                                end_a_fake[w_idx].unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
+                        end_local_loss = end_local_loss + w_value * self.ans_local_infomax(end_a_enc, \
+                            end_a_fake, ans_embeds, ans_fake_embeds, do_summarize=False)
+                        end_pos_loss = end_pos_loss + self.ans_boundary_infomax(end_embeds.unsqueeze(0), \
+                                end_embeds_fake.unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
 
-                loss_summarized = start_summarized_loss + end_summarized_loss
-                start_end_local_loss = start_local_loss + end_local_loss
+                loss_boundary_info = start_pos_loss + end_pos_loss
+                loss_local_info = start_local_loss + end_local_loss
                 loss_span_info = self.gamma_span_info * \
-                    ((start_end_local_loss + 0.5*loss_summarized) / len(ans_enc))
+                    ((loss_local_info + 0.5*loss_boundary_info) / len(ans_enc))
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
