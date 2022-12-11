@@ -55,10 +55,10 @@ def main(args):
             continue
 
         if not args.is_test_run and args.optimizer == "manual":
-            if epoch+1 == 11:
+            if epoch+1 == 21:
                 current_lr = current_lr / 10
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
-            elif epoch+1 == 21:
+            elif epoch+1 == 31:
                 current_lr = current_lr / 10
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
 
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_dir", default="../save/vae-checkpoint", type=str)
     parser.add_argument("--dataloader_dir", default="../save/dataloader", type=str)
     parser.add_argument("--checkpoint_file", default=None, type=str, help="Path to the .pt file, None if checkpoint should not be loaded")
-    parser.add_argument("--epochs", default=20, type=int)
+    parser.add_argument("--epochs", default=40, type=int)
     parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")
     parser.add_argument("--log_loss_info", dest="log_loss_info", action="store_true")
