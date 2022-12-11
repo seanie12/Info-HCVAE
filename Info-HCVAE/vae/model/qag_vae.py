@@ -82,14 +82,6 @@ class DiscreteVAE(nn.Module):
         self.categorical_kl_criterion = CategoricalKLLoss()
 
         if self.gamma_span_info > 0:
-            # enc_nhidden * 2 to account for bidirectional case
-            # self.ans_global_infomax = AnswerMutualInfoMax(
-            #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
-            # self.ans_local_infomax = AnswerMutualInfoMax(
-            #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
-            # self.ans_global_infomax.denote_is_infomax_net_for_params()
-            # self.ans_boundary_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
-            # self.ans_local_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
             self.start_infomax = DimBceInfoMax(x_dim=dec_a_nhidden*2, z_dim=dec_a_nhidden*2)
             self.end_infomax = DimBceInfoMax(x_dim=dec_a_nhidden*2, z_dim=dec_a_nhidden*2)
 
