@@ -54,13 +54,13 @@ def main(args):
         if epoch+1 < args.resume_epochs:
             continue
 
-        # if not args.is_test_run:
-        #     if epoch+1 == 11:
-        #         current_lr = current_lr / 10
-        #         trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
-        #     elif epoch+1 == 21:
-        #         current_lr = current_lr / 10
-        #         trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+        if not args.is_test_run and args.optimizer == "manual":
+            if epoch+1 == 11:
+                current_lr = current_lr / 10
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+            elif epoch+1 == 21:
+                current_lr = current_lr / 10
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
 
         trainer.reset_cnt_steps()
         for batch in tqdm(train_loader, leave=False, position=1):
@@ -128,7 +128,8 @@ if __name__ == "__main__":
     parser.add_argument("--save_freq", default=5, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=5, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
-    parser.add_argument("--optimizer", default="swats", type=str, help="optimizer to use, [\"adam\", \"sgd\", \"swats\"] are supported")
+    parser.add_argument("--optimizer", default="manual", choices=["sgd", "adam", "swats", "manual"], type=str, \
+        help="optimizer to use, [\"adam\", \"sgd\", \"swats\", \"manual\"] are supported")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
     parser.add_argument("--clip", default=5.0, type=float, help="max grad norm")

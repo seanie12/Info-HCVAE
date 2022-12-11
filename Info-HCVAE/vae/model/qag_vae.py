@@ -6,8 +6,9 @@ from transformers import BertTokenizer
 from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
-from model.losses import GaussianKLLoss, CategoricalKLLoss, ContinuousKernelMMDLoss, CategoricalMMDLoss
+from model.losses import GaussianKLLoss, CategoricalKLLoss
 from model.infomax import AnswerSpanInfoMaxLoss
+from model.model_utils import gaussian_kernel
 
 
 class DiscreteVAE(nn.Module):
@@ -87,7 +88,7 @@ class DiscreteVAE(nn.Module):
             # self.ans_local_infomax = AnswerMutualInfoMax(
             #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
             # self.ans_global_infomax.denote_is_infomax_net_for_params()
-            self.ans_global_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
+            self.ans_summarized_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
             self.ans_local_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
 
     def return_init_state(self, zq, za):
@@ -136,7 +137,7 @@ class DiscreteVAE(nn.Module):
             loss_start_a_rec = self.a_rec_criterion(
                 start_logits, start_positions)
             loss_end_a_rec = self.a_rec_criterion(end_logits, end_positions)
-            loss_a_rec = 0.5 * (loss_start_a_rec + loss_end_a_rec)
+            loss_a_rec = loss_start_a_rec + loss_end_a_rec
 
             # kl loss
             loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
@@ -150,65 +151,65 @@ class DiscreteVAE(nn.Module):
                 ### compute QAInfomax-based regularizer loss ###
                 # dec_ans_outputs.size() = (N, seq_len, 2*dec_a_nhidden)
 
-                # context means set of {paragraph embeddings}. answer decoding does not require question embeddings
-                context_enc = []
+                # context means set of {paragraph embeddings}.
                 ans_enc = []
-                sampled_word_range = []  # for LC computation
                 batch_size = dec_ans_outputs.size(0)
                 for b_idx in range(batch_size):
                     # invalid example or impossible example
-                    if start_positions[b_idx].item() == 0 and end_positions[b_idx].item() == 0:
+                    if start_positions[b_idx].item() <= 0 and end_positions[b_idx].item() <= 0:
                         continue
 
-                    context_output = torch.cat((dec_ans_outputs[b_idx, :start_positions[b_idx], :],
-                                                dec_ans_outputs[b_idx, end_positions[b_idx] + 1:, :]),
-                                               dim=0)
-                    context_enc.append(context_output.unsqueeze(0))
-
-                    # extend by 5 tokens to take into account local context
-                    extend_start = max(0, start_positions[b_idx] - 5)
-                    extend_end = min(dec_ans_outputs.size(1),
-                                     end_positions[b_idx] + 5)
-                    # sample a word from answer span to compute LC
-                    start_idx = abs(start_positions[b_idx] - extend_start)
-                    end_idx = extend_end - extend_start - \
-                        abs(extend_end - end_positions[b_idx])
-                    sampled_word_range.append((start_idx.item(), end_idx.item()))
+                    # avg_ans_embeds represent the grammatical semantics of answer representation embeddings
+                    ans_embeds = dec_ans_outputs[b_idx,
+                                        start_positions[b_idx]:end_positions[b_idx] + 1, :].unsqueeze(0)
                     # (seq, hidden_size)
-                    ans_seq = dec_ans_outputs[b_idx,
-                                              extend_start: extend_end, :]
-                    ans_enc.append(ans_seq.unsqueeze(0))
-                assert len(ans_enc) == len(context_enc)
+                    # Construct start position local representations
+                    # extend by 1 tokens left & right to take into account local context
+                    start_idx_1, end_idx_1 = max(0, start_positions[b_idx] - 1), \
+                        min(end_positions[b_idx], start_positions[b_idx] + 1)
+                    start_ans_seq = dec_ans_outputs[b_idx, start_idx_1:end_idx_1+1, :]
+
+                    start_idx_2, end_idx_2 = max(start_positions[b_idx], end_positions[b_idx] - 1), \
+                        min(dec_ans_outputs.size(1)-1, end_positions[b_idx] + 1)
+                    end_ans_seq = dec_ans_outputs[b_idx, start_idx_2:end_idx_2+1, :]
+
+                    ans_enc.append((start_ans_seq, end_ans_seq, ans_embeds))
 
                 # generate fake examples by shifting
-                shift = random.randint(1, len(context_enc))
-                context_fake = context_enc[-shift:] + context_enc[:-shift]
+                shift = random.randint(1, len(ans_enc))
                 ans_fake = ans_enc[-shift:] + ans_enc[:-shift]
 
-                global_loss = 0
-                local_loss = 0
-                for b_idx in range(len(context_enc)):
-                    c_enc, c_fake = context_enc[b_idx], context_fake[b_idx]
+                start_local_loss, start_summarized_loss = 0, 0
+                end_local_loss, end_summarized_loss = 0, 0
+                for b_idx in range(len(ans_enc)):
                     a_enc, a_fake = ans_enc[b_idx], ans_fake[b_idx]
+                    start_a_enc, end_a_enc, ans_embeds = a_enc
+                    start_a_fake, end_a_fake, ans_fake_embeds = a_fake
 
-                    ## Compute GC ##
-                    global_loss = global_loss + self.ans_global_infomax(a_enc, a_fake,
-                                                                        c_enc, c_fake, do_summarize=True)
+                    avg_ans_embeds = ans_embeds.mean(dim=1, keepdims=True)
+                    avg_ans_fake_embeds = ans_fake_embeds.mean(dim=1, keepdims=True)
 
-                    ## Compute LC ##
+                    ## Compute LC infomax ##
                     # sample one
-                    start_idx, end_idx = sampled_word_range[b_idx]
-                    rand_idx = start_idx # take into account the case when start_idx == end_idx
-                    if start_idx < end_idx:
-                        rand_idx = random.randint(start_idx, end_idx)
-                    a_enc_word = a_enc[0, rand_idx, :]
-                    rand_idx = random.randint(0, a_fake.size(1) - 1)
-                    a_enc_fake = a_fake[0, rand_idx, :]
-                    local_loss = local_loss + self.ans_local_infomax(a_enc_word.unsqueeze(0),
-                                                                     a_enc_fake.unsqueeze(0), a_enc, a_fake, do_summarize=False)
+                    # information weights strength of local range of start & end positions
+                    weights = gaussian_kernel(n=start_a_enc.size(1))
+                    for w_idx, w_value in weights:
+                        start_local_loss = start_local_loss + w_value * self.ans_local_infomax(start_a_enc[w_idx:w_idx+1, :], \
+                            start_a_fake[w_idx:w_idx+1, :], ans_embeds, ans_fake_embeds, do_summarize=False)
+                        start_summarized_loss = start_summarized_loss + \
+                            w_value * self.ans_summarized_infomax(start_a_enc[w_idx:w_idx+1, :], \
+                                start_a_fake[w_idx:w_idx+1, :], avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
 
+                        end_local_loss = end_local_loss + w_value * self.ans_local_infomax(end_a_enc[w_idx:w_idx+1, :], \
+                            end_a_fake[w_idx:w_idx+1, :], ans_embeds, ans_fake_embeds, do_summarize=False)
+                        end_summarized_loss = end_summarized_loss + \
+                            w_value * self.ans_summarized_infomax(end_a_enc[w_idx:w_idx+1, :], \
+                                end_a_fake[w_idx:w_idx+1, :], avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
+
+                loss_summarized = start_summarized_loss + end_summarized_loss
+                start_end_local_loss = start_local_loss + end_local_loss
                 loss_span_info = self.gamma_span_info * \
-                    ((0.5 * global_loss + local_loss) / len(ans_enc))
+                    ((start_end_local_loss + 0.5*loss_summarized) / len(ans_enc))
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info

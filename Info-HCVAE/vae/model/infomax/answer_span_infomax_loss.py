@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 
 class _AnswerSpanInfoMaxDiscriminator(nn.Module):
     def __init__(self, feature_size):
@@ -50,12 +52,12 @@ class AnswerSpanInfoMaxLoss(nn.Module):
             x_enc = self.summarize(x_enc)
         x_enc = self.dropout(x_enc)
         y_enc = self.dropout(y_enc)
-        logits = self.discriminator(x_enc, y_enc)        
+        logits = self.discriminator(x_enc, y_enc)
         batch_size1, n_seq1 = y_enc.size(0), y_enc.size(1)
         labels = torch.ones(batch_size1, n_seq1)
 
         # Compute 1 - g(x, y^(\bar))
-        y_fake = self.dropout(y_fake)        
+        y_fake = self.dropout(y_fake)
         _logits = self.discriminator(x_enc, y_fake)
         batch_size2, n_seq2 = y_fake.size(0), y_fake.size(1)
         _labels = torch.zeros(batch_size2, n_seq2)
