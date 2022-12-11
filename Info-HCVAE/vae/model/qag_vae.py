@@ -86,8 +86,8 @@ class DiscreteVAE(nn.Module):
             self.end_infomax = DimBceInfoMax(x_dim=dec_a_nhidden*2, z_dim=dec_a_nhidden*2)
 
     def return_init_state(self, zq, za):
-        q_init_h = F.mish(self.q_h_linear(zq))
-        q_init_c = F.mish(self.q_c_linear(zq))
+        q_init_h = self.q_h_linear(zq)
+        q_init_c = self.q_c_linear(zq)
         q_init_h = q_init_h.view(-1, self.dec_q_nlayers,
                                  self.dec_q_nhidden).transpose(0, 1).contiguous()
         q_init_c = q_init_c.view(-1, self.dec_q_nlayers,
@@ -95,7 +95,7 @@ class DiscreteVAE(nn.Module):
         q_init_state = (q_init_h, q_init_c)
 
         za_flatten = za.view(-1, self.nza * self.nzadim)
-        a_init_state = F.mish(self.a_linear(za_flatten))
+        a_init_state = self.a_linear(za_flatten)
 
         return q_init_state, a_init_state
 

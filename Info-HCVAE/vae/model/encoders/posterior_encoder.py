@@ -71,7 +71,7 @@ class PosteriorEncoder(nn.Module):
 
         h = torch.cat([q_h, q_attned_by_c, c_h, c_attned_by_q], dim=-1)
 
-        zq_mu, zq_logvar = torch.split(F.mish(self.zq_linear(h)), self.nzqdim, dim=1)
+        zq_mu, zq_logvar = torch.split(self.zq_linear(h), self.nzqdim, dim=1)
         zq = sample_gaussian(zq_mu, zq_logvar)
 
         # attention zq, c_a
@@ -84,7 +84,7 @@ class PosteriorEncoder(nn.Module):
 
         h = torch.cat([zq, c_a_attned_by_zq, c_a_h], dim=-1)
 
-        za_logits = F.mish(self.za_linear(h)).view(-1, self.nza, self.nzadim)
+        za_logits = self.za_linear(h).view(-1, self.nza, self.nzadim)
         # za_prob = F.softmax(za_logits, dim=-1)
         za = gumbel_softmax(za_logits, hard=True)
 
