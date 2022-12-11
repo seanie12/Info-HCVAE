@@ -101,7 +101,7 @@ def main(args):
                             "best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1 }, f, indent=4)
 
         if (epoch + 1) % args.save_freq == 0:
-            trainer.save(args.save_by_epoch_dir, epoch+1)
+            trainer.save(args.save_by_epoch_dir, epoch+1, save_freq=args.save_freq)
 
 
 if __name__ == "__main__":

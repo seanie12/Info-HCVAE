@@ -4,6 +4,7 @@ from model.qag_vae import DiscreteVAE
 import torch_optimizer as additional_optim
 import torch.optim as optim
 
+
 class VAETrainer(object):
     def __init__(self, args):
         self.args = args
@@ -15,11 +16,14 @@ class VAETrainer(object):
         self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
         # self.params = self.vae.get_vae_params(lr=args.lr) + (self.vae.get_infomax_params(lr=args.lr/100) if args.lambda_z_info > 0 else [])
         if args.optimizer == "sgd":
-            self.optimizer = optim.SGD(self.params, lr=args.lr, momentum=0.9, nesterov=False, weight_decay=args.weight_decay)
+            self.optimizer = optim.SGD(
+                self.params, lr=args.lr, momentum=0.9, nesterov=False, weight_decay=args.weight_decay)
         elif args.optimizer == "adam" or args.optimizer == "manual":
-            self.optimizer = optim.Adam(self.params, lr=args.lr, weight_decay=args.weight_decay)
+            self.optimizer = optim.Adam(
+                self.params, lr=args.lr, weight_decay=args.weight_decay)
         else:
-            self.optimizer = additional_optim.SWATS(self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
+            self.optimizer = additional_optim.SWATS(
+                self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
 
         self.losses = {
             "total_loss": 0,
@@ -90,11 +94,11 @@ class VAETrainer(object):
 
         print(log_str + "\n")
 
-        if self.log_loss_info: # log to file for monitoring
-            with open("loss_info.log", "a") as f: # open loss log in the current working dir
-                f.write(("\n\n" if log_type == "epoch" else "") + \
-                    log_str + "\n" + \
-                    ("\n" if log_type == "epoch" else ""))
+        if self.log_loss_info:  # log to file for monitoring
+            with open("loss_info.log", "a") as f:  # open loss log in the current working dir
+                f.write(("\n\n" if log_type == "epoch" else "") +
+                        log_str + "\n" +
+                        ("\n" if log_type == "epoch" else ""))
 
     def _reset_loss_values(self):
         for key in self.losses.keys():
@@ -125,7 +129,9 @@ class VAETrainer(object):
                 zq, za, c_ids)
         return q_ids, start_positions, end_positions, zq
 
-    def save(self, save_path, epoch, epoch_window=4, filename_format="model-epoch-{:02d}.pt"):
+    def save(self, save_path, epoch, save_freq, max_models_to_keep=4, filename_format="model-epoch-{:02d}.pt"):
+        assert epoch % save_freq == 0
+
         filename = os.path.join(save_path, filename_format.format(epoch))
         params = {
             "vae_state_dict": self.vae.state_dict(),
@@ -133,8 +139,9 @@ class VAETrainer(object):
         }
         torch.save(params, filename)
 
-        if epoch - epoch_window >= 1:
-            remove_filename = os.path.join(save_path, filename_format.format(epoch - epoch_window))
+        if epoch - max_models_to_keep*save_freq >= 1:
+            remove_filename = os.path.join(
+                save_path, filename_format.format(epoch - max_models_to_keep))
             if os.path.exists(remove_filename):
                 os.remove(remove_filename)
 
