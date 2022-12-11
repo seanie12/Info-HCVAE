@@ -189,23 +189,19 @@ class DiscreteVAE(nn.Module):
                     start_embeds, end_embeds = a_enc[0, 0, :], a_enc[0, -1, :]
                     start_embeds_fake, end_embeds_fake = a_fake[0, 0, :], a_fake[0, -1, :]
 
-                    avg_ans_embeds = ans_embeds.mean(dim=1, keepdims=True)
-                    avg_ans_fake_embeds = ans_fake_embeds.mean(dim=1, keepdims=True)
+                    ## Compute local range infomax with all answers ##
+                    start_local_loss = start_local_loss + self.ans_local_infomax(start_a_enc, \
+                        start_a_fake, ans_embeds, ans_fake_embeds, do_summarize=True)
 
-                    ## Compute LC infomax ##
-                    # sample one
-                    # information weights strength of local range of start & end positions
-                    weights = gaussian_kernel(n=start_a_enc.size(0))
-                    for w_idx, w_value in enumerate(weights):
-                        start_local_loss = start_local_loss + w_value * self.ans_local_infomax(start_a_enc, \
-                            start_a_fake, ans_embeds, ans_fake_embeds, do_summarize=True)
-                        start_pos_loss = start_pos_loss + self.ans_boundary_infomax(start_embeds.unsqueeze(0), \
-                                start_embeds_fake.unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
+                    end_local_loss = end_local_loss + self.ans_local_infomax(end_a_enc, \
+                        end_a_fake, ans_embeds, ans_fake_embeds, do_summarize=True)
 
-                        end_local_loss = end_local_loss + w_value * self.ans_local_infomax(end_a_enc, \
-                            end_a_fake, ans_embeds, ans_fake_embeds, do_summarize=False)
-                        end_pos_loss = end_pos_loss + self.ans_boundary_infomax(end_embeds.unsqueeze(0), \
-                                end_embeds_fake.unsqueeze(0), avg_ans_embeds, avg_ans_fake_embeds, do_summarize=False)
+                    ## Compute boundary infomax w.r.t answer representations (emphasize start & end tokens)
+                    start_pos_loss = start_pos_loss + self.ans_boundary_infomax(start_embeds.unsqueeze(0), \
+                        start_embeds_fake.unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
+
+                    end_pos_loss = end_pos_loss + self.ans_boundary_infomax(end_embeds.unsqueeze(0), \
+                        end_embeds_fake.unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
 
                 loss_boundary_info = start_pos_loss + end_pos_loss
                 loss_local_info = start_local_loss + end_local_loss
