@@ -193,7 +193,7 @@ class DiscreteVAE(nn.Module):
                     # sample one
                     # information weights strength of local range of start & end positions
                     weights = gaussian_kernel(n=start_a_enc.size(1))
-                    for w_idx, w_value in weights:
+                    for w_idx, w_value in enumerate(weights):
                         start_local_loss = start_local_loss + w_value * self.ans_local_infomax(start_a_enc[w_idx:w_idx+1, :], \
                             start_a_fake[w_idx:w_idx+1, :], ans_embeds, ans_fake_embeds, do_summarize=False)
                         start_summarized_loss = start_summarized_loss + \
