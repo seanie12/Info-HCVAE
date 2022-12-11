@@ -206,7 +206,7 @@ class DiscreteVAE(nn.Module):
                 loss_boundary_info = start_pos_loss + end_pos_loss
                 loss_local_info = start_local_loss + end_local_loss
                 loss_span_info = self.gamma_span_info * \
-                    ((loss_local_info + 0.5*loss_boundary_info) / len(ans_enc))
+                    ((0.5*loss_local_info + loss_boundary_info) / len(ans_enc))
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
