@@ -186,8 +186,8 @@ class DiscreteVAE(nn.Module):
                     start_a_enc, end_a_enc, ans_embeds = a_enc
                     start_a_fake, end_a_fake, ans_fake_embeds = a_fake
 
-                    start_embeds, end_embeds = a_enc[0, 0, :], a_enc[0, -1, :]
-                    start_embeds_fake, end_embeds_fake = a_fake[0, 0, :], a_fake[0, -1, :]
+                    start_embeds, end_embeds = ans_embeds[0, 0, :], ans_embeds[0, -1, :]
+                    start_embeds_fake, end_embeds_fake = ans_fake_embeds[0, 0, :], ans_fake_embeds[0, -1, :]
 
                     ## Compute local range infomax with all answers ##
                     start_local_loss = start_local_loss + self.ans_local_infomax(start_a_enc, \
