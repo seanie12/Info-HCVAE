@@ -1,7 +1,4 @@
-import math
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from .mine_infomax import MineInfoMax
 from .dim_bce_infomax import DimBceInfoMax
 

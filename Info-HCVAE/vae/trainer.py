@@ -1,7 +1,7 @@
+import os
 import torch
-import torch.nn as nn
 from model.qag_vae import DiscreteVAE
-import torch_optimizer as optim_custom
+import torch_optimizer as additional_optim
 import torch.optim as optim
 
 class VAETrainer(object):
@@ -19,7 +19,7 @@ class VAETrainer(object):
         elif args.optimizer == "adam" or args.optimizer == "manual":
             self.optimizer = optim.Adam(self.params, lr=args.lr, weight_decay=args.weight_decay)
         else:
-            self.optimizer = optim_custom.SWATS(self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
+            self.optimizer = additional_optim.SWATS(self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
 
         self.losses = {
             "total_loss": 0,
@@ -125,12 +125,18 @@ class VAETrainer(object):
                 zq, za, c_ids)
         return q_ids, start_positions, end_positions, zq
 
-    def save(self, filename):
+    def save(self, save_path, epoch, epoch_window=4, filename_format="model-epoch-{:02d}.pt"):
+        filename = os.path.join(save_path, filename_format.format(epoch))
         params = {
-            'vae_state_dict': self.vae.state_dict(),
-            'args': self.args
+            "vae_state_dict": self.vae.state_dict(),
+            "args": self.args
         }
         torch.save(params, filename)
+
+        if epoch - epoch_window >= 1:
+            remove_filename = os.path.join(save_path, filename_format.format(epoch - epoch_window))
+            if os.path.exists(remove_filename):
+                os.remove(remove_filename)
 
     def load_model_state_dict(self, filename):
         params = torch.load(filename)

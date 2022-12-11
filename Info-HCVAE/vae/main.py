@@ -101,7 +101,7 @@ def main(args):
                             "best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1 }, f, indent=4)
 
         if (epoch + 1) % args.save_freq == 0:
-            trainer.save(os.path.join(args.save_by_epoch_dir, "model-epoch-{:02d}.pt".format(epoch + 1)))
+            trainer.save(args.save_by_epoch_dir, epoch+1)
 
 
 if __name__ == "__main__":
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_freq", default=5, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=5, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
-    parser.add_argument("--optimizer", default="manual", choices=["sgd", "adam", "swats", "manual"], type=str, \
+    parser.add_argument("--optimizer", default="swats", choices=["sgd", "adam", "swats", "manual"], type=str, \
         help="optimizer to use, [\"adam\", \"sgd\", \"swats\", \"manual\"] are supported")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")

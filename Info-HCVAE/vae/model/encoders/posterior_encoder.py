@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from model.customized_layers import CustomLSTM
 from model.model_utils import return_mask_lengths, cal_attn, gumbel_softmax, sample_gaussian
 
