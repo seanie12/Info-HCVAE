@@ -111,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument('--train_dir', default='../data/squad/train-v1.1.json')
     parser.add_argument('--dev_dir', default='../data/squad/my_dev.json')
     parser.add_argument("--train_percentage", default=100, type=int, help="training data percentage of questions to use")
-    
+
     parser.add_argument("--max_c_len", default=384, type=int, help="max context length")
     parser.add_argument("--max_q_len", default=64, type=int, help="max query length")
     parser.add_argument("--load_saved_dataloader", dest="load_saved_dataloader", action="store_true")

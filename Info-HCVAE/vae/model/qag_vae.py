@@ -8,7 +8,7 @@ from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
 from model.losses import GaussianKLLoss, CategoricalKLLoss
 from model.infomax import AnswerSpanInfoMaxLoss
-from model.model_utils import gaussian_kernel
+from model.infomax.dim_bce_infomax import DimBceInfoMax
 
 
 class DiscreteVAE(nn.Module):
@@ -88,8 +88,10 @@ class DiscreteVAE(nn.Module):
             # self.ans_local_infomax = AnswerMutualInfoMax(
             #     2*dec_a_nhidden, 2*dec_a_nhidden, infomax_type="bce")
             # self.ans_global_infomax.denote_is_infomax_net_for_params()
-            self.ans_boundary_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
-            self.ans_local_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
+            # self.ans_boundary_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
+            # self.ans_local_infomax = AnswerSpanInfoMaxLoss(2*dec_a_nhidden)
+            self.start_infomax = DimBceInfoMax(x_dim=dec_a_nhidden*2, y_dim=dec_a_nhidden*2)
+            self.end_infomax = DimBceInfoMax(x_dim=dec_a_nhidden*2, y_dim=dec_a_nhidden*2)
 
     def return_init_state(self, zq, za):
         q_init_h = F.mish(self.q_h_linear(zq))
@@ -152,7 +154,7 @@ class DiscreteVAE(nn.Module):
                 # dec_ans_outputs.size() = (N, seq_len, 2*dec_a_nhidden)
 
                 # context means set of {paragraph embeddings}.
-                ans_enc = []
+                start_enc, end_enc, avg_a_enc = [], [], []
                 batch_size = dec_ans_outputs.size(0)
                 for b_idx in range(batch_size):
                     # invalid example or impossible example
@@ -160,53 +162,23 @@ class DiscreteVAE(nn.Module):
                         continue
 
                     # avg_ans_embeds represent the grammatical semantics of answer representation embeddings
-                    ans_embeds = dec_ans_outputs[b_idx,
-                                        start_positions[b_idx]:end_positions[b_idx] + 1, :].unsqueeze(0)
-                    # (seq, hidden_size)
-                    # Construct start position local representations
-                    # extend by 1 tokens left & right to take into account local context
-                    start_idx_1, end_idx_1 = max(0, start_positions[b_idx] - 1), \
-                        min(end_positions[b_idx], start_positions[b_idx] + 1)
-                    start_ans_seq = dec_ans_outputs[b_idx, start_idx_1:end_idx_1+1, :].unsqueeze(0)
+                    avg_ans_embeds = dec_ans_outputs[b_idx,
+                                        start_positions[b_idx]:end_positions[b_idx] + 1, :].unsqueeze(0).mean(dim=1)
+                    # (1, 2*dec_a_nhidden)
+                    start_embed = dec_ans_outputs[b_idx, start_positions[b_idx], :].unsqueeze(0)
+                    end_embed = dec_ans_outputs[b_idx, end_positions[b_idx], :].unsqueeze(0)
+                    start_enc.append(start_embed)
+                    end_enc.append(end_embed)
+                    avg_a_enc.append(avg_ans_embeds)
 
-                    start_idx_2, end_idx_2 = max(start_positions[b_idx], end_positions[b_idx] - 1), \
-                        min(dec_ans_outputs.size(1)-1, end_positions[b_idx] + 1)
-                    end_ans_seq = dec_ans_outputs[b_idx, start_idx_2:end_idx_2+1, :].unsqueeze(0)
+                start_enc = torch.cat(start_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+                end_enc = torch.cat(end_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+                avg_a_enc = torch.cat(avg_a_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+                
+                loss_start_info = self.start_infomax(start_enc, avg_a_enc)
+                loss_end_info = self.end_infomax(start_enc, avg_a_enc)
+                loss_span_info = self.gamma_span_info * (loss_start_info + loss_end_info)
 
-                    ans_enc.append((start_ans_seq, end_ans_seq, ans_embeds))
-
-                # generate fake examples by shifting
-                shift = random.randint(1, len(ans_enc))
-                ans_fake = ans_enc[-shift:] + ans_enc[:-shift]
-
-                start_local_loss, start_pos_loss = 0, 0
-                end_local_loss, end_pos_loss = 0, 0
-                for b_idx in range(len(ans_enc)):
-                    a_enc, a_fake = ans_enc[b_idx], ans_fake[b_idx]
-                    start_a_enc, end_a_enc, ans_embeds = a_enc
-                    start_a_fake, end_a_fake, ans_fake_embeds = a_fake
-
-                    start_embeds, end_embeds = ans_embeds[0, 0, :], ans_embeds[0, -1, :]
-                    start_embeds_fake, end_embeds_fake = ans_fake_embeds[0, 0, :], ans_fake_embeds[0, -1, :]
-
-                    ## Compute local range infomax with all answers ##
-                    start_local_loss = start_local_loss + self.ans_local_infomax(start_a_enc, \
-                        start_a_fake, ans_embeds, ans_fake_embeds, do_summarize=True)
-
-                    end_local_loss = end_local_loss + self.ans_local_infomax(end_a_enc, \
-                        end_a_fake, ans_embeds, ans_fake_embeds, do_summarize=True)
-
-                    ## Compute boundary infomax w.r.t answer representations (emphasize start & end tokens)
-                    start_pos_loss = start_pos_loss + self.ans_boundary_infomax(start_embeds.unsqueeze(0), \
-                        start_embeds_fake.unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
-
-                    end_pos_loss = end_pos_loss + self.ans_boundary_infomax(end_embeds.unsqueeze(0), \
-                        end_embeds_fake.unsqueeze(0), ans_embeds, ans_fake_embeds, do_summarize=False)
-
-                loss_boundary_info = start_pos_loss + end_pos_loss
-                loss_local_info = start_local_loss + end_local_loss
-                loss_span_info = self.gamma_span_info * \
-                    ((0.5*loss_local_info + loss_boundary_info) / len(ans_enc))
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
