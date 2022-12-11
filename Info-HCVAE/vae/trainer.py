@@ -131,8 +131,8 @@ class VAETrainer(object):
 
     def save(self, save_path, save_mode="epoch", epoch=None, save_freq=None, max_models_to_keep=4):
         assert save_mode in ["best_f1", "best_bleu"] or \
-            (save_mode == "epoch" and epoch is not None and save_freq is not None)
-        assert epoch % save_freq == 0
+            (save_mode == "epoch" and epoch is not None and save_freq is not None \
+                and epoch % save_freq == 0)
 
         if save_mode == "epoch":
             filename = os.path.join(save_path, "model-epoch-{:02d}.pt".format(epoch))
