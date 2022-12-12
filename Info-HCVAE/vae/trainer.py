@@ -25,16 +25,7 @@ class VAETrainer(object):
             self.optimizer = additional_optim.SWATS(
                 self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
 
-        self.losses = {
-            "total_loss": 0,
-            "loss_q_rec": 0,
-            "loss_a_rec": 0,
-            "loss_kl": 0,
-            "loss_zq_kl": 0,
-            "loss_za_kl": 0,
-            "loss_jsd": 0,
-            "loss_qa_info": 0,
-        }
+        self.losses = dict()
         self.cnt_steps = 0
 
     def adjust_infomax_weight(self, infomax_loss):
@@ -55,7 +46,10 @@ class VAETrainer(object):
         self.optimizer.step()
 
         for key, value in return_dict.items():
-            self.losses[key] += value.item()
+            if key in self.losses:
+                self.losses[key] += value.item()
+            else:
+                self.losses[key] = value.item()
 
         self.cnt_steps += 1
         if self.cnt_steps % 100 == 0:

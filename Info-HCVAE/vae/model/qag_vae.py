@@ -138,7 +138,7 @@ class DiscreteVAE(nn.Module):
             loss_za_kl = self.categorical_kl_criterion(posterior_za_logits,
                                                        prior_za_logits)
 
-            loss_jsd = 0
+            loss_jsd, loss_zq_jsd, loss_za_jsd = 0, 0, 0
             if self.alpha_jsd > 0:
                 loss_zq_jsd = self.gaussian_jsd_loss(posterior_zq_mu, posterior_zq_logvar, \
                     prior_zq_mu, prior_zq_logvar)
@@ -158,6 +158,8 @@ class DiscreteVAE(nn.Module):
                 "loss_zq_kl": loss_zq_kl,
                 "loss_za_kl": loss_za_kl,
                 "loss_jsd": loss_jsd,
+                "loss_zq_jsd": loss_zq_jsd,
+                "loss_za_jsd": loss_za_jsd,
                 "loss_qa_info": loss_qa_info,
             }
             return return_dict
