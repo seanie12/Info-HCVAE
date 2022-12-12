@@ -75,7 +75,7 @@ class DiscreteVAE(nn.Module):
 
         self.q_h_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
         self.q_c_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
-        self.a_linear = nn.Linear(nza*nzadim, args.max_c_len, False)
+        self.a_linear = nn.Linear(nza*nzadim, emsize, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
         self.a_rec_criterion = nn.CrossEntropyLoss(ignore_index=args.max_c_len)
