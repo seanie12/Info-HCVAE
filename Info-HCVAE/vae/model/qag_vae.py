@@ -142,8 +142,9 @@ class DiscreteVAE(nn.Module):
 
             loss_z_prior_info = 0
             if self.z_prior_info > 0:
+                batch_size, _ = prior_zq.size()
                 loss_z_prior_info = self.z_prior_info * (self.zq_prior_infomax(prior_zq, posterior_zq) \
-                    + self.za_prior_infomax(prior_za, posterior_za))
+                    + self.za_prior_infomax(prior_za.view(batch_size, -1), posterior_za.view(batch_size, -1)))
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
