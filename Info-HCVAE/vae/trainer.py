@@ -32,7 +32,7 @@ class VAETrainer(object):
             "loss_kl": 0,
             "loss_zq_kl": 0,
             "loss_za_kl": 0,
-            "loss_z_prior_info": 0,
+            "loss_jsd": 0,
             "loss_qa_info": 0,
         }
         self.cnt_steps = 0

@@ -6,9 +6,7 @@ from transformers import BertTokenizer
 from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
-from model.losses import GaussianKLLoss, CategoricalKLLoss
-from model.infomax import AnswerSpanInfoMaxLoss
-from model.infomax.dim_bce_infomax import DimBceInfoMax
+from model.losses import GaussianKLLoss, CategoricalKLLoss, GaussianJensenShannonDivLoss, CategoricalJensenShannonDivLoss
 
 
 class DiscreteVAE(nn.Module):
@@ -41,7 +39,7 @@ class DiscreteVAE(nn.Module):
 
         self.w_bce = args.w_bce
         self.alpha_kl = args.alpha_kl
-        self.z_prior_info = args.z_prior_info
+        self.alpha_jsd = args.alpha_jsd
         self.lambda_qa_info = args.lambda_qa_info
 
         max_q_len = args.max_q_len
@@ -81,9 +79,9 @@ class DiscreteVAE(nn.Module):
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
 
-        if self.z_prior_info > 0:
-            self.zq_prior_infomax = DimBceInfoMax(x_dim=nzqdim, z_dim=nzqdim)
-            self.za_prior_infomax = DimBceInfoMax(x_dim=nza*nzadim, z_dim=nza*nzadim)
+        if self.alpha_jsd > 0:
+            self.gaussian_jsd_loss = GaussianJensenShannonDivLoss()
+            self.categorical_jsd_loss = CategoricalJensenShannonDivLoss()
 
     def return_init_state(self, zq, za):
         q_init_h = self.q_h_linear(zq)
@@ -104,8 +102,8 @@ class DiscreteVAE(nn.Module):
             posterior_za_logits, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, prior_zq, \
-            prior_za_logits, prior_za \
+        prior_zq_mu, prior_zq_logvar, _, \
+            prior_za_logits, _ \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -140,16 +138,17 @@ class DiscreteVAE(nn.Module):
             loss_za_kl = self.categorical_kl_criterion(posterior_za_logits,
                                                        prior_za_logits)
 
-            loss_z_prior_info = 0
-            if self.z_prior_info > 0:
-                batch_size, _ = prior_zq.size()
-                loss_z_prior_info = self.z_prior_info * (self.zq_prior_infomax(prior_zq, posterior_zq) \
-                    + self.za_prior_infomax(prior_za.view(batch_size, -1), posterior_za.view(batch_size, -1)))
+            loss_jsd = 0
+            if self.alpha_jsd > 0:
+                loss_zq_jsd = self.gaussian_jsd_loss(posterior_zq_mu, posterior_zq_logvar, \
+                    prior_zq_mu, prior_zq_logvar)
+                loss_za_jsd = self.categorical_jsd_loss(posterior_za_logits, prior_za_logits)
+                loss_jsd = self.alpha_jsd * (loss_zq_jsd + loss_za_jsd)
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
             loss = self.w_bce * (loss_q_rec + loss_a_rec) + \
-                loss_kl + loss_qa_info + loss_z_prior_info
+                loss_kl + loss_qa_info + loss_jsd
 
             return_dict = {
                 "total_loss": loss,
@@ -158,7 +157,7 @@ class DiscreteVAE(nn.Module):
                 "loss_kl": loss_kl,
                 "loss_zq_kl": loss_zq_kl,
                 "loss_za_kl": loss_za_kl,
-                "loss_z_prior_info": loss_z_prior_info,
+                "loss_jsd": loss_jsd,
                 "loss_qa_info": loss_qa_info,
             }
             return return_dict

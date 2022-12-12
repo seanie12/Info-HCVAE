@@ -4,6 +4,8 @@ import torch.nn.functional as F
 from model.model_utils import sample_gaussian, gumbel_softmax, return_mask_lengths
 
 # Define MMD loss
+
+
 def compute_kernel(x, y, latent_dim, kernel_bandwidth, imq_scales=[0.1, 0.2, 0.5, 1.0, 2.0, 5, 10.0], kernel="rbf"):
     """ Return a kernel of size (batch_x, batch_y) """
     if kernel == "imq":
@@ -107,41 +109,75 @@ class ContinuousKernelMMDLoss(nn.Module):
 
 class DIoUAnswerSpanLoss(nn.Module):
     """ Maybe i'll try later - but it's not sure that this will work """
+
     def __init__(self):
         super(DIoUAnswerSpanLoss, self).__init__()
-
 
     def compute_diou(self, start_positions, end_positions, gt_start_positions, gt_end_positions):
         center_dist = (end_positions - start_positions + 1) / 2
         gt_center_dist = (gt_end_positions - gt_start_positions + 1) / 2
         min_start_positions = torch.min(torch.cat((start_positions.unsqueeze(-1), gt_start_positions.unsqueeze(-1)), dim=-1),
-                                    dim=-1)[0] # return tuple of torch.min = (min, min_indices)
+                                        dim=-1)[0]  # return tuple of torch.min = (min, min_indices)
         max_end_positions = torch.max(torch.cat((end_positions.unsqueeze(-1), gt_end_positions.unsqueeze(-1)), dim=-1),
-                                    dim=-1)[0] # return tuple of torch.max = (max, max_indices)
-        center_loss = (center_dist - gt_center_dist).pow(2).sum(dim=-1) / (max_end_positions - min_start_positions).pow(2).sum(dim=-1)
+                                      dim=-1)[0]  # return tuple of torch.max = (max, max_indices)
+        center_loss = (center_dist - gt_center_dist).pow(2).sum(dim=-1) / \
+            (max_end_positions - min_start_positions).pow(2).sum(dim=-1)
 
         max_start_positions = torch.max(start_positions, gt_start_positions)[0]
         min_end_positions = torch.min(end_positions, gt_end_positions)[0]
-        intersection = torch.max(min_end_positions - max_start_positions, 0)[0].sum(dim=-1)
-        union = (((end_positions - start_positions) + (gt_end_positions - gt_start_positions)) - intersection).sum(dim=-1)
+        intersection = torch.max(
+            min_end_positions - max_start_positions, 0)[0].sum(dim=-1)
+        union = (((end_positions - start_positions) + (gt_end_positions -
+                 gt_start_positions)) - intersection).sum(dim=-1)
         iou = intersection / union
         return ((1 - iou) + center_loss).mean()
-
 
     def forward(self, c_ids, gt_start_positions, gt_end_positions, start_logits, end_logits):
         # Extract answer mask, start pos, & end pos using start logits & end logits
         c_mask, _ = return_mask_lengths(c_ids)
 
         mask = torch.matmul(c_mask.unsqueeze(2).float(),
-                            c_mask.unsqueeze(1).float()) # shape = (batch, c_len, c_len)
+                            c_mask.unsqueeze(1).float())  # shape = (batch, c_len, c_len)
         mask = torch.triu(mask) == 0
         score = (F.log_softmax(start_logits, dim=1).unsqueeze(2)
-                 + F.log_softmax(end_logits, dim=1).unsqueeze(1)) # shape = (batch, c_len, c_len)
+                 + F.log_softmax(end_logits, dim=1).unsqueeze(1))  # shape = (batch, c_len, c_len)
         score = score.masked_fill(mask, -10000.0)
-        score, start_positions = score.max(dim=1) # score's shape = (batch, c_len)
+        # score's shape = (batch, c_len)
+        score, start_positions = score.max(dim=1)
         score, end_positions = score.max(dim=1)
         start_positions = torch.gather(start_positions,
                                        1,
                                        end_positions.view(-1, 1)).squeeze(1)
 
         return self.compute_diou(start_positions, end_positions, gt_start_positions, gt_end_positions)
+
+
+class GaussianJensenShannonDivLoss(nn.Module):
+    def __init__(self):
+        super(GaussianJensenShannonDivLoss, self).__init__()
+        self.gaussian_kl_loss = GaussianKLLoss()
+
+    def forward(self, mu1, logvar1, mu2, logvar2):
+        mean_mu, mean_logvar = (mu1+mu2) / 2, ((logvar1.exp() + logvar2.exp()) / 2).log()
+
+        loss = self.gaussian_kl_loss(mu1, logvar1, mean_mu, mean_logvar)
+        loss += self.gaussian_kl_loss(mu2, logvar2, mean_mu, mean_logvar)
+     
+        return (0.5 * loss)
+
+
+class CategoricalJensenShannonDivLoss(nn.Module):
+    def __init__(self):
+        super(CategoricalJensenShannonDivLoss, self).__init__()
+
+    def forward(self, posterior_za_logits, prior_za_logits):
+        posterior_za_probs = F.softmax(posterior_za_logits, dim=1)
+        prior_za_probs = F.softmax(prior_za_logits, dim=1)
+
+        mean_probs = 0.5 * (posterior_za_probs + prior_za_probs)
+        loss = F.kl_div(F.log_softmax(posterior_za_logits,
+                         dim=1), mean_probs, reduction="batchmean")
+        loss += F.kl_div(F.log_softmax(prior_za_logits, dim=1),
+                         mean_probs, reduction="batchmean")
+
+        return (0.5 * loss)
