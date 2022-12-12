@@ -156,24 +156,24 @@ class DiscreteVAE(nn.Module):
 
                     # avg_ans_embeds represent the grammatical semantics of answer representation embeddings
                     avg_ans_embeds = dec_ans_outputs[b_idx,
-                                        start_positions[b_idx]:end_positions[b_idx] + 1, :].unsqueeze(0).mean(dim=1)
+                                        start_positions[b_idx]:end_positions[b_idx] + 1, :].mean(dim=0, keepdims=True)
+                    avg_a_enc.append(avg_ans_embeds)
                     # (1, 2*dec_a_nhidden)
                     for w_idx, window_size in enumerate(self.local_info_window):
                         extend_start_pos = (max(0, start_positions[b_idx] - window_size), \
                             min(end_positions[b_idx] + 1, start_positions[b_idx] + window_size + 1))
                         extend_end_pos = (max(start_positions[b_idx], end_positions[b_idx] - window_size), \
                             min(dec_ans_outputs.size(1), end_positions[b_idx] + window_size + 1))
-                        start_embed = dec_ans_outputs[b_idx, extend_start_pos[0]:extend_start_pos[1], :].mean(dim=0).unsqueeze(0)
-                        end_embed = dec_ans_outputs[b_idx, extend_end_pos[0]:extend_end_pos[1], :].mean(dim=0).unsqueeze(0)
+                        start_embed = dec_ans_outputs[b_idx, extend_start_pos[0]:extend_start_pos[1], :].mean(dim=0, keepdims=True)
+                        end_embed = dec_ans_outputs[b_idx, extend_end_pos[0]:extend_end_pos[1], :].mean(dim=0, keepdims=True)
+                        print(w_idx + " -- " + start_embed.size() + " -- " + end_embed.size())
                         start_encs[w_idx].append(start_embed)
                         end_encs[w_idx].append(end_embed)
-                    avg_a_enc.append(avg_ans_embeds)
 
                 assert len(start_encs) == len(self.local_info_window) and len(end_encs) == len(self.local_info_window)
 
                 loss_start_info, loss_end_info = 0, 0
                 avg_a_enc = torch.cat(avg_a_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
-                print(avg_a_enc.size())
                 for w_idx in range(len(self.local_info_window)):
                     start_enc, end_enc = start_encs[w_idx], end_encs[w_idx]
                     start_enc = torch.cat(start_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
