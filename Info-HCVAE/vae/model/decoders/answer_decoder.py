@@ -27,12 +27,12 @@ class AnswerDecoder(nn.Module):
         c_mask, c_lengths = return_mask_lengths(c_ids)
 
         c_embeddings = self.embedding(c_ids, c_mask)
-        # U = init_state.unsqueeze(1).repeat(1, max_c_len, 1)
-        reshaped_init_state = init_state.view(batch_size, max_c_len, -1)
+        repeated_init_state = init_state.unsqueeze(1).repeat(1, max_c_len, 1)
+        # reshaped_init_state = init_state.view(batch_size, max_c_len, -1)
         fused_features = torch.cat([c_embeddings,
-                                    reshaped_init_state,
-                                    c_embeddings * reshaped_init_state,
-                                    torch.abs(c_embeddings - reshaped_init_state)],
+                                    repeated_init_state,
+                                    c_embeddings * repeated_init_state,
+                                    torch.abs(c_embeddings - repeated_init_state)],
                                    dim=-1)
         out_features, _ = self.context_lstm(
             fused_features, c_lengths.to("cpu"))

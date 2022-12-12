@@ -43,6 +43,7 @@ class DiscreteVAE(nn.Module):
         self.alpha_kl = args.alpha_kl
         self.gamma_span_info = args.gamma_span_info
         self.lambda_qa_info = args.lambda_qa_info
+        self.local_info_window = args.local_info_window
 
         max_q_len = args.max_q_len
 
@@ -74,7 +75,7 @@ class DiscreteVAE(nn.Module):
 
         self.q_h_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
         self.q_c_linear = nn.Linear(nzqdim, dec_q_nlayers * dec_q_nhidden)
-        self.a_linear = nn.Linear(nza*nzadim, emsize*args.max_c_len, False)
+        self.a_linear = nn.Linear(nza*nzadim, args.max_c_len, False)
 
         self.q_rec_criterion = nn.CrossEntropyLoss(ignore_index=padding_idx)
         self.a_rec_criterion = nn.CrossEntropyLoss(ignore_index=args.max_c_len)
@@ -146,7 +147,7 @@ class DiscreteVAE(nn.Module):
                 # dec_ans_outputs.size() = (N, seq_len, 2*dec_a_nhidden)
 
                 # context means set of {paragraph embeddings}.
-                start_enc, end_enc, avg_a_enc = [], [], []
+                start_encs, end_encs, avg_a_enc = [[]]*len(self.local_info_window), [[]]*len(self.local_info_window), []
                 batch_size = dec_ans_outputs.size(0)
                 for b_idx in range(batch_size):
                     # invalid example or impossible example
@@ -157,19 +158,27 @@ class DiscreteVAE(nn.Module):
                     avg_ans_embeds = dec_ans_outputs[b_idx,
                                         start_positions[b_idx]:end_positions[b_idx] + 1, :].unsqueeze(0).mean(dim=1)
                     # (1, 2*dec_a_nhidden)
-                    start_embed = dec_ans_outputs[b_idx, start_positions[b_idx], :].unsqueeze(0)
-                    end_embed = dec_ans_outputs[b_idx, end_positions[b_idx], :].unsqueeze(0)
-                    start_enc.append(start_embed)
-                    end_enc.append(end_embed)
+                    for w_idx, window_size in enumerate(self.local_info_window):
+                        extend_start_pos = (max(0, start_positions[b_idx] - window_size), \
+                            min(end_positions[b_idx] + 1, start_positions[b_idx] + window_size + 1))
+                        extend_end_pos = (max(start_positions[b_idx], end_positions[b_idx] - window_size), \
+                            min(dec_ans_outputs.size(1), end_positions[b_idx] + window_size + 1))
+                        start_embed = dec_ans_outputs[b_idx, extend_start_pos[0]:extend_start_pos[1], :].mean(dim=1).unsqueeze(0)
+                        end_embed = dec_ans_outputs[b_idx, extend_end_pos[0]:extend_end_pos[1], :].mean(dim=1).unsqueeze(0)
+                        start_encs[w_idx].append(start_embed)
+                        end_encs[w_idx].append(end_embed)
                     avg_a_enc.append(avg_ans_embeds)
 
-                start_enc = torch.cat(start_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
-                end_enc = torch.cat(end_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+                loss_start_info, loss_end_info = 0, 0
                 avg_a_enc = torch.cat(avg_a_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+                for w_idx in range(len(self.local_info_window)):
+                    start_encs[w_idx] = torch.cat(start_encs[w_idx], dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+                    end_encs[w_idx] = torch.cat(end_encs[w_idx], dim=0) # shape = (batch_size, 2*dec_a_nhidden)
 
-                loss_start_info = self.start_infomax(start_enc, avg_a_enc)
-                loss_end_info = self.end_infomax(start_enc, avg_a_enc)
-                loss_span_info = self.gamma_span_info * (loss_start_info + loss_end_info)
+                    loss_start_info += self.start_infomax(start_encs[w_idx], avg_a_enc)
+                    loss_end_info += self.end_infomax(end_encs[w_idx], avg_a_enc)
+
+                loss_span_info = self.gamma_span_info * ((loss_start_info + loss_end_info) / len(self.local_info_window))
 
 
             loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)

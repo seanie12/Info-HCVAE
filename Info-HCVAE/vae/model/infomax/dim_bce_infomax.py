@@ -15,14 +15,18 @@ class DimBceInfoMax(nn.Module):
         self.z_dim = z_dim
         self.x_dim = x_dim
         self.discriminator = nn.Sequential(
-            nn.Linear(self.x_dim + self.z_dim, 1024),
+            nn.Linear(self.x_dim + self.z_dim, 2048),
             nn.Mish(True),
             nn.Dropout(0.5),
+            nn.Linear(2048, 1024),
+            nn.Mish(True),
             nn.Linear(1024, 512),
             nn.Mish(True),
             nn.Linear(512, 256),
             nn.Mish(True),
-            nn.Linear(256, 1),
+            nn.Linear(256, 128),
+            nn.Mish(True),
+            nn.Linear(128, 1)
         )
         self.bce_loss = nn.BCEWithLogitsLoss()
 
