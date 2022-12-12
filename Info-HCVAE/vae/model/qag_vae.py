@@ -176,6 +176,10 @@ class DiscreteVAE(nn.Module):
                 avg_a_enc = torch.cat(avg_a_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
                 for w_idx in range(len(self.local_info_window)):
                     start_enc, end_enc = start_encs[w_idx], end_encs[w_idx]
+                    print(len(start_enc))
+                    print(len(end_enc))
+                    print(start_enc[0].size())
+                    print(end_enc[0].size())
                     start_enc = torch.cat(start_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
                     end_enc = torch.cat(end_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
 
