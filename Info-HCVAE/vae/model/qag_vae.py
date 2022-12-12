@@ -163,8 +163,8 @@ class DiscreteVAE(nn.Module):
                             min(end_positions[b_idx] + 1, start_positions[b_idx] + window_size + 1))
                         extend_end_pos = (max(start_positions[b_idx], end_positions[b_idx] - window_size), \
                             min(dec_ans_outputs.size(1), end_positions[b_idx] + window_size + 1))
-                        start_embed = dec_ans_outputs[b_idx, extend_start_pos[0]:extend_start_pos[1], :].mean(dim=1).unsqueeze(0)
-                        end_embed = dec_ans_outputs[b_idx, extend_end_pos[0]:extend_end_pos[1], :].mean(dim=1).unsqueeze(0)
+                        start_embed = dec_ans_outputs[b_idx, extend_start_pos[0]:extend_start_pos[1], :].mean(dim=0).unsqueeze(0)
+                        end_embed = dec_ans_outputs[b_idx, extend_end_pos[0]:extend_end_pos[1], :].mean(dim=0).unsqueeze(0)
                         start_encs[w_idx].append(start_embed)
                         end_encs[w_idx].append(end_embed)
                     avg_a_enc.append(avg_ans_embeds)
