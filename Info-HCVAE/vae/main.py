@@ -47,7 +47,7 @@ def main(args):
         eval_data = test_eval_data
 
     train_loader, _, _ = train_data
-    # current_lr = args.lr
+    current_lr = args.lr
     best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
     first_run = True
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
@@ -55,7 +55,9 @@ def main(args):
             continue
 
         if not args.is_test_run and args.optimizer == "manual":
-            if epoch+1 == 21:
+            if epoch+1 == 11:
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+            elif epoch+1 == 21:
                 current_lr = current_lr / 10
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
             elif epoch+1 == 31:
@@ -128,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_freq", default=5, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=5, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
-    parser.add_argument("--optimizer", default="swats", choices=["sgd", "adam", "swats", "manual"], type=str, \
+    parser.add_argument("--optimizer", default="manual", choices=["sgd", "adam", "swats", "manual"], type=str, \
         help="optimizer to use, [\"adam\", \"sgd\", \"swats\", \"manual\"] are supported")
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
