@@ -169,11 +169,17 @@ class DiscreteVAE(nn.Module):
                         end_encs[w_idx].append(end_embed)
                     avg_a_enc.append(avg_ans_embeds)
 
+                assert len(start_encs) == len(self.local_info_window) and len(end_encs) == len(self.local_info_window)
+
                 loss_start_info, loss_end_info = 0, 0
                 avg_a_enc = torch.cat(avg_a_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+                print(avg_a_enc.size())
                 for w_idx in range(len(self.local_info_window)):
                     start_encs[w_idx] = torch.cat(start_encs[w_idx], dim=0) # shape = (batch_size, 2*dec_a_nhidden)
                     end_encs[w_idx] = torch.cat(end_encs[w_idx], dim=0) # shape = (batch_size, 2*dec_a_nhidden)
+
+                    print(start_encs[w_idx].size())
+                    print(end_encs[w_idx].size())
 
                     loss_start_info += self.start_infomax(start_encs[w_idx], avg_a_enc)
                     loss_end_info += self.end_infomax(end_encs[w_idx], avg_a_enc)
