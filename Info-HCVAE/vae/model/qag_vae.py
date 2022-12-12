@@ -182,8 +182,8 @@ class DiscreteVAE(nn.Module):
                     start_enc = torch.cat(start_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
                     end_enc = torch.cat(end_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
 
-                    loss_start_info += self.start_infomax(start_encs[w_idx], avg_a_enc)
-                    loss_end_info += self.end_infomax(end_encs[w_idx], avg_a_enc)
+                    loss_start_info += self.start_infomax(start_enc, avg_a_enc)
+                    loss_end_info += self.end_infomax(end_enc, avg_a_enc)
 
                 loss_span_info = self.gamma_span_info * ((loss_start_info + loss_end_info) / len(self.local_info_window))
 
