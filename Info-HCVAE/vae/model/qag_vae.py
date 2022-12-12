@@ -147,7 +147,10 @@ class DiscreteVAE(nn.Module):
                 # dec_ans_outputs.size() = (N, seq_len, 2*dec_a_nhidden)
 
                 # context means set of {paragraph embeddings}.
-                start_encs, end_encs, avg_a_enc = [[]]*len(self.local_info_window), [[]]*len(self.local_info_window), []
+                start_encs, end_encs, avg_a_enc = [], [], []
+                for _ in range(len(self.local_info_window)):
+                    start_encs.append([])
+                    end_encs.append([])
                 batch_size = dec_ans_outputs.size(0)
                 for b_idx in range(batch_size):
                     # invalid example or impossible example
@@ -166,27 +169,18 @@ class DiscreteVAE(nn.Module):
                             min(dec_ans_outputs.size(1), end_positions[b_idx] + window_size + 1))
                         start_embed = dec_ans_outputs[b_idx, extend_start_pos[0]:extend_start_pos[1], :].mean(dim=0, keepdims=True)
                         end_embed = dec_ans_outputs[b_idx, extend_end_pos[0]:extend_end_pos[1], :].mean(dim=0, keepdims=True)
-                        print("{:d} -- ".format(w_idx), end='')
-                        print(start_embed.size(), end='')
-                        print(end_embed.size())
                         start_encs[w_idx].append(start_embed)
                         end_encs[w_idx].append(end_embed)
 
                 assert len(start_encs) == len(self.local_info_window) and len(end_encs) == len(self.local_info_window)
+                assert len(start_encs[0]) == batch_size
 
                 loss_start_info, loss_end_info = 0, 0
                 avg_a_enc = torch.cat(avg_a_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
                 for w_idx in range(len(self.local_info_window)):
                     start_enc, end_enc = start_encs[w_idx], end_encs[w_idx]
-                    print(len(start_enc))
-                    print(len(end_enc))
-                    print(start_enc[0].size())
-                    print(end_enc[0].size())
                     start_enc = torch.cat(start_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
                     end_enc = torch.cat(end_enc, dim=0) # shape = (batch_size, 2*dec_a_nhidden)
-
-                    print(start_enc.size())
-                    print(end_enc.size())
 
                     loss_start_info += self.start_infomax(start_encs[w_idx], avg_a_enc)
                     loss_end_info += self.end_infomax(end_encs[w_idx], avg_a_enc)
