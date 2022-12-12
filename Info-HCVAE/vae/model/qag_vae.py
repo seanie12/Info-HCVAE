@@ -166,7 +166,9 @@ class DiscreteVAE(nn.Module):
                             min(dec_ans_outputs.size(1), end_positions[b_idx] + window_size + 1))
                         start_embed = dec_ans_outputs[b_idx, extend_start_pos[0]:extend_start_pos[1], :].mean(dim=0, keepdims=True)
                         end_embed = dec_ans_outputs[b_idx, extend_end_pos[0]:extend_end_pos[1], :].mean(dim=0, keepdims=True)
-                        print(w_idx + " -- " + start_embed.size() + " -- " + end_embed.size())
+                        print("{:d} -- ".format(w_idx), end='')
+                        print(start_embed.size(), end='')
+                        print(end_embed.size())
                         start_encs[w_idx].append(start_embed)
                         end_encs[w_idx].append(end_embed)
 
