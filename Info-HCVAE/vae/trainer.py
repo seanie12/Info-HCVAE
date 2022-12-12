@@ -32,7 +32,7 @@ class VAETrainer(object):
             "loss_kl": 0,
             "loss_zq_kl": 0,
             "loss_za_kl": 0,
-            "loss_span_info": 0,
+            "loss_z_prior_info": 0,
             "loss_qa_info": 0,
         }
         self.cnt_steps = 0
@@ -64,15 +64,18 @@ class VAETrainer(object):
         # self.adjust_infomax_weight(return_dict["loss_z_info"].item())
 
     def change_optimizer(self, args, optimizer="adam", lr=1e-4, weight_decay=0.0):
-        assert optimizer in ["sgd", "adam"]
+        assert optimizer in ["sgd", "adam", "swats"]
         self.params = filter(lambda p: p.requires_grad, self.vae.parameters())
         # self.params = self.vae.get_vae_params(lr=lr) + (self.vae.get_infomax_params(lr=lr/100) if args.lambda_z_info > 0 else [])
         if optimizer == "sgd":
             self.optimizer = torch.optim.SGD(
                 self.params, lr=lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
-        else:
+        elif optimizer == "adam":
             self.optimizer = torch.optim.Adam(
                 self.params, lr=lr, weight_decay=weight_decay)
+        else:
+            self.optimizer = additional_optim.SWATS(
+                self.params, lr=args.lr, nesterov=False, weight_decay=args.weight_decay)
 
     def print_log(self, log_type="step", epoch=None):
         """

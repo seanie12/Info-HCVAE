@@ -23,7 +23,7 @@ class AnswerDecoder(nn.Module):
         self.ls = nn.LogSoftmax(dim=1)
 
     def forward(self, init_state, c_ids):
-        batch_size, max_c_len = c_ids.size()
+        _, max_c_len = c_ids.size()
         c_mask, c_lengths = return_mask_lengths(c_ids)
 
         c_embeddings = self.embedding(c_ids, c_mask)
@@ -45,10 +45,7 @@ class AnswerDecoder(nn.Module):
             start_end_mask, -10000.0)
         masked_end_logits = end_logits.masked_fill(start_end_mask, -10000.0)
 
-        if self.training:
-            return masked_start_logits, masked_end_logits, out_features
-        else:
-            return masked_start_logits, masked_end_logits
+        return masked_start_logits, masked_end_logits
 
     def generate(self, init_state, c_ids):
         start_logits, end_logits = self.forward(init_state, c_ids)
