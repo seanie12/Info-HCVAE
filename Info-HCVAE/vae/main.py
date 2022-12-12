@@ -55,10 +55,19 @@ def main(args):
             continue
 
         if not args.is_test_run and args.optimizer == "manual":
-            if epoch+1 == 11:
+            if epoch+1 == 5:
+                # boost grad descent by reset the LR of Adam
+                trainer.change_optimizer(args, optimizer="adam", lr=current_lr, weight_decay=args.weight_decay)
+            elif epoch+1 == 11:
+                # change optimizer to sgd
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+            elif epoch+1 == 15:
+                # reduce the LR by 5 times at epoch 15
+                current_lr = current_lr / 5
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr / 5, weight_decay=args.weight_decay)
             elif epoch+1 == 21:
-                current_lr = current_lr / 10
+                # reduce again by 2 to get a total reduction of 10 at epoch > 20
+                current_lr = current_lr / 2
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
             elif epoch+1 == 31:
                 current_lr = current_lr / 10
