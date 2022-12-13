@@ -56,17 +56,18 @@ def main(args):
 
         if not args.is_test_run and args.optimizer == "manual":
             if epoch+1 == 5:
-                # boost grad descent by reset the LR of Adam
+                # boost grad descent by reset Adam with LR / 2 = 0.0005 = 5e-4
+                current_lr = current_lr / 2
                 trainer.change_optimizer(args, optimizer="adam", lr=current_lr, weight_decay=args.weight_decay)
             elif epoch+1 == 11:
                 # change optimizer to sgd
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
             elif epoch+1 == 15:
-                # reduce the LR by 5 times at epoch 15
-                current_lr = current_lr / 5
-                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr / 5, weight_decay=args.weight_decay)
+                # reduce the LR by 5 times at epoch 15 = 0.0001 = 1e-4
+                current_lr = current_lr / 2
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
             elif epoch+1 == 21:
-                # reduce again by 2 to get a total reduction of 10 at epoch > 20
+                # reduce by 10 at epoch > 20 = 0.00001 = 1e-5
                 current_lr = current_lr / 2
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
             elif epoch+1 == 31:
@@ -151,18 +152,18 @@ if __name__ == "__main__":
     parser.add_argument('--enc_dropout', type=float, default=0.3)
     parser.add_argument('--dec_a_nhidden', type=int, default=300)
     parser.add_argument('--dec_a_nlayers', type=int, default=1)
-    parser.add_argument('--dec_a_dropout', type=float, default=0.2)
+    parser.add_argument('--dec_a_dropout', type=float, default=0.3)
     parser.add_argument('--dec_q_nhidden', type=int, default=900)
     parser.add_argument('--dec_q_nlayers', type=int, default=2)
     parser.add_argument('--dec_q_dropout', type=float, default=0.3)
     parser.add_argument('--nzqdim', type=int, default=64)
     parser.add_argument('--nza', type=int, default=32)
     parser.add_argument('--nzadim', type=int, default=16)
-    parser.add_argument('--w_bce', type=float, default=2.0)
+    parser.add_argument('--w_bce', type=float, default=1.5)
     parser.add_argument('--alpha_kl', type=float, default=0.9)
-    parser.add_argument('--lambda_mmd_q', type=float, default=1.1)
-    parser.add_argument('--lambda_mmd_a', type=float, default=10.1)
-    parser.add_argument('--lambda_qa_info', type=float, default=1.0)
+    parser.add_argument('--lambda_mmd_q', type=float, default=1.6)
+    parser.add_argument('--lambda_mmd_a', type=float, default=1.6)
+    parser.add_argument('--lambda_qa_info', type=float, default=1.5)
 
     args = parser.parse_args()
 
