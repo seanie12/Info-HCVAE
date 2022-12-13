@@ -46,7 +46,7 @@ class Result(object):
         self.prior_z_prob = prior_z_prob
 
 
-def eval_vae(epoch, args, trainer, eval_data):
+def eval_vae(args, trainer, eval_data):
     trainer.set_eval_mode(True)
 
     tokenizer = BertTokenizer.from_pretrained(args.huggingface_model)
