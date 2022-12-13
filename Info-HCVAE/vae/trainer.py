@@ -119,9 +119,9 @@ class VAETrainer(object):
                 zq, za, c_ids)
         return start_logits, end_logits
 
-    def generate_prior(self, c_ids):
+    def generate_prior(self, c_ids, posterior_zq=None):
         with torch.no_grad():
-            zq, za = self.vae.prior_encoder(c_ids)
+            zq, za = self.vae.prior_encoder(c_ids, zq=posterior_zq)
             q_ids, start_positions, end_positions = self.vae.generate(
                 zq, za, c_ids)
         return q_ids, start_positions, end_positions, zq

@@ -87,29 +87,33 @@ def main(args):
         trainer.print_log(log_type="epoch", epoch=epoch+1)
 
         if (epoch + 1) % args.eval_freq == 0:
-            metric_dict, bleu, _ = eval_vae(epoch, args, trainer, eval_data)
-            f1 = metric_dict["f1"]
-            em = metric_dict["exact_match"]
+            posterior_metrics, prior_metrics, bleu = eval_vae(epoch, args, trainer, eval_data)
+            posterior_f1 = posterior_metrics["f1"]
+            posterior_em = posterior_metrics["exact_match"]
+            prior_f1 = prior_metrics["f1"]
+            prior_em = prior_metrics["exact_match"]
             bleu = bleu * 100
-            log_str = '{}-th Epochs BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
-            log_str = log_str.format(epoch, bleu, em, f1)
+
+            log_str = '{}-th Epochs BLEU : {:02.2f} POS_EM : {:02.2f} POS_F1 : {:02.2f} PRI_EM : {02:2f} PRI_F1 : {:02.2f}'
+            log_str = log_str.format(epoch, bleu, posterior_em, posterior_f1, prior_em, prior_f1)
             print(log_str)
-            if em > best_em:
-                best_em = em
-            if f1 > best_f1:
-                best_f1 = f1
+
+            if posterior_em > best_em:
+                best_em = posterior_em
+            if posterior_f1 > best_f1:
+                best_f1 = posterior_f1
                 trainer.save(args.best_model_dir, save_mode="best_f1")
             if bleu > best_bleu:
                 best_bleu = bleu
                 trainer.save(args.best_model_dir, save_mode="best_bleu")
-
             log_str = 'BEST BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
             log_str = log_str.format(best_bleu, best_em, best_f1)
             print(log_str)
 
             with open(os.path.join(args.model_dir, "metrics.json"), "wt") as f:
                 import json
-                json.dump({ "latest_bleu": bleu, "latest_em": em, "latest_f1": f1,
+                json.dump({ "latest_bleu": bleu, "latest_pos_em": posterior_em, "latest_pos_f1": posterior_f1,
+                            "latest_pri_em": prior_em, "latest_pri_f1": prior_f1,
                             "best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1 }, f, indent=4)
 
         if (epoch + 1) % args.save_freq == 0:
