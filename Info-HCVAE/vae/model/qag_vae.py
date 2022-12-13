@@ -139,8 +139,7 @@ class DiscreteVAE(nn.Module):
             loss_zq_kl = self.gaussian_kl_criterion(posterior_zq_mu, posterior_zq_logvar,
                                                     prior_zq_mu, prior_zq_logvar)
 
-            loss_za_kl = self.categorical_kl_criterion(posterior_za_logits,
-                                                       prior_za_logits)
+            loss_za_kl = self.categorical_kl_criterion(posterior_za_logits, prior_za_logits)
 
             loss_zq_mmd = (self.alpha_kl + self.lambda_mmd_q - 1.) * self.cont_mmd_criterion(posterior_zq, prior_zq)
             loss_za_mmd = (self.alpha_kl + self.lambda_mmd_a - 1.) * self.gumbel_mmd_criterion(posterior_za, prior_za)
