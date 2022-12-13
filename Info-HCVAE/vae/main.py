@@ -85,24 +85,24 @@ def main(args):
             continue
 
         if not args.is_test_run and args.optimizer == "manual":
-            if epoch+1 == 5:
-                # boost grad descent by reset Adam with LR / 2 = 0.0005 = 5e-4
-                current_lr = current_lr / 2
-                trainer.change_optimizer(args, optimizer="adam", lr=current_lr, weight_decay=args.weight_decay)
-            elif epoch+1 == 11:
-                # change optimizer to sgd
+            if epoch + 1 >= 31:
+                current_lr = current_lr / 10
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
-            elif epoch+1 == 15:
-                # reduce the LR by 5 times at epoch 15 = 0.0001 = 1e-4
-                current_lr = current_lr / 2
-                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
-            elif epoch+1 == 21:
+            elif epoch + 1 >= 21:
                 # reduce by 10 at epoch > 20 = 0.00001 = 1e-5
                 current_lr = current_lr / 2
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
-            elif epoch+1 == 31:
-                current_lr = current_lr / 10
+            elif epoch+1 >= 15:
+                # reduce the LR by 5 times at epoch 15 = 0.0001 = 1e-4
+                current_lr = current_lr / 2
                 trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+            elif epoch+1 >= 11:
+                # change optimizer to sgd
+                trainer.change_optimizer(args, optimizer="sgd", lr=current_lr, weight_decay=args.weight_decay)
+            elif epoch+1 >= 5:
+                # boost grad descent by reset Adam with LR / 2 = 0.0005 = 5e-4
+                current_lr = current_lr / 2
+                trainer.change_optimizer(args, optimizer="adam", lr=current_lr, weight_decay=args.weight_decay)
 
         trainer.reset_cnt_steps()
         for batch in tqdm(train_loader, leave=False, position=1):
