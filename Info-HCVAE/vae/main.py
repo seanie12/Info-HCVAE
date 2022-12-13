@@ -35,8 +35,7 @@ def evaluate_model(epoch, args, trainer, eval_data, best_bleu, best_em, best_f1)
                     "latest_pri_em": prior_em, "latest_pri_f1": prior_f1,
                     "best_bleu": best_bleu, "best_em": best_em, "best_f1": best_f1 }, f, indent=4)
 
-    log_str = "{}-th Epochs BLEU : {:02.2f} POS_EM : {:02.2f} POS_F1 : " + \
-        "{:02.2f} PRI_EM : {02:2f} PRI_F1 : {:02.2f}"
+    log_str = "{}-th Epochs BLEU : {:02.2f} POS_EM : {:02.2f} POS_F1 : {:02.2f} PRI_EM : {02:2f} PRI_F1 : {:02.2f}"
     log_str = log_str.format(epoch, bleu, posterior_em, posterior_f1, prior_em, prior_f1)
     print(log_str)
 
