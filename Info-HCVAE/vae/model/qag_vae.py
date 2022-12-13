@@ -106,8 +106,8 @@ class DiscreteVAE(nn.Module):
             posterior_za_logits, posterior_za \
             = self.posterior_encoder(c_ids, q_ids, a_ids)
 
-        prior_zq_mu, prior_zq_logvar, _, \
-            prior_za_logits, _ \
+        prior_zq_mu, prior_zq_logvar, prior_zq, \
+            prior_za_logits, prior_za \
             = self.prior_encoder(c_ids)
 
         q_init_state, a_init_state = self.return_init_state(
@@ -142,8 +142,8 @@ class DiscreteVAE(nn.Module):
             loss_za_kl = self.categorical_kl_criterion(posterior_za_logits,
                                                        prior_za_logits)
 
-            loss_zq_mmd = (self.alpha_kl + self.lambda_mmd_q - 1.) * self.cont_mmd_criterion(posterior_zq)
-            loss_za_mmd = (self.alpha_kl + self.lambda_mmd_a - 1.) * self.gumbel_mmd_criterion(posterior_za)
+            loss_zq_mmd = (self.alpha_kl + self.lambda_mmd_q - 1.) * self.cont_mmd_criterion(posterior_zq, prior_zq)
+            loss_za_mmd = (self.alpha_kl + self.lambda_mmd_a - 1.) * self.gumbel_mmd_criterion(posterior_za, prior_za)
             loss_mmd =  loss_zq_mmd + loss_za_mmd
 
             loss_kl = (1. - self.alpha_kl) * (loss_zq_kl + loss_za_kl)

@@ -66,9 +66,8 @@ class GumbelMMDLoss(nn.Module):
     def __init__(self):
         super(GumbelMMDLoss, self).__init__()
 
-    def forward(self, posterior_z):
-        batch_size, latent_dim, nlatent = posterior_z.size()
-        prior_z = gumbel_latent_var_sampling(batch_size, latent_dim, nlatent, device=posterior_z.device)
+    def forward(self, posterior_z, prior_z):
+        _, latent_dim, _ = posterior_z.size()
 
         # do softargmax to make measuring the mean in MMD possible
         prior_z = softargmax(prior_z)
@@ -80,10 +79,9 @@ class ContinuousKernelMMDLoss(nn.Module):
     def __init__(self):
         super(ContinuousKernelMMDLoss, self).__init__()
 
-    def forward(self, posterior_z):
+    def forward(self, posterior_z, prior_z):
         # input shape = (batch, dim)
-        batch_size, latent_dim = posterior_z.size()
-        prior_z = torch.randn(batch_size, latent_dim).to(posterior_z.device)
+        _, latent_dim = posterior_z.size()
         return compute_mmd(posterior_z, prior_z, latent_dim)
 
 
