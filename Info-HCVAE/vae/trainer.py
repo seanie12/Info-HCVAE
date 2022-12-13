@@ -52,7 +52,7 @@ class VAETrainer(object):
                 self.losses[key] = value.item()
 
         self.cnt_steps += 1
-        if self.cnt_steps % 100 == 0:
+        if self.cnt_steps % 50 == 0:
             self.print_log()
 
         # self.adjust_infomax_weight(return_dict["loss_z_info"].item())

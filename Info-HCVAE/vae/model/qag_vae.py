@@ -6,7 +6,11 @@ from transformers import BertTokenizer
 from model.customized_layers import ContextualizedEmbedding, Embedding
 from model.encoders import PosteriorEncoder, PriorEncoder
 from model.decoders import QuestionDecoder, AnswerDecoder
-from model.losses import GaussianKLLoss, CategoricalKLLoss, GaussianJensenShannonDivLoss, CategoricalJensenShannonDivLoss
+from model.losses import GaussianKLLoss, CategoricalKLLoss, \
+    GaussianJensenShannonDivLoss, CategoricalJensenShannonDivLoss, \
+    ContinuousKernelMMDLoss, GumbelMMDLoss, GumbelKLLoss, \
+    VaeGaussianKLLoss, VaeGumbelKLLoss
+from model.model_utils import sample_gumbel
 
 
 class DiscreteVAE(nn.Module):
@@ -39,7 +43,8 @@ class DiscreteVAE(nn.Module):
 
         self.w_bce = args.w_bce
         self.alpha_kl = args.alpha_kl
-        self.alpha_jsd = args.alpha_jsd
+        self.lambda_mmd_q = args.lambda_mmd_q
+        self.lambda_mmd_a = args.lambda_mmd_a
         self.lambda_qa_info = args.lambda_qa_info
 
         max_q_len = args.max_q_len
@@ -79,9 +84,8 @@ class DiscreteVAE(nn.Module):
         self.gaussian_kl_criterion = GaussianKLLoss()
         self.categorical_kl_criterion = CategoricalKLLoss()
 
-        if self.alpha_jsd > 0:
-            self.gaussian_jsd_loss = GaussianJensenShannonDivLoss()
-            self.categorical_jsd_loss = CategoricalJensenShannonDivLoss()
+        self.cont_mmd_criterion = ContinuousKernelMMDLoss()
+        self.gumbel_mmd_criterion = GumbelMMDLoss()
 
     def return_init_state(self, zq, za):
         q_init_h = self.q_h_linear(zq)
@@ -138,17 +142,14 @@ class DiscreteVAE(nn.Module):
             loss_za_kl = self.categorical_kl_criterion(posterior_za_logits,
                                                        prior_za_logits)
 
-            loss_jsd, loss_zq_jsd, loss_za_jsd = 0, 0, 0
-            if self.alpha_jsd > 0:
-                loss_zq_jsd = self.gaussian_jsd_loss(posterior_zq_mu, posterior_zq_logvar, \
-                    prior_zq_mu, prior_zq_logvar)
-                loss_za_jsd = self.categorical_jsd_loss(posterior_za_logits, prior_za_logits)
-                loss_jsd = self.alpha_jsd * (loss_zq_jsd + loss_za_jsd)
+            loss_zq_mmd = (self.alpha_kl + self.lambda_mmd_q - 1.) * self.cont_mmd_criterion(posterior_zq)
+            loss_za_mmd = (self.alpha_kl + self.lambda_mmd_a - 1.) * self.gumbel_mmd_criterion(posterior_za)
+            loss_mmd =  loss_zq_mmd + loss_za_mmd
 
-            loss_kl = self.alpha_kl * (loss_zq_kl + loss_za_kl)
+            loss_kl = (1. - self.alpha_kl) * (loss_zq_kl + loss_za_kl)
             loss_qa_info = self.lambda_qa_info * loss_info
             loss = self.w_bce * (loss_q_rec + loss_a_rec) + \
-                loss_kl + loss_qa_info + loss_jsd
+                loss_kl + loss_qa_info + loss_mmd
 
             return_dict = {
                 "total_loss": loss,
@@ -157,9 +158,9 @@ class DiscreteVAE(nn.Module):
                 "loss_kl": loss_kl,
                 "loss_zq_kl": loss_zq_kl,
                 "loss_za_kl": loss_za_kl,
-                "loss_jsd": loss_jsd,
-                "loss_zq_jsd": loss_zq_jsd,
-                "loss_za_jsd": loss_za_jsd,
+                "loss_mmd": loss_mmd,
+                "loss_zq_mmd": loss_zq_mmd,
+                "loss_za_mmd": loss_za_mmd,
                 "loss_qa_info": loss_qa_info,
             }
             return return_dict

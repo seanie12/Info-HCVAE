@@ -160,10 +160,11 @@ def main(args):
 
             # sample latent variable K times
             for idx in range(args.k):
-                zq, za = vae.prior_encoder(c_ids)
+                # zq, za = vae.prior_encoder(c_ids)
 
                 with torch.no_grad():
-                    batch_q_ids, batch_start, batch_end = vae.generate(zq, za, c_ids)
+                    # batch_q_ids, batch_start, batch_end = vae.generate(zq, za, c_ids)
+                    batch_q_ids, batch_start, batch_end = vae.generate(c_ids)
 
                     if args.out_qa_json is not None: # out QA text to json
                         for idx in range(batch_q_ids.size(0)):
