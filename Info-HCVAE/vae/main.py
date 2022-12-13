@@ -79,8 +79,20 @@ def main(args):
 
     train_loader, _, _ = train_data
     current_lr = args.lr
-    best_bleu, best_em, best_f1 = args.prev_best_bleu, 0.0, args.prev_best_f1
+    best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
     first_run = True
+
+    if os.path.exists(os.path.join(args.model_dir, "metrics.json")):
+        with open(os.path.join(args.model_dir, "metrics.json")) as f:
+            import json
+            metrics = json.load(f)
+        best_bleu = metrics["best_bleu"]
+        best_em = metrics["best_em"]
+        best_f1 = metrics["best_f1"]
+
+    if args.resume_epochs > 1 and args.eval_after_resume:
+        evaluate_model(args.resume_epochs - 1, args, trainer, eval_data, best_bleu, best_em, best_f1)
+
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
         if epoch+1 < args.resume_epochs:
             continue
@@ -144,8 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")
     parser.add_argument("--log_loss_info", dest="log_loss_info", action="store_true")
-    parser.add_argument("--prev_best_bleu", default=0.0, type=float)
-    parser.add_argument("--prev_best_f1", default=0.0, type=float)
+    parser.add_argument("--eval_after_resume", dest="eval_after_resume", action="store_true", default=False)
     parser.add_argument("--save_freq", default=5, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=5, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
