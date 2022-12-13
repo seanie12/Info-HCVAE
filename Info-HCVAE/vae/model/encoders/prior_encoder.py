@@ -32,7 +32,8 @@ class PriorEncoder(nn.Module):
     def forward(self, c_ids):
         c_mask, c_lengths = return_mask_lengths(c_ids)
 
-        c_embeddings = self.embedding(c_ids)
+        # c_embeddings = self.embedding(c_ids)
+        c_embeddings = self.embedding(c_ids, c_mask)
         c_hs, c_state = self.context_encoder(c_embeddings, c_lengths.to("cpu"))
         c_h = c_state[0].view(self.nlayers, 2, -1, self.nhidden)[-1]
         c_h = c_h.transpose(0, 1).contiguous().view(-1, 2 * self.nhidden)
