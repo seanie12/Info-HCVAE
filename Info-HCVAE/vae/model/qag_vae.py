@@ -57,12 +57,12 @@ class DiscreteVAE(nn.Module):
         for param in contextualized_embedding.parameters():
             param.requires_grad = False
 
-        self.posterior_encoder = PosteriorEncoder(embedding, emsize,
+        self.posterior_encoder = PosteriorEncoder(contextualized_embedding, emsize,
                                                   enc_nhidden, enc_nlayers,
                                                   nzqdim, nza, nzadim,
                                                   enc_dropout)
 
-        self.prior_encoder = PriorEncoder(embedding, emsize,
+        self.prior_encoder = PriorEncoder(contextualized_embedding, emsize,
                                           enc_nhidden, enc_nlayers,
                                           nzqdim, nza, nzadim, enc_dropout)
 
