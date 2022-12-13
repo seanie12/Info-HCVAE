@@ -20,7 +20,8 @@ def evaluate_model(epoch, args, trainer, eval_data, best_bleu, best_em, best_f1)
     prior_em = prior_metrics["exact_match"]
     bleu = bleu * 100
 
-    log_str = '{}-th Epochs BLEU : {:02.2f} POS_EM : {:02.2f} POS_F1 : {:02.2f} PRI_EM : {02:2f} PRI_F1 : {:02.2f}'
+    log_str = '{}-th Epochs BLEU : {:02.2f} POS_EM : {:02.2f} POS_F1 : " + \
+        "{:02.2f} PRI_EM : {02:2f} PRI_F1 : {:02.2f}'
     log_str = log_str.format(epoch, bleu, posterior_em, posterior_f1, prior_em, prior_f1)
     print(log_str)
 
