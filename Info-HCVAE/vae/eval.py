@@ -74,7 +74,7 @@ def eval_vae(args, trainer, eval_data):
         = trainer.generate_answer_logits(c_ids, q_ids, a_ids)
 
         # in this case: prior_zq == posterior_zq
-        batch_prior_start_logits, batch_prior_end_logits, _ = \
+        batch_prior_start_logits, batch_prior_end_logits = \
             trainer.generate_prior_answer_logits(c_ids, q_ids, a_ids)
 
         # Convert posterior tensors to Python list

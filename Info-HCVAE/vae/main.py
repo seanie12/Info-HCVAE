@@ -90,7 +90,7 @@ def main(args):
         best_em = metrics["best_em"]
         best_f1 = metrics["best_f1"]
 
-    if args.resume_epochs > 1 and args.eval_after_resume:
+    if args.resume_epochs > 1 and args.eval_before_resume:
         evaluate_model(args.resume_epochs - 1, args, trainer, eval_data, best_bleu, best_em, best_f1)
 
     for epoch in trange(int(args.epochs), desc="Epoch", position=0):
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume_epochs", default=1, type=int)
     parser.add_argument("--is_test_run", dest="is_test_run", action="store_true")
     parser.add_argument("--log_loss_info", dest="log_loss_info", action="store_true")
-    parser.add_argument("--eval_after_resume", dest="eval_after_resume", action="store_true", default=False)
+    parser.add_argument("--eval_before_resume", dest="eval_before_resume", action="store_true", default=False)
     parser.add_argument("--save_freq", default=5, type=int, help="Model saving should be executed after how many epochs?")
     parser.add_argument("--eval_freq", default=5, type=int, help="Model validation should be executed after how many epochs?")
     parser.add_argument("--lr", default=1e-3, type=float, help="lr")
