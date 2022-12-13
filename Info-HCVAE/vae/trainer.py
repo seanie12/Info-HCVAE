@@ -118,6 +118,15 @@ class VAETrainer(object):
             start_logits, end_logits = self.vae.return_answer_logits(
                 zq, za, c_ids)
         return start_logits, end_logits
+    
+    def generate_prior_answer_logits(self, c_ids, q_ids, a_ids):
+        """Generate prior answer logits based on posterior_zq"""
+        with torch.no_grad():
+            zq, _ = self.vae.posterior_encoder(c_ids, q_ids, a_ids)
+            _, za = self.vae.prior_encoder(c_ids, zq=zq)
+            start_logits, end_logits = self.vae.return_answer_logits(
+                zq, za, c_ids)
+        return start_logits, end_logits
 
     def generate_prior(self, c_ids, posterior_zq=None):
         with torch.no_grad():

@@ -62,12 +62,9 @@ def eval_vae(args, trainer, eval_data):
     example_index = -1
 
     for batch in tqdm(eval_loader, desc="Eval iter", leave=False, position=4):
-        c_ids, q_ids, a_ids, start, end = batch_to_device(batch, args.device)
+        c_ids, q_ids, a_ids, _, _ = batch_to_device(batch, args.device)
         batch_size = c_ids.size(0)
-        batch_c_ids = c_ids.cpu().tolist()
         batch_q_ids = q_ids.cpu().tolist()
-        batch_start = start.cpu().tolist()
-        batch_end = end.cpu().tolist()
 
         batch_posterior_q_ids, \
         batch_posterior_start, batch_posterior_end, \
@@ -77,25 +74,22 @@ def eval_vae(args, trainer, eval_data):
         = trainer.generate_answer_logits(c_ids, q_ids, a_ids)
 
         # in this case: prior_zq == posterior_zq
-        _, batch_prior_start, batch_prior_end, _ = \
-            trainer.generate_prior(c_ids, posterior_zq=posterior_zq)
+        batch_prior_start_logits, batch_prior_end_logits, _ = \
+            trainer.generate_prior_answer_logits(c_ids, q_ids, a_ids)
 
-        # Convert posterior and prior tensors to Python list
+        # Convert posterior tensors to Python list
         batch_posterior_q_ids, \
         batch_posterior_start, batch_posterior_end = \
         batch_posterior_q_ids.cpu().tolist(), \
         batch_posterior_start.cpu().tolist(), batch_posterior_end.cpu().tolist()
         posterior_zq = posterior_zq.cpu()
 
-        batch_prior_start, batch_prior_end = \
-        batch_prior_start.cpu().tolist(), batch_prior_end.cpu().tolist()
-
         for i in range(batch_size):
             example_index += 1
             posterior_start_logits = batch_start_logits[i].detach().cpu().tolist()
             posterior_end_logits = batch_end_logits[i].detach().cpu().tolist()
-            prior_start_logits = batch_prior_start[i].detach().cpu().tolist()
-            prior_end_logits = batch_prior_end[i].detach().cpu().tolist()
+            prior_start_logits = batch_prior_start_logits[i].detach().cpu().tolist()
+            prior_end_logits = batch_prior_end_logits[i].detach().cpu().tolist()
             eval_feature = eval_features[example_index]
             unique_id = int(eval_feature.unique_id)
 
