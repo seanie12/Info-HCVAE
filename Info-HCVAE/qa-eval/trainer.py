@@ -1,29 +1,19 @@
 import collections
-import math
 import os
 import time
 import json
-import socket
-from tqdm import tqdm
 import numpy as np
-import pickle
-import random
 
 import torch
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
-import torch.optim as optim
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer, AdamW
 from torch.nn.parallel import DistributedDataParallel
-from torch.utils.data import DataLoader, TensorDataset
-from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import LambdaLR
 from torch.nn.utils import clip_grad_norm_
 
-from squad_utils import read_squad_examples, read_examples, \
-                        convert_examples_to_features, \
-                        write_predictions, read_answers, \
-                        evaluate, evaluate_mrqa
+from squad_utils import write_predictions, evaluate
 
 from utils import eta, progress_bar, user_friendly_time, time_since
 
