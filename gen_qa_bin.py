@@ -1,5 +1,4 @@
 import argparse
-import pickle
 import math
 import h5py
 
@@ -8,10 +7,9 @@ from transformers import AutoTokenizer
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 import os
-from model.qag_vae import DiscreteVAE
-from model.model_utils import sample_gaussian
-from squad_utils import (InputFeatures, convert_examples_to_harv_features,
-                         read_examples, read_squad_examples)
+from infohcvae.model.qag_vae import DiscreteVAE
+from infohcvae.squad_utils import (convert_examples_to_harv_features,
+                                   read_examples, read_squad_examples)
 
 
 def return_mask_lengths(ids):

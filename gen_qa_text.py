@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, Dataset, TensorDataset
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
-from models import DiscreteVAE
+from infohcvae.model.qag_vae import DiscreteVAE
 
 
 class CustomDatset(Dataset):

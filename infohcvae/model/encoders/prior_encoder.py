@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from model.customized_layers import CustomLSTM
-from model.model_utils import return_mask_lengths, cal_attn, sample_gaussian, gumbel_softmax
+from infohcvae.model.customized_layers import CustomLSTM
+from infohcvae.model.model_utils import return_mask_lengths, cal_attn, sample_gaussian, gumbel_softmax
 
 class PriorEncoder(nn.Module):
     def __init__(self, embedding, emsize,

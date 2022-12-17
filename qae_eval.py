@@ -1,70 +1,14 @@
 import argparse
-import linecache
-import os
 import pickle
-import subprocess
-import time
-import h5py
 
 import torch
-from torch.utils.data import Dataset, TensorDataset
+from torch.utils.data import TensorDataset
 
-from distributed_run import distributed_main
-from trainer import Trainer
+from infohcvae.qae.trainer import Trainer
+from infohcvae.datasets import HarvestingQADatasetH5, HarvestingQADataset
 
-
-class HarvestingQADataset(Dataset):
-    def __init__(self, filename, ratio):
-        self.filename = filename
-        self.total_size = int(int(subprocess.check_output("wc -l " + filename, shell=True).split()[0]) * ratio)
-
-    def __getitem__(self, idx):
-        line = linecache.getline(self.filename, idx + 1)
-        str_loaded = line.split("\t")
-
-        input_ids = str_loaded[0].split()
-        input_mask = str_loaded[1].split()
-        segment_ids = str_loaded[2].split()
-        start_position = str_loaded[3]
-        end_position = str_loaded[4]
-
-        input_ids = torch.tensor([int(idx) for idx in input_ids], dtype=torch.long)
-        input_mask = torch.tensor([int(idx) for idx in input_mask], dtype=torch.long)
-        segment_ids = torch.tensor([int(idx) for idx in segment_ids], dtype=torch.long)
-        start_position = torch.tensor([int(start_position)], dtype=torch.long)
-        end_position = torch.tensor([int(end_position)], dtype=torch.long)
-
-        return input_ids, input_mask, segment_ids, start_position, end_position
-
-    def __len__(self):
-        return self.total_size
-
-
-class HarvestingQADatasetH5(Dataset):
-    def __init__(self, filename):
-        self.filename = filename
-        self.fdata = h5py.File(filename, "r")
-        self.input_ids = self.fdata["qas/input_ids"]
-        self.input_masks = self.fdata["qas/input_masks"]
-        self.segment_ids = self.fdata["qas/segment_ids"]
-        self.start_positions = self.fdata["qas/start_positions"]
-        self.end_positions = self.fdata["qas/end_positions"]
-        self.total_size = self.start_positions.len()
-
-    def __getitem__(self, idx):
-        input_ids = torch.tensor(self.input_ids[idx, :], dtype=torch.long)
-        input_mask = torch.tensor(self.input_masks[idx, :], dtype=torch.long)
-        segment_ids = torch.tensor(self.segment_ids[idx, :], dtype=torch.long)
-        start_position = torch.tensor([self.start_positions[idx]], dtype=torch.long)
-        end_position = torch.tensor([self.end_positions[idx]], dtype=torch.long)
-
-        return input_ids, input_mask, segment_ids, start_position, end_position
-
-    def __len__(self):
-        return self.total_size
 
 def main(args):
-
     args.workers = int(args.workers)
 
     args.dev_features_file = "../data/pickle-file/dev_features.pkl"
@@ -156,9 +100,8 @@ if __name__ == "__main__":
 
     # directory option
     parser.add_argument("--lazy_loader", action="store_true", help="lazy loader")
-    parser.add_argument("--pretrain_file",
-    default="../data/harv_synthetic_data_semi/0.4_replaced_1.0_harv_features.txt",
-    type=str, help="path of training data file, use .h5 extension to use the new dataloader")
+    parser.add_argument("--pretrain_file", default="./data/harv_synthetic_data_semi/0.4_replaced_1.0_harv_features.txt",
+        type=str, help="path of training data file, use .h5 extension to use the new dataloader")
     # gpu option
     parser.add_argument("--use_cuda", default=True, help="use cuda or not")
     parser.add_argument("--devices", type=str, default='0_1_2_3', help="gpu device ids to use")

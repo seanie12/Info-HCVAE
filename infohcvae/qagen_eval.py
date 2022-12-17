@@ -5,8 +5,8 @@ from transformers import BertTokenizer
 from tqdm import tqdm
 
 from qgevalcap.eval import eval_qg
-from squad_utils import evaluate, write_predictions
-from utils import batch_to_device
+from infohcvae.squad_utils import evaluate, write_predictions
+from infohcvae.utils import batch_to_device
 
 def to_string(index, tokenizer):
     tok_tokens = tokenizer.convert_ids_to_tokens(index)
@@ -130,7 +130,7 @@ def eval_vae(args, trainer, eval_data):
     with open(os.path.join(args.model_dir, "prior_pred.json")) as prediction_file:
         prior_predictions = json.load(prediction_file)
     posterior_ret = evaluate(dataset, posterior_predictions)
-    prior_ret = evaluate(dataset, posterior_predictions)
+    prior_ret = evaluate(dataset, prior_predictions)
     bleu = eval_qg(res_dict, qg_results)
 
     return posterior_ret, prior_ret, bleu

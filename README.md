@@ -46,27 +46,27 @@ wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -O ./squad
 Train Info-HCVAE with the following command. The checkpoint will be save at ./save/vae-checkpoint.
 ```bash
 cd vae
-python main.py
+python qae_eval.py
 ```
 ## Generate QA pairs 
 Generate QA pairs from unlabeled paragraphs. If you generate QA pairs from SQuAD, use option --squad.
 ```bash
 cd vae
-python translate.py --data_file "DATA DIRECTORY for paragraph" --checkpoint "directory for Info-HCVAE model" --output_file "output file directory" --k "the number of QA pairs to sample for each paragraph" --ratio "the percentage of context to use"
+python gen_qa_bin.py --data_file "DATA DIRECTORY for paragraph" --checkpoint "directory for Info-HCVAE model" --output_file "output file directory" --k "the number of QA pairs to sample for each paragraph" --ratio "the percentage of context to use"
 ```
 
 ## QA-based-Evaluation (QAE) 
 It requires **3 1080ti GPUS (11GB memory)** to reproduce the results. You should download data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory. Uncompress it and the "data" folder contains all the files required for QAE and Semi-supervised Learning.
 ```bash
 cd qa-eval
-python main.py --devices 0_1_2 --pretrain_file $PATH_TO_qaeval --unlabel_ratio 0.1 --lazy_loader --batch_size 24
+python qae_eval.py --devices 0_1_2 --pretrain_file $PATH_TO_qaeval --unlabel_ratio 0.1 --lazy_loader --batch_size 24
 ```
 
 ## Semi-Supervised Learning for SQuAD
 It requires **4 1080ti GPUS (11GB memory)** As QAE, you should download the data from [here](https://drive.google.com/file/d/1CdhslOycNFDwnDo7e8c7GaxvYxHrUlFG/view?usp=sharing) and place it under the root directory.
 ```bash
 cd qa-eval
-python main.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_ratio 1.0 --lazy_loader --batch_size 32
+python qae_eval.py --devices 0_1_2_3 --pretrain_file $PATH_TO_semieval --unlabel_ratio 1.0 --lazy_loader --batch_size 32
 ```
 
 ## Synthetic QA pairs

@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.distributions as torch_dist
 from torch.distributions.gumbel import Gumbel
-from model.model_utils import softargmax, gumbel_latent_var_sampling
-from model.loss_utils import compute_mmd
+from infohcvae.model.model_utils import softargmax
+from infohcvae.model.loss_utils import compute_mmd
 
 
 class VaeGumbelKLLoss(nn.Module):

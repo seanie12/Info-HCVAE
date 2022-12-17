@@ -13,9 +13,9 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import LambdaLR
 from torch.nn.utils import clip_grad_norm_
 
-from squad_utils import write_predictions, evaluate
+from infohcvae.qae.qae_squad_utils import write_predictions, evaluate
 
-from utils import eta, progress_bar, user_friendly_time, time_since
+from infohcvae.qae.qae_utils import eta, progress_bar, user_friendly_time, time_since
 
 def get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps, last_epoch=-1):
     """ Create a schedule with a learning rate that decreases linearly after
