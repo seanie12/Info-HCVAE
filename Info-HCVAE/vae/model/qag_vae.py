@@ -1,10 +1,16 @@
+import random
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from transformers import BertTokenizer
-from infohcvae.model.customized_layers import ContextualizedEmbedding, Embedding
-from infohcvae.model.encoders import PosteriorEncoder, PriorEncoder
-from infohcvae.model.decoders import QuestionDecoder, AnswerDecoder
-from infohcvae.model.losses import GaussianKLLoss, CategoricalKLLoss, \
-    ContinuousKernelMMDLoss, GumbelMMDLoss
+from model.customized_layers import ContextualizedEmbedding, Embedding
+from model.encoders import PosteriorEncoder, PriorEncoder
+from model.decoders import QuestionDecoder, AnswerDecoder
+from model.losses import GaussianKLLoss, CategoricalKLLoss, \
+    GaussianJensenShannonDivLoss, CategoricalJensenShannonDivLoss, \
+    ContinuousKernelMMDLoss, GumbelMMDLoss, GumbelKLLoss, \
+    VaeGaussianKLLoss, VaeGumbelKLLoss
+from model.model_utils import sample_gumbel
 
 
 class DiscreteVAE(nn.Module):

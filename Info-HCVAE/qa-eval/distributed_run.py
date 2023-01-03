@@ -1,6 +1,6 @@
 import torch
 import torch.multiprocessing as mp
-from infohcvae.qae.trainer import Trainer
+from trainer import Trainer
 
 
 def distributed_main(args):

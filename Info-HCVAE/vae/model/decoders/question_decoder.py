@@ -2,10 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from infohcvae.model.customized_layers import CustomLSTM
-from infohcvae.model.model_utils import return_mask_lengths, cal_attn
+from model.customized_layers import CustomLSTM
+from model.model_utils import return_mask_lengths, cal_attn
 from torch_scatter import scatter_max
-from infohcvae.model.infomax.dim_bce_infomax import DimBceInfoMax
+from model.infomax.dim_bce_infomax import DimBceInfoMax
 
 class _ContextEncoderforQG(nn.Module):
     def __init__(self, embedding, emsize,
